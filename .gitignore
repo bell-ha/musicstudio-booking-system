@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Env
+.env
+.env.local
+*.env
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Node
+node_modules/
+
+# DB tool artifacts
+*.session.sql
