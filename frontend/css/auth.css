@@ -563,3 +563,245 @@
     transition-duration: .01ms !important;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   로그인 화면 재구성
+   ──────────────────────────────────────────────────────────────
+   기존은 흰 카드를 좌우로 나눠 왼쪽에 폼, 오른쪽에 공지를 두었다.
+   그런데 공지는 대부분 비어 있어서 화면 절반이 빈 채로 남았고,
+   빈 상태 문구를 넣어도 "절반이 비었다"는 사실은 그대로였다.
+
+   왼쪽을 브랜드 패널로 바꿔 그 자리를 의미 있게 채운다.
+   공지는 폼 아래로 내려 있을 때만 보이게 한다.
+   ══════════════════════════════════════════════════════════════ */
+
+.nm-auth.nm-page-login .main-container {
+  padding: var(--sp-6) var(--sp-4);
+}
+
+.nm-auth.nm-page-login .card {
+  max-width: 940px;
+  border: none;
+  box-shadow: 0 18px 48px rgba(16, 24, 48, .16);
+  overflow: hidden;
+}
+
+/* ── 왼쪽: 브랜드 패널 ─────────────────────────────────── */
+.nm-auth.nm-page-login .notice-box {
+  order: -1;                         /* 시각 순서만 왼쪽으로. DOM은 그대로 */
+  flex: 0 0 42%;
+  background:
+    radial-gradient(120% 90% at 12% 8%, #16307a 0%, transparent 60%),
+    linear-gradient(160deg, #002a7a 0%, #001b52 100%);
+  color: #fff;
+  border: none;
+  padding: var(--sp-6) var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+/* 오선지를 옅게 깐다 — 뉴뮤직학부라는 맥락을 배경으로만 드러낸다 */
+.nm-auth.nm-page-login .notice-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 26px,
+    rgba(255, 255, 255, .10) 26px 27px
+  );
+  opacity: .5;
+  pointer-events: none;
+}
+
+.nm-auth.nm-page-login .notice-box > * { position: relative; }
+
+.nm-auth.nm-page-login .notice-box h2 {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .62);
+  margin: 0 0 var(--sp-3);
+}
+
+/* 패널 제목은 h2 앞에 붙인다 — 마크업을 건드리지 않기 위해 ::before를 쓴다 */
+.nm-auth.nm-page-login .notice-box::after {
+  content: "연습실 예약";
+  position: absolute;
+  left: var(--sp-5);
+  top: var(--sp-6);
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -.02em;
+  color: #fff;
+}
+
+.nm-auth.nm-page-login .notice-box #public-notice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.nm-auth.nm-page-login .notice-box #public-notice-list li a,
+.nm-auth.nm-page-login .notice-box #public-notice-list li {
+  color: rgba(255, 255, 255, .88);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+/* 공지가 없으면 목록 영역 자체를 지운다 — 빈 상자를 보여주지 않는다 */
+.nm-auth.nm-page-login .notice-box #public-notice-list:empty { display: none; }
+.nm-auth.nm-page-login .notice-box #public-notice-list:empty::after { content: none; }
+.nm-auth.nm-page-login .notice-box:has(#public-notice-list:empty) h2 { display: none; }
+
+/* ── 오른쪽: 폼 ────────────────────────────────────────── */
+.nm-auth.nm-page-login .login-box {
+  flex: 1 1 58%;
+  padding: var(--sp-6) var(--sp-6) var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* 제목과 버튼에 밑줄이 그어져 링크처럼 보이던 것을 없앤다 */
+.nm-auth.nm-page-login .login-box h2,
+.nm-auth.nm-page-login .login-box button {
+  text-decoration: none;
+}
+
+.nm-auth.nm-page-login .login-box h2 {
+  font-size: 1.5rem;
+  letter-spacing: -.02em;
+  margin-bottom: var(--sp-2);
+}
+
+@media (max-width: 768px) {
+  .nm-auth.nm-page-login .notice-box {
+    order: 0;                        /* 모바일에서는 폼이 먼저 */
+    flex: none;
+    padding: var(--sp-5) var(--sp-4);
+  }
+  .nm-auth.nm-page-login .notice-box::after {
+    position: static;
+    display: block;
+    font-size: 1.35rem;
+    margin-bottom: var(--sp-3);
+  }
+  .nm-auth.nm-page-login .login-box { padding: var(--sp-5) var(--sp-4); }
+}
+
+/* 브랜드 패널 설명 문장 — 제목(::after) 아래 자리를 비워두고 놓는다 */
+.nm-auth.nm-page-login .notice-box .brand-sub {
+  margin: 0 0 auto;
+  padding-top: 3.4rem;
+  font-size: var(--fs-sm);
+  line-height: 1.65;
+  color: rgba(255, 255, 255, .72);
+  max-width: 20ch;
+}
+.nm-auth.nm-page-login .notice-box h2 { margin-top: var(--sp-5); }
+
+/* ── 브랜드 패널 마무리 ────────────────────────────────────
+   오선지가 배경이 아니라 무늬로 읽혀서 눈에 걸렸다.
+   간격을 넓히고 대비를 낮춰, 가까이 봐야 보이는 정도로 남긴다. */
+.nm-auth.nm-page-login .notice-box::before {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 43px,
+    rgba(255, 255, 255, .055) 43px 44px
+  );
+  opacity: 1;
+}
+
+.nm-auth.nm-page-login .notice-box {
+  padding: var(--sp-6) var(--sp-5) var(--sp-5);
+  justify-content: flex-start;
+}
+.nm-auth.nm-page-login .notice-box::after {
+  position: static;
+  display: block;
+  font-size: 1.75rem;
+  margin-bottom: var(--sp-3);
+}
+.nm-auth.nm-page-login .notice-box .brand-sub {
+  padding-top: 0;
+  max-width: 24ch;
+  word-break: keep-all;              /* 한글이 어절 중간에서 끊기지 않게 */
+  margin-bottom: var(--sp-5);
+}
+.nm-auth.nm-page-login .notice-box h2 { margin-top: 0; }
+
+/* 패널 하단 — 규모를 한 줄로 알려 빈 공간을 채운다 */
+.nm-auth.nm-page-login .notice-box .brand-sub::after {
+  content: "연습실 55실 · 4개 층";
+  display: block;
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid rgba(255, 255, 255, .16);
+  font-size: var(--fs-xs);
+  letter-spacing: .04em;
+  color: rgba(255, 255, 255, .55);
+}
+
+/* ── 브랜드 패널: 의사요소 대신 마크업으로 ────────────────
+   ::after는 항상 마지막에 붙어서 제목이 설명 아래로 내려갔다. */
+.nm-auth.nm-page-login .notice-box::after { content: none; }
+
+.nm-auth.nm-page-login .notice-box .brand-title {
+  margin: 0 0 var(--sp-3);
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -.02em;
+  color: #fff;
+}
+.nm-auth.nm-page-login .notice-box .brand-sub::after { content: none; }
+.nm-auth.nm-page-login .notice-box .brand-sub { margin-bottom: var(--sp-4); }
+
+.nm-auth.nm-page-login .notice-box .brand-meta {
+  margin: 0;
+  padding-top: var(--sp-4);
+  border-top: 1px solid rgba(255, 255, 255, .16);
+  font-size: var(--fs-xs);
+  letter-spacing: .04em;
+  color: rgba(255, 255, 255, .55);
+}
+.nm-auth.nm-page-login .notice-box h2 { margin-top: var(--sp-5); }
+
+/* 제목에 남아 있던 밑줄 제거 — common.css 규칙보다 명시도를 높인다 */
+body.nm-auth.nm-page-login .login-box h2,
+body.nm-auth.nm-page-login .login-box form button,
+body.nm-auth.nm-page-login .notice-box .brand-title {
+  text-decoration: none;
+}
+
+/* ── 마무리 ────────────────────────────────────────────────
+   1) 제목·제출 버튼의 밑줄 제거.
+      common.css가 button 전반에 밑줄을 주고 있어 명시도를 올린다.
+   2) 브랜드 패널 아래쪽 여백 정리 — 공지가 없을 때 아래가 크게 비었다. */
+body.nm-auth.nm-page-login .login-box h2,
+body.nm-auth.nm-page-login .login-box form button[type="submit"],
+body.nm-auth.nm-page-login .register button,
+body.nm-auth.nm-page-login .notice-box .brand-title {
+  text-decoration: none !important;
+}
+
+body.nm-auth.nm-page-login .notice-box {
+  justify-content: space-between;
+  padding-bottom: var(--sp-6);
+}
+/* 제목·설명 묶음은 위로, 규모 표시는 아래로 밀어 균형을 잡는다 */
+body.nm-auth.nm-page-login .notice-box .brand-sub { margin-bottom: 0; }
+body.nm-auth.nm-page-login .notice-box .brand-meta {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, .16);
+}
+body.nm-auth.nm-page-login .notice-box h2 {
+  margin: var(--sp-5) 0 var(--sp-2);
+}
