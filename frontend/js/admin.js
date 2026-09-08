@@ -80,35 +80,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.querySelector('#userTable tbody');
     tbody.innerHTML = '';
     if (normals.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">등록된 일반 사용자가 없습니다.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">등록된 일반 사용자가 없습니다.</td></tr>';
       return;
     }
     normals.forEach(u => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${u.login_id}</td>
-        <td class="password-cell">
-          <button class="toggle-pw">보기</button>
-          <span class="plain" style="display:none;">${u.password}</span>
-        </td>
         <td>${u.username}</td>
         <td>${u.student_id}</td>
         <td>${u.major}</td>
         <td>${u.phone}</td>
         <td class="actions">
+          <button class="reset-pw">비밀번호 초기화</button>
           <button class="delete">삭제</button>
         </td>
       `;
-      tr.querySelector('.toggle-pw').onclick = () => {
-        const span = tr.querySelector('.plain');
-        const btn  = tr.querySelector('.toggle-pw');
-        if (span.style.display === 'none') {
-          span.style.display = '';
-          btn.textContent    = '가리기';
-        } else {
-          span.style.display = 'none';
-          btn.textContent    = '보기';
+      tr.querySelector('.reset-pw').onclick = async () => {
+        if (!confirm(`${u.username}(${u.login_id})님의 비밀번호를 초기화할까요?\n임시 비밀번호가 한 번만 표시되며 다시 볼 수 없습니다.`)) return;
+        const res = await fetch(`/users/${u.user_id}/reset-password`, { method: 'PATCH', headers });
+        if (!res.ok) {
+          alert('초기화에 실패했습니다.');
+          return;
         }
+        const d = await res.json();
+        // 비밀번호는 해시로 저장되므로 이 값은 지금 한 번만 볼 수 있다.
+        window.prompt(`${d.username}님의 임시 비밀번호입니다. 복사해서 본인에게 전달하세요.`, d.temp_password);
       };
       tr.querySelector('.delete').onclick = async () => {
         if (!confirm('정말 이 사용자를 삭제하시겠습니까?')) return;

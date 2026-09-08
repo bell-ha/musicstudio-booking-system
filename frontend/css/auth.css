@@ -1,0 +1,565 @@
+@charset "UTF-8";
+/* ══════════════════════════════════════════════════════════════════
+   auth.css — 로그인 / 회원가입 / 공지상세 전용 오버레이 스타일
+
+   [통합 방법]
+   common.css 다음에 이 파일 한 줄만 추가하면 됩니다. common.css는
+   user.html·admin 페이지가 함께 쓰므로 건드리지 않았고, 모든 규칙을
+   body.nm-auth 아래로 한정해 다른 화면에 새어 나가지 않게 했습니다.
+
+     <link rel="stylesheet" href="css/common.css">
+     <link rel="stylesheet" href="css/auth.css">     ← 추가
+     <body class="nm-auth nm-page-login">            ← 클래스 추가
+
+   [JS 계약 — 아래 이름은 절대 바꾸지 않았습니다]
+   main.js          : #loginForm, #goRegister, form.login_id, form.password,
+                      #public-notice-list, li.urgent
+   register.js      : #regForm, #result, #consentRequired,
+                      input[name=login_id|password|username|student_id|major|phone],
+                      input 바로 다음 형제가 small.hint 여야 함 (순서 유지)
+   consent-modal.js : #consentModal, #openConsent, #agreeBtn, #consentRequired,
+                      [data-close], .modal-close, .modal.show
+   notice.html 인라인 스크립트 : #notice
+
+   [필요한 공통 토큰 — github-f9 확정 시 아래 이름으로 치환]
+   색   : --nm-color-primary        단국대 남색 계열 주색
+          --nm-color-primary-hover  주색 hover
+          --nm-color-primary-weak   주색 연한 배경 틴트
+          --nm-color-text           본문 글자
+          --nm-color-text-muted     보조 설명 글자
+          --nm-color-bg             페이지 배경
+          --nm-color-surface        카드 표면
+          --nm-color-surface-alt    카드 내 보조 표면
+          --nm-color-border         테두리
+          --nm-color-danger         오류/긴급
+          --nm-color-success        성공
+          --nm-color-focus          포커스 링
+   간격 : --nm-space-1(4) --nm-space-2(8) --nm-space-3(12)
+          --nm-space-4(16) --nm-space-5(24) --nm-space-6(32) --nm-space-7(48)
+   반경 : --nm-radius-sm(6) --nm-radius-md(10) --nm-radius-lg(14)
+   그림자: --nm-shadow-card
+   글꼴 : --nm-font-sans
+   ────────────────────────────────────────────────────────────────
+   지금은 var(--토큰, 폴백) 형태라 토큰이 없어도 그대로 렌더링됩니다.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── 0. 지역 폴백 값 ───────────────────────────────────────────── */
+.nm-auth {
+  --c-primary:        var(--nm-color-primary,        #003399);
+  --c-primary-hover:  var(--nm-color-primary-hover,  #002a7a);
+  --c-primary-weak:   var(--nm-color-primary-weak,   #eef2fb);
+  --c-text:           var(--nm-color-text,           #1f2328);
+  --c-muted:          var(--nm-color-text-muted,     #5c6570);
+  --c-bg:             var(--nm-color-bg,             #f2f3f5);
+  --c-surface:        var(--nm-color-surface,        #ffffff);
+  --c-surface-alt:    var(--nm-color-surface-alt,    #fafbfc);
+  --c-border:         var(--nm-color-border,         #d8dce1);
+  --c-danger:         var(--nm-color-danger,         #b00020);
+  --c-success:        var(--nm-color-success,        #0b7a0b);
+  --c-focus:          var(--nm-color-focus,          #4a7fe0);
+
+  --s-1: var(--nm-space-1, 4px);
+  --s-2: var(--nm-space-2, 8px);
+  --s-3: var(--nm-space-3, 12px);
+  --s-4: var(--nm-space-4, 16px);
+  --s-5: var(--nm-space-5, 24px);
+  --s-6: var(--nm-space-6, 32px);
+  --s-7: var(--nm-space-7, 48px);
+
+  --r-sm: var(--nm-radius-sm, 6px);
+  --r-md: var(--nm-radius-md, 10px);
+  --r-lg: var(--nm-radius-lg, 14px);
+
+  --shadow-card: var(--nm-shadow-card, 0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.08));
+
+  --header-h: 92px;   /* header 실측 높이(패딩 20+로고 50+패딩 20) */
+
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--nm-font-sans, 'Pretendard', 'Apple SD Gothic Neo', 'Segoe UI', system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── 1. 헤더 ───────────────────────────────────────────────────────
+   HTML은 그대로 두고 색·간격만 정리했습니다. 부제(#6699ff)는 흰 배경에서
+   대비가 2.9:1로 WCAG AA(4.5:1) 미달이라 어둡게 내렸습니다. */
+.nm-auth header {
+  padding: var(--s-4) var(--s-6);
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  box-shadow: none;
+}
+.nm-auth header img { height: 44px; margin-right: var(--s-3); }
+.nm-auth header .title h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--c-primary);
+}
+.nm-auth header .title p {
+  font-size: 0.8rem;
+  color: var(--c-muted);      /* 기존 #6699ff → 대비 개선 */
+  margin-top: 1px;
+  letter-spacing: 0.02em;
+}
+
+/* ── 2. 카드 레이아웃 ──────────────────────────────────────────── */
+.nm-auth .main-container {
+  padding: var(--s-7) var(--s-5);
+  align-items: flex-start;
+}
+.nm-auth .card {
+  max-width: 880px;
+  background: var(--c-surface);          /* 기존 #ddd → 두 칸 사이 회색 이음매 제거 */
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  align-items: stretch;
+}
+
+/* 로그인 화면만 세로 중앙 정렬.
+   회원가입은 폼이 길어 중앙 정렬 시 위쪽이 잘릴 수 있어 상단 정렬 유지합니다. */
+.nm-page-login .main-container {
+  min-height: calc(100vh - var(--header-h));
+  align-items: center;
+  padding-top: var(--s-5);
+  padding-bottom: var(--s-5);
+}
+
+/* ── 3. 로그인 박스 ────────────────────────────────────────────── */
+.nm-auth .login-box {
+  flex: 1.12;                            /* 왼쪽을 주 영역으로 (기존 1:1) */
+  padding: var(--s-7) var(--s-6);
+  background: var(--c-surface);
+}
+.nm-auth .login-box h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--c-text);
+  margin-bottom: var(--s-2);
+}
+.nm-auth .login-box > p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--c-muted);
+  margin-bottom: var(--s-5);
+}
+.nm-auth .login-box label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--c-text);
+  margin-bottom: var(--s-4);
+}
+
+/* ── 4. 입력 필드 (로그인·회원가입 공통) ───────────────────────── */
+.nm-auth .login-box input,
+.nm-auth .reg-box input,
+.nm-auth .reg-box select {
+  width: 100%;
+  padding: 11px 12px;
+  margin-top: var(--s-2);
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+.nm-auth .login-box input::placeholder,
+.nm-auth .reg-box input::placeholder { color: #9aa2ac; }
+
+.nm-auth .login-box input:hover,
+.nm-auth .reg-box input:hover,
+.nm-auth .reg-box select:hover { border-color: #b6bcc4; }
+
+/* 포커스 표시가 UA 기본값뿐이라 키보드 사용자가 위치를 놓칩니다. */
+.nm-auth .login-box input:focus,
+.nm-auth .reg-box input:focus,
+.nm-auth .reg-box select:focus {
+  outline: none;
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px rgba(0, 51, 153, .14);
+}
+.nm-auth :focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+/* select 화살표 자리 확보 (전공명이 길어 텍스트와 겹치지 않게) */
+.nm-auth .reg-box select {
+  padding-right: 36px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5 6 6.5l5-5' fill='none' stroke='%235c6570' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+}
+.nm-auth .reg-box select:invalid { color: #9aa2ac; }   /* 미선택 상태를 흐리게 */
+
+/* ── 5. 버튼 ───────────────────────────────────────────────────── */
+.nm-auth .login-box button[type="submit"],
+.nm-auth .reg-box button[type="submit"] {
+  width: 100%;
+  min-height: 46px;                      /* 터치 타깃 확보 */
+  padding: 12px;
+  margin-top: var(--s-5);
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: var(--c-primary);          /* 기존 #4a62f6 → 헤더 남색과 통일 */
+  border: none;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background .12s ease;
+}
+.nm-auth .login-box button[type="submit"]:hover,
+.nm-auth .reg-box button[type="submit"]:hover { background: var(--c-primary-hover); }
+.nm-auth .login-box button[type="submit"]:active,
+.nm-auth .reg-box button[type="submit"]:active { transform: translateY(1px); }
+
+/* 회원가입 유도 — 신규 학생이 제일 먼저 찾는 경로라 각주가 아니라
+   보조 버튼으로 올렸습니다. #goRegister id는 유지. */
+.nm-auth .login-box .register {
+  margin-top: var(--s-5);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--c-border);
+  font-size: 0.85rem;
+  color: var(--c-muted);
+  text-align: center;
+}
+.nm-auth .login-box .register button {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: var(--s-3);
+  padding: 11px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--c-primary);
+  background: var(--c-surface);
+  border: 1px solid var(--c-primary);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background .12s ease;
+}
+.nm-auth .login-box .register button:hover { background: var(--c-primary-weak); }
+
+/* 승인 대기 안내 — main.js가 role==="pending"일 때 alert만 띄우고 끝나서
+   학생이 다음에 뭘 해야 할지 알 수 없습니다. 로그인 화면에 미리 적습니다. */
+.nm-auth .auth-note {
+  margin-top: var(--s-4);
+  padding: 10px var(--s-3);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--c-muted);
+  background: var(--c-primary-weak);
+  border-radius: var(--r-sm);
+}
+
+/* ── 6. 공지 박스 ──────────────────────────────────────────────── */
+.nm-auth .notice-box {
+  flex: 0.88;
+  display: flex;
+  flex-direction: column;
+  padding: var(--s-7) var(--s-6);
+  background: var(--c-surface-alt);
+  border-left: 1px solid var(--c-border);
+}
+.nm-auth .notice-box h2 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--c-muted);
+  text-transform: uppercase;
+  margin-bottom: var(--s-4);
+}
+.nm-auth .notice-box ul {
+  flex: 1;
+  list-style: none;                      /* 기존 disc → 날짜와 겹쳐 지저분함 */
+  margin: 0;
+}
+.nm-auth .notice-box li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding: 10px 0;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--c-muted);
+  line-height: 1.4;
+  border-bottom: 1px solid var(--c-border);
+  /* main.js가 li 안에 "[날짜]" 텍스트 + <a>제목</a> 순으로 넣습니다.
+     텍스트 노드가 첫 flex 항목, a가 둘째 항목이 됩니다. */
+}
+.nm-auth .notice-box li:last-child { border-bottom: none; }
+.nm-auth .notice-box a {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
+  color: var(--c-text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nm-auth .notice-box a:hover {
+  color: var(--c-primary);
+  text-decoration: underline;
+}
+.nm-auth .notice-box li.urgent { color: var(--c-danger); }
+.nm-auth .notice-box li.urgent a { color: var(--c-danger); font-weight: 600; }
+
+/* 빈 상태 — 지금 /api/notices가 []를 반환해 오른쪽 절반이 통째로
+   비어 있습니다. main.js를 고치지 않고 :empty로 처리합니다.
+   (JS는 innerHTML=''로 비우므로 :empty가 그대로 매칭됩니다) */
+.nm-auth #public-notice-list:empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;      /* ul의 flex:1을 해제 — 안 하면 빈 상자가 칸 전체로 늘어남 */
+  min-height: 140px;
+  border: 1px dashed var(--c-border);
+  border-radius: var(--r-md);
+}
+.nm-auth #public-notice-list:empty::after {
+  content: "등록된 공지가 없습니다.";
+  font-size: 0.85rem;
+  color: var(--c-muted);
+}
+
+/* ── 7. 회원가입 카드 ──────────────────────────────────────────── */
+.nm-auth .reg-card { max-width: 520px; }
+.nm-auth .reg-box {
+  padding: var(--s-7) var(--s-6);
+  background: var(--c-surface);
+}
+.nm-auth .reg-box h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--s-2);
+}
+.nm-auth .reg-box label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--c-text);
+  margin-bottom: var(--s-4);
+}
+.nm-auth .reg-box .label-optional {
+  font-weight: 400;
+  color: var(--c-muted);
+}
+.nm-auth .reg-box small.hint {
+  display: block;
+  margin-top: var(--s-1);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--c-muted);
+}
+/* register.js가 small.hint에 .error를 붙입니다 (기존 인라인 style에 있던 규칙) */
+.nm-auth .reg-box small.hint.error { color: var(--c-danger) !important; }
+
+/* 가입 전 승인 안내 — 이게 없어서 "가입했는데 로그인이 안 된다" 문의가 납니다.
+   register.js는 POST 성공 후에야 이 사실을 알려줍니다(L174). */
+.nm-auth .reg-lead {
+  display: flex;
+  gap: var(--s-3);
+  margin-bottom: var(--s-5);
+  padding: var(--s-3) var(--s-4);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--c-text);
+  background: var(--c-primary-weak);
+  border-left: 3px solid var(--c-primary);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+}
+.nm-auth .reg-lead strong { display: block; margin-bottom: 2px; color: var(--c-primary); }
+
+/* ── 8. 동의 영역 ──────────────────────────────────────────────────
+   [수정한 실제 버그] common.css:180 `.reg-box button`이 #openConsent까지
+   잡아서 "개인정보 수집 및 이용 동의"가 제출 버튼과 똑같이 생긴 파란
+   버튼으로 렌더링되고 있었습니다(.linklike는 어디에도 정의가 없음).
+   파란 버튼 두 개가 세로로 붙어 있어 오클릭이 납니다. 링크로 되돌립니다. */
+.nm-auth .reg-box .consent-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin: var(--s-5) 0 0;
+  padding: var(--s-3) var(--s-4);
+  font-size: 0.85rem;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+}
+.nm-auth .reg-box .consent-check {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: 0.85rem;
+  color: var(--c-muted);
+}
+.nm-auth .reg-box .consent-check input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: var(--c-primary);
+  cursor: pointer;
+}
+/* consent-modal.js:27-28 — 동의서를 열어 "동의합니다"를 눌러야 체크박스가
+   활성화됩니다. 비활성 상태임을 눈에 보이게 합니다. */
+.nm-auth .reg-box .consent-check input[type="checkbox"]:disabled { cursor: not-allowed; opacity: .55; }
+.nm-auth .reg-box .consent-text { font-size: 0.85rem; color: var(--c-text); }
+.nm-auth .reg-box .consent-row .linklike {
+  width: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--c-primary);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.nm-auth .reg-box .consent-row .linklike:hover { color: var(--c-primary-hover); }
+.nm-auth .consent-note {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--c-muted);
+}
+
+/* ── 9. 결과 메시지 ────────────────────────────────────────────────
+   <pre id="result">가 비어 있을 때도 흰 상자로 계속 보였습니다.
+   또 pre 기본 white-space:pre라 긴 한글 문장이 줄바꿈 없이 가로로 넘칩니다.
+   (register.js가 color를 인라인으로 지정하므로 색은 건드리지 않습니다) */
+.nm-auth .reg-box pre#result:empty { display: none; }
+.nm-auth .reg-box pre#result {
+  margin-top: var(--s-5);
+  padding: var(--s-4);
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-left: 3px solid currentColor;
+  border-radius: var(--r-sm);
+  max-height: none;
+}
+
+/* ── 10. 동의 모달 보정 (consent-modal.css 다음에 로드) ─────────── */
+.nm-auth .modal-content { border-radius: var(--r-lg); }
+.nm-auth .modal-header h3 { font-size: 1.05rem; color: var(--c-text); }
+.nm-auth .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+}
+.nm-auth .modal-footer { background: var(--c-surface-alt); border-top: 1px solid var(--c-border); }
+.nm-auth .modal-body { font-size: 0.9rem; color: var(--c-text); }
+.nm-auth .agreement strong { color: var(--c-primary); }
+.nm-auth .modal-footer button { min-height: 40px; padding: 9px 18px; font-family: inherit; font-weight: 600; }
+.nm-auth .modal-footer #agreeBtn { background: var(--c-primary); }
+.nm-auth .modal-footer #agreeBtn:hover { background: var(--c-primary-hover); }
+.nm-auth .modal-footer .secondary { background: var(--c-surface); border: 1px solid var(--c-border); color: var(--c-text); }
+
+/* ── 11. 공지 상세 (notice.html) ───────────────────────────────────
+   원래 common.css를 안 쓰고 인라인 Arial 스타일이라, 로그인 화면에서
+   공지를 누르면 완전히 다른 사이트로 넘어간 것처럼 보였습니다. */
+.nm-auth .notice-page { max-width: 760px; margin: 0 auto; width: 100%; }
+.nm-auth a.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--s-4);
+  font-size: 0.875rem;
+  color: var(--c-muted);
+  text-decoration: none;
+}
+.nm-auth a.back:hover { color: var(--c-primary); }
+.nm-auth .notice-container {
+  padding: var(--s-6);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+}
+/* 아래 요소들은 notice.html 인라인 스크립트가 innerHTML로 넣습니다 */
+.nm-auth .notice-container h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--c-text);
+  margin-bottom: var(--s-2);
+}
+.nm-auth .notice-container small { font-size: 0.8rem; color: var(--c-muted); }
+.nm-auth .notice-container hr {
+  margin: var(--s-4) 0;
+  border: none;
+  border-top: 1px solid var(--c-border);
+}
+.nm-auth .notice-container p {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--c-text);
+  word-break: keep-all;
+}
+
+/* ── 12. 반응형 ────────────────────────────────────────────────────
+   common.css에 미디어 쿼리가 한 줄도 없어 휴대폰에서 두 칸이 짓눌립니다.
+   학생들이 실제로 제일 많이 여는 화면이라 이게 큰 편입니다. */
+@media (max-width: 860px) {
+  .nm-auth .card { flex-direction: column; }
+  .nm-auth .login-box,
+  .nm-auth .notice-box { padding: var(--s-6) var(--s-5); }
+  .nm-auth .notice-box {
+    border-left: none;
+    border-top: 1px solid var(--c-border);
+  }
+  .nm-page-login .main-container { min-height: 0; align-items: flex-start; }
+  .nm-auth #public-notice-list:empty { min-height: 96px; }
+}
+
+@media (max-width: 560px) {
+  .nm-auth header { padding: var(--s-3) var(--s-4); }
+  .nm-auth header img { height: 36px; }
+  .nm-auth header .title h1 { font-size: 1.02rem; }
+  .nm-auth header .title p { font-size: 0.72rem; }
+  .nm-auth .main-container { padding: var(--s-5) var(--s-3); }
+  .nm-auth .card { border-radius: var(--r-md); }
+  .nm-auth .login-box,
+  .nm-auth .notice-box,
+  .nm-auth .reg-box { padding: var(--s-5) var(--s-4); }
+  .nm-auth .login-box h2,
+  .nm-auth .reg-box h2 { font-size: 1.3rem; }
+  /* iOS Safari는 16px 미만 입력 필드에서 자동 확대됩니다 */
+  .nm-auth .login-box input,
+  .nm-auth .reg-box input,
+  .nm-auth .reg-box select { font-size: 16px; }
+  .nm-auth .notice-container { padding: var(--s-5) var(--s-4); }
+}
+
+/* ── 13. 접근성 ───────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .nm-auth *, .nm-auth *::before, .nm-auth *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}

@@ -6,34 +6,14 @@
   <title>회원가입 | 뉴뮤직 예약 시스템</title>
   <link rel="stylesheet" href="css/common.css?v=20250905">
   <link rel="stylesheet" href="css/consent-modal.css?v=20250905"><!-- 모달 전용 -->
-  <style>
-    /* 동의 영역 스타일 보정 */
-    .consent-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 12px 0 20px;
-      flex-wrap: wrap;
-      font-size: 14px;
-    }
-    .consent-row input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-    }
-    .consent-row label {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .consent-row .linklike {
-      margin: 0 4px;
-    }
-    small.hint.error {
-      color: #b00020 !important;
-    }
-  </style>
+  <!-- [추가] 인증 화면 전용 오버레이. 위 두 개보다 뒤에 와야 합니다. -->
+  <link rel="stylesheet" href="css/auth.css">
+  <!-- [삭제] 기존 인라인 <style> 블록을 auth.css로 옮겼습니다.
+       .consent-row가 common.css:205와 이 인라인에 서로 다르게 두 번
+       정의돼 있어(column vs row) 동의 영역이 세 줄로 깨져 보였습니다.
+       small.hint.error 규칙(register.js가 붙이는 클래스)도 함께 옮겼습니다. -->
 </head>
-<body>
+<body class="nm-auth nm-page-register">
   <!-- 헤더 -->
   <header>
     <img src="images/dku-logo.png" alt="DKU Logo">
@@ -49,35 +29,63 @@
       <div class="reg-box">
         <h2>회원가입</h2>
 
+        <!-- [추가] 승인 대기 안내를 폼 위로.
+             register.js:174는 POST가 성공한 뒤에야 이 사실을 알려줍니다.
+             가입 전에 모르면 "가입했는데 로그인이 안 된다" 문의가 납니다. -->
+        <p class="reg-lead">
+          <span>
+            <strong>가입 후 관리자 승인이 필요합니다</strong>
+            신청서를 제출하면 관리자 승인 후에 로그인할 수 있습니다.
+            승인 전에는 로그인이 되지 않습니다.
+          </span>
+        </p>
+
+        <!-- ⚠️ 아래 폼에서 지킨 규칙 (register.js 의존성)
+             · input의 name 값은 하나도 바꾸지 않았습니다
+             · <input> 바로 다음 형제는 반드시 <small class="hint">입니다.
+               register.js:17의 showError()가 input.nextElementSibling을
+               힌트로 보기 때문에, 사이에 다른 요소를 넣으면 오류 메시지가
+               중복 생성됩니다. 라벨 텍스트만 한글로 바꿨습니다.
+             · name 속성이 있는 입력을 새로 추가하지 않았습니다.
+               register.js:148이 FormData 전체를 그대로 JSON 본문으로
+               보내므로, 새 name이 생기면 백엔드 스키마에서 튕깁니다. -->
         <form id="regForm" novalidate>
           <label>
-            Login ID
+            <!-- [변경] Login ID → 아이디. 한국어 화면에 영문 라벨만 6개
+                 있었습니다. name은 그대로 login_id. -->
+            아이디
             <input
               name="login_id"
               required
               minlength="2"
               maxlength="50"
-              pattern="^[A-Za-z~!@#$%^&*()_+\-={}[\]|\\:;&quot;',.<>/?`]+$"
+              pattern="^[A-Za-z0-9~!@#$%^&*()_+\-={}[\]|\\:;&quot;',.<>/?`]+$"
               autocomplete="username"
+              placeholder="예) newmusic2025"
             />
-            <small class="hint">영문/숫자/특수문자만 사용 가능, 최소 2자</small>
+            <!-- ⚠️ 위 pattern에 0-9가 빠져 있습니다(register.js:8의 정규식과
+                 hint 문구는 숫자를 허용). form에 novalidate가 있어 지금은
+                 제출을 막지 않지만, novalidate를 떼는 순간 숫자가 든 아이디가
+                 거부됩니다. 기능 변경이라 손대지 않고 보고만 합니다. -->
+            <small class="hint">로그인할 때 쓸 아이디입니다. 영문·숫자·특수문자, 2자 이상</small>
           </label>
 
           <label>
-            Password
+            비밀번호
             <input
               type="password"
               name="password"
               required
               minlength="8"
-              pattern="^[A-Za-z~!@#$%^&*()_+\-={}[\]|\\:;&quot;',.<>/?`]+$"
+              pattern="^[A-Za-z0-9~!@#$%^&*()_+\-={}[\]|\\:;&quot;',.<>/?`]+$"
               autocomplete="new-password"
+              placeholder="8자 이상"
             />
-            <small class="hint">영문/숫자/특수문자만 사용 가능, 8자 이상</small>
+            <small class="hint">영문·숫자·특수문자, 8자 이상</small>
           </label>
 
           <label>
-            Username
+            이름
             <input
               name="username"
               required
@@ -86,11 +94,11 @@
               pattern="^[A-Za-z\uAC00-\uD7A3\s]+$"
               placeholder="예) 이종하"
             />
-            <small class="hint">한글 또는 영문만</small>
+            <small class="hint">한글 또는 영문</small>
           </label>
 
           <label>
-            Student ID
+            학번
             <input
               name="student_id"
               required
@@ -103,7 +111,7 @@
           </label>
 
           <label>
-            Major
+            전공
             <select name="major" required>
               <option value="" disabled selected>전공을 선택하세요</option>
               <option value="뮤직테크놀러지&컴퓨터음악작곡">뮤직테크놀러지&컴퓨터음악작곡</option>
@@ -113,7 +121,9 @@
           </label>
 
           <label>
-            Phone
+            <!-- [변경] phone은 required가 아니고 register.js:130도 값이
+                 있을 때만 검사합니다. 필수처럼 보이던 걸 명시했습니다. -->
+            전화번호 <span class="label-optional">(선택)</span>
             <input
               type="tel"
               name="phone"
@@ -121,37 +131,44 @@
               placeholder="010-1234-5678"
               autocomplete="tel"
             />
+            <small class="hint">하이픈(-)을 포함해 입력해 주세요</small>
           </label>
 
-          <!-- 동의 영역 -->
+          <!-- 동의 영역
+               [수정] common.css:180의 `.reg-box button`이 아래 #openConsent까지
+               잡아서, "개인정보 수집 및 이용 동의"가 제출 버튼과 똑같이 생긴
+               파란 버튼으로 보이고 있었습니다(.linklike는 정의된 적이 없음).
+               파란 버튼 둘이 세로로 붙어 오클릭이 납니다.
+               HTML은 그대로 두고 auth.css에서 링크 모양으로 되돌렸습니다. -->
           <div class="consent-row">
-            <!-- 첫 줄: 체크박스 + (필수) -->
             <label class="consent-check">
               <input type="checkbox" id="consentRequired" disabled />
               (필수)
             </label>
 
-            <!-- 둘째 줄: 버튼 + 문구 -->
             <div class="consent-text">
               <button type="button" class="linklike" id="openConsent">개인정보 수집 및 이용 동의</button>
               에 동의합니다.
             </div>
+
+            <!-- [추가] 체크박스가 disabled로 시작하는 이유 설명.
+                 consent-modal.js:27-28이 "동의합니다"를 눌러야 활성화합니다.
+                 모르면 체크가 안 돼서 가입을 못 합니다.
+                 ⚠️ 입력 요소와 인접하지 않게 배치했습니다(위 규칙 참고). -->
+            <p class="consent-note">동의서를 열어 [동의합니다]를 누르면 위 항목이 체크됩니다.</p>
           </div>
-
-
-
-
-
 
           <button type="submit" id="submitBtn">가입하기</button>
         </form>
 
+        <!-- register.js가 결과 메시지를 넣는 자리.
+             비었을 때 빈 흰 상자로 남던 것을 auth.css의 :empty로 숨겼습니다. -->
         <pre id="result" aria-live="polite"></pre>
       </div>
     </div>
   </div>
 
-  <!-- 동의서 모달 -->
+  <!-- 동의서 모달 — 구조·id 전부 그대로 (consent-modal.js 의존) -->
   <div class="modal" id="consentModal" aria-hidden="true" role="dialog" aria-labelledby="consentTitle">
     <div class="modal-backdrop" data-close></div>
     <div class="modal-content" role="document">

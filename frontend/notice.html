@@ -4,21 +4,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>공지사항 상세</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-    h1, h2, h3, small { color: #333; }
-    a.back { display: inline-block; margin-bottom: 20px; color: #007BFF; text-decoration: none; }
-    .notice-container { border: 1px solid #ccc; padding: 15px; border-radius: 5px; }
-  </style>
+  <!-- [변경] 제목에 시스템명을 붙여 다른 페이지와 형식을 맞췄습니다 -->
+  <title>공지사항 | 뉴뮤직 예약 시스템</title>
+  <!-- [추가] 이 페이지만 common.css를 안 쓰고 인라인 Arial 스타일이라,
+       로그인 화면에서 공지를 누르면 다른 사이트로 넘어간 것처럼 보였습니다.
+       헤더도 없어서 어디로 돌아가야 할지 알기 어려웠습니다. -->
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <!-- [삭제] 기존 인라인 <style> 블록 → auth.css의 "11. 공지 상세" 절로 이동 -->
 </head>
-<body>
-  <a class="back" href="index.html">← 돌아가기</a>
-  <div id="notice" class="notice-container">
-    <h2>로딩 중...</h2>
-    <p>잠시만 기다려주세요.</p>
+<body class="nm-auth nm-page-notice">
+
+  <!-- [추가] 다른 화면과 같은 헤더. 마크업은 index.html과 동일합니다. -->
+  <header>
+    <img src="images/dku-logo.png" alt="DKU Logo">
+    <div class="title">
+      <h1>단국대학교 뉴뮤직학부</h1>
+      <p>Dankook University New Music</p>
+    </div>
+  </header>
+
+  <!-- [추가] 본문 폭을 잡는 래퍼 두 겹. 안쪽 요소의 id/class는 그대로입니다. -->
+  <div class="main-container">
+    <div class="notice-page">
+      <a class="back" href="index.html">← 로그인 화면으로 돌아가기</a>
+      <!-- id="notice" 유지 필수: 아래 인라인 스크립트가 이 id에 씁니다.
+           스크립트가 넣는 h2 / small / hr / p 는 auth.css에서 스타일합니다. -->
+      <div id="notice" class="notice-container">
+        <h2>불러오는 중입니다</h2>
+        <p>잠시만 기다려 주세요.</p>
+      </div>
+    </div>
   </div>
 
+  <!-- 아래 스크립트는 원본 그대로입니다 (한 글자도 바꾸지 않았습니다).
+       ⚠️ 참고: n.title / n.content를 innerHTML로 넣고 있어, 공지 본문에
+       HTML 태그가 들어가면 그대로 실행됩니다. 관리자만 작성하는 값이라
+       당장 급하진 않지만 textContent 사용을 권합니다. 기능 변경이라
+       여기서는 손대지 않았습니다. -->
   <script>
     async function loadNotice() {
       const params = new URLSearchParams(window.location.search);
