@@ -10,7 +10,7 @@
 
 .sidebar {
   width: 220px;
-  background: #4a62f6;
+  background: var(--c-brand);
   color: #fff;
   transform: translateX(0);
   transition: transform 0.3s ease;
@@ -191,7 +191,7 @@ th {
   padding: 6px 14px;
   border: none;
   border-radius: 4px;
-  background: #4a62f6;
+  background: var(--c-brand);
   color: #fff;
   cursor: pointer;
   font-size: 0.95rem;
