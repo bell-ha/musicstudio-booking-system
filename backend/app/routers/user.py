@@ -9,8 +9,9 @@ from fastapi import Query
 
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserRead
+from app.schemas.user import UserCreate, UserRead, TempPasswordRead
 from app.routers.auth import get_current_user  # 로그인된 사용자
+from app.security import get_password_hash, generate_temp_password
 
 router = APIRouter(
     prefix="/users",
@@ -78,7 +79,8 @@ def register_user(
 
     db_user = User(
         login_id=user_in.login_id,
-        password=user_in.password,
+        # 평문 저장 금지. 신규 가입은 처음부터 bcrypt 해시로 들어갑니다.
+        password=get_password_hash(user_in.password),
         username=user_in.username,
         student_id=user_in.student_id,
         major=user_in.major,
@@ -163,7 +165,24 @@ def approve_user(
     db.refresh(user)
     return user
 
-# ─── 5) 사용자 삭제 (관리자 전용) ─────────────────────────────────────────
+# ─── 5) 내 계정 삭제 (본인용) ─────────────────────────────────────────────
+# ⚠️ 이 라우트는 반드시 "/{user_id}" 보다 위에 있어야 합니다.
+#    아래에 있으면 DELETE /users/me 가 {user_id}="me" 로 먼저 매칭돼
+#    422가 나고 본인 탈퇴가 아예 동작하지 않습니다.
+@router.delete(
+    "/me",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="내 계정 삭제",
+)
+def delete_own_account(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    db.delete(current_user)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+# ─── 6) 사용자 삭제 (관리자 전용) ─────────────────────────────────────────
 @router.delete(
     "/{user_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -181,19 +200,40 @@ def delete_user_by_admin(
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-# ─── 6) 내 계정 삭제 (본인용) ─────────────────────────────────────────────
-@router.delete(
-    "/me",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="내 계정 삭제",
+@router.patch(
+    "/{user_id}/reset-password",
+    response_model=TempPasswordRead,
+    summary="비밀번호 초기화 (관리자)",
 )
-def delete_own_account(
-    current_user: User = Depends(get_current_user),
+def reset_user_password(
+    user_id: int,
     db: Session = Depends(get_db),
+    _: User = Depends(get_current_admin_user),
 ):
-    db.delete(current_user)
+    """
+    임시 비밀번호를 발급한다.
+
+    비밀번호가 해시로 저장되므로 관리자도 원래 값을 알 수 없다.
+    비밀번호를 잊은 학생은 이 경로로만 도울 수 있다.
+    평문은 이 응답에서 한 번만 나가고 DB에는 해시만 남으므로,
+    관리자가 화면에서 바로 학생에게 전달해야 한다.
+    """
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    temp = generate_temp_password()
+    user.password = get_password_hash(temp)
     db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    db.refresh(user)
+
+    return TempPasswordRead(
+        user_id=user.user_id,
+        login_id=user.login_id,
+        username=user.username,
+        temp_password=temp,
+    )
+
 
 # ─── 7) 관리자 HTML: 사용자 목록 렌더링 ───────────────────────────────────
 @router.get(

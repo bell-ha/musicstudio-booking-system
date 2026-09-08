@@ -38,7 +38,7 @@ def seed_rooms():
         for raw in raw_names:
             num = format_room_name(raw)
             room = Room(
-                room_name = num,
+                room_name = str(num),
                 state     = True,      # 초기값: 빈방
                 equipment = None,
             )
