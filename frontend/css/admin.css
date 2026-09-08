@@ -758,8 +758,8 @@ tbody tr:hover td { background: var(--c-brand-softer); }
 
 /* --- 오른쪽 안내 패널 ----------------------------------------------------- */
 .editor-guide {
-  flex: 1 1 260px;
-  min-width: 240px;
+  flex: 1 1 240px;
+  min-width: 220px;
   max-width: 340px;
   background: var(--c-surface);
   border: 1px solid var(--c-border);
@@ -1082,6 +1082,15 @@ tbody tr:hover td { background: var(--c-brand-softer); }
     overflow: auto;
     -webkit-overflow-scrolling: touch;
   }
+
+  /* 툴바가 두 줄로 접히면 그룹 구분선이 줄 끝에 홀로 남아 어색하다.
+     좁은 화면에서는 선을 빼고 그룹 라벨(모드/동작)만으로 구분한다. */
+  .tool-group { border-right: none; padding-right: 0; }
+  .toolbar { gap: var(--sp-2) var(--sp-3); }
+  .tool-save { margin-left: auto; }
+
+  /* 안내 패널은 격자 아래로 */
+  .editor-guide { max-width: none; flex-basis: 100%; }
 
   /* 예약 정책: 라벨을 입력 위로 올리고 버튼은 폭을 채운다 */
   .policy-group { padding: var(--sp-4); }
