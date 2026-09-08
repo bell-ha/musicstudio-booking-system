@@ -5,7 +5,7 @@
 **단국대학교 뉴뮤직 학부 연습실 예약·관리 웹 서비스 — 학부 학생들이 실제로 사용 중**
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)](https://neon.tech/)
 [![JWT](https://img.shields.io/badge/Auth-JWT_HS256-000000?logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 [![Docker](https://img.shields.io/badge/Docker-Deployed-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![Status](https://img.shields.io/badge/운영-실사용_중-success)]()
@@ -166,6 +166,22 @@ cells
 - JWT (HS256), payload에 `user_id` · `role` 포함
 - Refresh Token 1일 — 학생들이 매번 로그인하지 않도록
 - 매일 오전 6시 전체 자동 로그아웃 — 공용 PC에서 로그인이 남는 것을 방지
+- 서명키는 환경변수로만. 미설정이면 서버가 뜨지 않는다
+
+### 비밀번호 저장 — 평문에서 bcrypt로
+
+운영 중에 발견한 문제다. 비밀번호가 해싱 없이 저장되고 로그인이 평문을 직접 비교하고 있었다. 응답 스키마에도 `password`가 들어 있어 API로 나갔고, 관리자 화면에는 그것을 그대로 보여주는 버튼까지 있었다. 저장·전송·표시 세 단계가 모두 평문이었다.
+
+이미 쓰는 사람이 있는 서비스라 한 번에 갈아엎을 수 없어 **점진 전환**으로 갔다.
+
+```
+로그인 시 저장값이 bcrypt 해시가 아니면
+  → 평문으로 비교해 인증하고, 성공 즉시 bcrypt로 다시 저장
+```
+
+학생은 아무것도 하지 않아도 다음 로그인 한 번으로 전환된다.
+
+해시로 바꾸면 관리자도 남의 비밀번호를 알 수 없다. 그래서 비밀번호를 잊은 학생을 도울 경로가 필요했다 — `PATCH /users/{id}/reset-password`가 임시 비밀번호를 발급한다. 평문은 그 응답에서 **한 번만** 나가고 DB에는 해시만 남는다. 관리자 화면의 "보기" 버튼은 "초기화"로 바뀌었다.
 
 ---
 
@@ -195,7 +211,7 @@ cells
 
 | | |
 |---|---|
-| Backend | **FastAPI** · SQLAlchemy · MySQL |
+| Backend | **FastAPI** · SQLAlchemy · PostgreSQL (Neon) |
 | Auth | JWT (HS256) · Refresh Token |
 | Frontend | HTML / CSS / Vanilla JS (프레임워크 없음) |
 | 배포 | Docker · Cloudtype |
@@ -241,22 +257,55 @@ docker build -t musicstudio . && docker run -p 8000:8000 --env-file backend/.env
 
 ## 8. 알려진 한계와 다음 단계
 
-**동시성 — 현재 방어되지 않음**
+**동시성 — 해결함**
 
-예약 생성은 `SELECT`(충돌 검사) → `INSERT`(생성) 순서로 동작한다. 두 요청이 **정확히 같은 순간**에 같은 시간대를 요청하면, 둘 다 충돌 검사를 통과한 뒤 둘 다 삽입될 수 있다.
+예약 생성은 `SELECT`(충돌 검사) → `INSERT`(생성) 순서라, 두 요청이 같은 순간에 같은 시간대를 요청하면 둘 다 검사를 통과한 뒤 둘 다 삽입될 수 있었다. 주 단위 오픈(금요일 09:00)에 요청이 몰리는 구조라 실제로 터질 수 있는 문제였다.
 
-주 단위 오픈(매주 금요일 09:00)에 요청이 몰리는 구조라 실제로 발생 가능한 시나리오다. 해결 방향은 두 가지다.
+처음엔 `(room_id, start_date, start_time)` **유니크 제약**을 생각했는데, 검증해 보니 이 스키마에서는 부족했다. 예약 길이가 1~2시간 가변이라 `09:00-11:00`과 `10:00-12:00`은 `start_time`이 달라 제약에 걸리지 않으면서 시간은 겹친다.
 
-- `(room_id, start_date, start_time)`에 **DB 유니크 제약**을 걸어 두 번째 삽입을 실패시킨다
-- 충돌 검사 시 `SELECT ... FOR UPDATE`로 행을 잠근다
+`SELECT ... FOR UPDATE`도 단독으로는 안 된다. **존재하는 행만 잠그기** 때문에, 겹치는 기존 예약이 아직 없는 상황 — 오픈 직후, 레이스가 가장 많이 터지는 바로 그 순간 — 에는 잠글 대상이 없어 두 트랜잭션 다 통과한다.
 
-전자가 단순하고 확실하다. 현재는 예약 단위가 1시간 고정이므로 유니크 제약으로 대부분 커버된다.
+그래서 **`pg_advisory_xact_lock`** 으로 갔다.
+
+```python
+lock_room_date(db, room_id, start_date)   # 키: (-room_id, date.toordinal())
+lock_user_date(db, user_id, start_date)   # 키: ( user_id, date.toordinal())
+```
+
+- 방은 음수, 사용자는 양수로 키 공간을 나눠 충돌을 없앴다. `toordinal()`은 전단사라 날짜 간 해시 충돌이 원리적으로 없다
+- 획득 순서를 방 → 사용자로 고정해 데드락 사이클을 막았다
+- 세션 레벨이 아니라 **트랜잭션 레벨**이어야 한다. Neon의 커넥션 풀러가 PgBouncer transaction 모드라, 세션 락은 다른 커넥션에서 풀리거나 락을 쥔 채 반환될 수 있다
+
+**검증**: 8명이 같은 슬롯을 동시에 요청 → 1건만 201, 나머지 7건 400. DB에도 1행.
+
+**예약 정책을 코드에서 DB로**
+
+최대 예약 시간, 취소 마감, 운영 시간, 슬롯 단위, 주간 오픈 시점이 코드에 박혀 있어 규칙 하나 바꾸려면 재배포해야 했다. 평면도 좌표를 `cells` 테이블에 둔 것과 같은 이유로 `booking_policies` 테이블로 옮기고 관리자 화면을 붙였다.
+
+같은 날 재예약 규칙도 고를 수 있게 했다.
+
+| 값 | 동작 |
+|---|---|
+| `NO_OVERLAP` (기본) | 겹치지만 않으면 순서 무관 |
+| `SEQUENTIAL` | 이전 예약 종료 이후 시간대만 |
+| `ONE_PER_DAY` | 하루 1건 |
+
+원래 코드는 `SEQUENTIAL`을 의도했는데 비교 대상이 새 예약 시각이 아니라 **현재 시각**이었다. 그래서 같은 사용자의 그날 두 번째 예약이 시간대와 무관하게 전부 막혔고, ④(한 사람이 같은 시간에 여러 방)는 ②에 가려 실행조차 되지 않았다. 비교 대상을 바로잡고 규칙을 선택 가능하게 했다.
+
+**테스트**
+
+`pytest` 26건. 겹침 판정 9케이스, `same_day_mode` 3종, 취소 규칙 6종, 정책 반영, 관리자 권한.
+정책 테스트는 값을 바꾼 뒤 동작이 실제로 갈리는지를 본다 — 나중에 누가 하드코딩 상수로 되돌리면 여기서 잡힌다.
+
+```bash
+cd backend && ./.venv_pg/bin/python -m pytest -v
+```
 
 **그 외 예정**
 - 공지사항 첨부파일
 - DB 백업 체계
 - 관리자용 예약 기록 일괄 삭제
-- 토큰 만료 정책 재조정
+- 과거 시각 예약을 막는 검증 (현재는 지난 날짜도 등록된다)
 
 ---
 
