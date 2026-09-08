@@ -10,7 +10,7 @@ DB로 옮겼다. 규칙이 바뀔 때마다 재배포하지 않아도 되게 하
 """
 from datetime import datetime, time
 
-from sqlalchemy import Column, Integer, String, Time, DateTime
+from sqlalchemy import Column, Integer, String, Time, DateTime, CheckConstraint
 from app.database import Base
 
 # same_day_mode 허용값
@@ -50,6 +50,23 @@ class BookingPolicy(Base):
     week_open_time    = Column(Time,    nullable=False, default=time(9, 0))
 
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        # 정책은 단 하나여야 한다. id=1만 허용해 "어느 행이 진짜인가"를
+        # 애플리케이션이 아니라 DB가 보장하게 한다.
+        CheckConstraint("id = 1", name="ck_policy_singleton"),
+        CheckConstraint("close_time > open_time", name="ck_policy_open_before_close"),
+        CheckConstraint("max_minutes > 0", name="ck_policy_max_minutes"),
+        CheckConstraint("slot_minutes > 0", name="ck_policy_slot_minutes"),
+        CheckConstraint("cancel_deadline_min >= 0", name="ck_policy_cancel_deadline"),
+        CheckConstraint(
+            "week_open_weekday BETWEEN 0 AND 6", name="ck_policy_weekday_range"
+        ),
+        CheckConstraint(
+            "same_day_mode IN ('NO_OVERLAP', 'SEQUENTIAL', 'ONE_PER_DAY')",
+            name="ck_policy_same_day_mode",
+        ),
+    )
 
 
 def get_policy(db) -> BookingPolicy:
