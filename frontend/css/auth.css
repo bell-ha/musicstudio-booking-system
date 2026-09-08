@@ -805,3 +805,67 @@ body.nm-auth.nm-page-login .notice-box .brand-meta {
 body.nm-auth.nm-page-login .notice-box h2 {
   margin: var(--sp-5) 0 var(--sp-2);
 }
+
+/* ── 브랜드 패널 공지 목록 ────────────────────────────────
+   main.js가 li 안에 날짜와 제목을 넣고 하단 구분선을 그린다.
+   패널 배경 위에서는 그 선이 어긋나 보여 목록 자체로 다시 짠다. */
+body.nm-auth.nm-page-login .notice-box #public-notice-list {
+  gap: 0;
+  margin-top: var(--sp-2);
+  max-height: 15.5rem;
+  overflow-y: auto;
+}
+body.nm-auth.nm-page-login .notice-box #public-notice-list li {
+  display: block;
+  padding: var(--sp-2) 0;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, .12);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: rgba(255, 255, 255, .9);
+  word-break: keep-all;
+}
+body.nm-auth.nm-page-login .notice-box #public-notice-list li:last-child {
+  border-bottom: none;
+}
+/* 날짜는 보조 정보라 한 단계 내린다 */
+body.nm-auth.nm-page-login .notice-box #public-notice-list li > *:first-child {
+  display: block;
+  font-size: var(--fs-xs);
+  color: rgba(255, 255, 255, .45);
+  margin-bottom: 2px;
+}
+body.nm-auth.nm-page-login .notice-box #public-notice-list::-webkit-scrollbar {
+  width: 3px;
+}
+body.nm-auth.nm-page-login .notice-box #public-notice-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .22);
+  border-radius: 2px;
+}
+body.nm-auth.nm-page-login .notice-box .brand-meta { margin-top: var(--sp-4); }
+
+/* main.js는 li 안에 [날짜] 텍스트 노드 + <a>제목</a> 순으로 넣는다.
+   앞의 :first-child 규칙은 텍스트 노드가 아니라 <a>를 잡아서
+   날짜가 크고 제목이 작아지는 반대 결과가 됐다. 되돌린다. */
+body.nm-auth.nm-page-login .notice-box #public-notice-list li > *:first-child {
+  display: inline;
+  font-size: inherit;
+  color: inherit;
+  margin-bottom: 0;
+}
+body.nm-auth.nm-page-login .notice-box #public-notice-list li {
+  /* 날짜 텍스트 노드를 작게, 제목 링크를 본문 크기로 */
+  font-size: var(--fs-xs);
+  color: rgba(255, 255, 255, .45);
+}
+body.nm-auth.nm-page-login .notice-box #public-notice-list li a {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: rgba(255, 255, 255, .92);
+  text-decoration: none;
+}
+body.nm-auth.nm-page-login .notice-box #public-notice-list li a:hover {
+  text-decoration: underline;
+}
