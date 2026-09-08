@@ -615,6 +615,202 @@ tbody tr:hover td { background: var(--c-brand-softer); }
 
 
 /* ==========================================================================
+   예약 정책 화면 (admin_policy.html)
+   admin_policy.js 계약:
+     .form-msg 는 className 을 `form-msg ${kind}` 로 통째로 갈아끼우고
+     kind 는 'error' | 'success' 두 가지다. hidden 속성으로 표시를 토글한다.
+     ([hidden]{display:none} 은 common.css 에 있다)
+   ========================================================================== */
+.section-desc {
+  margin: calc(var(--sp-5) * -1 + 4px) 0 var(--sp-5);
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.policy-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  max-width: 640px;
+}
+/* .content form 이 flex-wrap: wrap + align-items: flex-end 라 여기서 되돌린다 */
+.content .policy-form { flex-wrap: nowrap; align-items: stretch; }
+
+.policy-group {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  padding: var(--sp-5);
+  margin: 0;
+}
+.policy-group legend {
+  padding: 0 var(--sp-2);
+  margin-left: calc(var(--sp-2) * -1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--c-brand);
+  letter-spacing: 0.02em;
+}
+.policy-group .field-help {
+  margin: var(--sp-1) 0 var(--sp-4);
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  line-height: var(--lh-normal);
+}
+
+/* --- 라디오 (같은 날 재예약) ---------------------------------------------
+   값 이름(NO_OVERLAP 등)만으로는 뜻을 알 수 없어서 설명이 붙는다.
+   설명까지 통째로 누를 수 있게 label 전체를 카드로 만든다.
+   -------------------------------------------------------------------------- */
+/* .content label 이 display:inline-block (0,1,1) 이라 그냥 .radio-row (0,1,0)
+   로는 카드가 내용만큼만 줄어든다. 한 단계 올려서 폭을 채운다. */
+.policy-group .radio-row {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.policy-group .radio-row:last-of-type { margin-bottom: 0; }
+.policy-group .radio-row:hover { background: var(--c-surface-2); border-color: var(--c-text-faint); }
+
+.radio-row input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--c-brand);
+  flex-shrink: 0;
+}
+.radio-row > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.radio-row strong {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+}
+.radio-row small {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  line-height: var(--lh-normal);
+}
+
+/* 선택된 항목. 색 하나에 기대지 않도록 테두리·배경·안쪽 선을 함께 준다.
+   :has() 를 못 쓰는 브라우저에서도 라디오 자체는 보이므로 기능은 그대로다. */
+.radio-row:has(input:checked) {
+  border-color: var(--c-brand);
+  background: var(--c-brand-softer);
+  box-shadow: inset 0 0 0 1px var(--c-brand);
+}
+.radio-row:has(input:focus-visible) { box-shadow: var(--shadow-focus); }
+
+/* --- 라벨 + 입력 한 줄 ---------------------------------------------------- */
+.field-row {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--c-border);
+}
+.field-row:last-of-type { border-bottom: none; padding-bottom: 0; }
+.field-row:first-of-type { padding-top: 0; }
+
+.field-row > label {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+}
+
+.field-input {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.field-input input[type="number"],
+.field-input input[type="time"],
+.field-input select {
+  width: auto;
+  min-width: 120px;
+  margin-top: 0;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  padding: 10px var(--sp-3);
+  font-family: inherit;
+  font-size: var(--fs-md);
+  color: var(--c-text);
+  background: var(--c-surface);
+}
+.field-input input[type="number"] { width: 110px; min-width: 0; }
+.field-input input:focus,
+.field-input select:focus {
+  outline: none;
+  border-color: var(--c-brand);
+  box-shadow: var(--shadow-focus);
+}
+.field-input .unit {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  white-space: nowrap;
+}
+
+/* --- 저장 결과 안내 ------------------------------------------------------- */
+.form-msg {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+  border: 1px solid transparent;
+}
+.form-msg.success {
+  background: var(--c-success-soft);
+  border-color: var(--c-success);
+  color: var(--c-success-strong);
+}
+.form-msg.error {
+  background: var(--c-danger-soft);
+  border-color: var(--c-danger);
+  color: var(--c-danger-strong);
+}
+
+/* --- 저장 / 되돌리기 ------------------------------------------------------
+   저장이 주 동작이라 오른쪽 끝에 두고, 되돌리기는 보조로 왼쪽에 둔다.
+   -------------------------------------------------------------------------- */
+.policy-form .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding-top: 0;
+  margin-top: 0;
+  border-top: none;
+}
+.policy-form .form-actions #policyReset {
+  margin-right: auto;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  color: var(--c-text);
+}
+.policy-form .form-actions #policyReset:hover { background: var(--c-surface-2); }
+.policy-form .form-actions #policySave {
+  min-width: 120px;
+  background: var(--c-brand);
+  border: 1px solid var(--c-brand);
+  color: var(--c-on-brand);
+}
+.policy-form .form-actions #policySave:hover { background: var(--c-brand-strong); }
+
+
+/* ==========================================================================
    관리자 화면 반응형
    공통 레이아웃(사이드바 → 상단 가로 탭)은 common.css 가 처리한다.
    여기서는 관리자 화면 고유의 것만 다룬다.
@@ -652,4 +848,23 @@ tbody tr:hover td { background: var(--c-brand-softer); }
     overflow: auto;
     -webkit-overflow-scrolling: touch;
   }
+
+  /* 예약 정책: 라벨을 입력 위로 올리고 버튼은 폭을 채운다 */
+  .policy-group { padding: var(--sp-4); }
+  .field-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-2);
+    padding: var(--sp-3) 0;
+  }
+  /* 입력과 단위를 한 줄에 둔다. 줄바꿈되면 "분"이 아래로 떨어져
+     무엇의 단위인지 읽기 어려워진다. */
+  .field-input { flex-wrap: nowrap; }
+  .field-input input[type="number"],
+  .field-input input[type="time"],
+  .field-input select { flex: 1; width: auto; min-width: 0; }
+  .field-input .unit { flex-shrink: 0; }
+
+  .policy-form .form-actions { flex-direction: column-reverse; }
+  .policy-form .form-actions #policyReset { margin-right: 0; width: 100%; }
+  .policy-form .form-actions #policySave { width: 100%; }
 }
