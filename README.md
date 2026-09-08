@@ -26,7 +26,8 @@
 | **사용자** | 뉴뮤직 학부 학생 · 관리자(교수/학생회) |
 
 <div align="center">
-<img src="booking_1.png" width="270"/> <img src="booking_2.png" width="270"/> <img src="admin_3.png" width="270"/>
+<img src="docs/images/02-booking.png" width="800"/>
+<br><sub>학생 예약 화면 — 관리자가 그린 평면도에서 방을 고른다</sub>
 <br><sub>예약 현황 · 시간 선택 · 관리자 호실 배치 설정</sub>
 </div>
 
@@ -142,7 +143,8 @@ cells
 **이렇게 한 이유**: 연습실은 공사·용도 변경으로 배치가 바뀐다. 하드코딩하면 그때마다 코드를 고치고 재배포해야 한다. 좌표를 데이터로 두면 **관리자가 직접 바꿀 수 있다.** 층 개념도 `floor` 컬럼 하나로 확장된다.
 
 <div align="center">
-<img src="admin_3.png" width="420"/>
+<img src="docs/images/03-admin-room.png" width="800"/>
+<br><sub>관리자 배치 편집 — 펜으로 복도를 그리고 방 이름표를 얹는다</sub>
 <br><sub>관리자 호실 배치 설정 화면</sub>
 </div>
 
@@ -182,6 +184,18 @@ cells
 학생은 아무것도 하지 않아도 다음 로그인 한 번으로 전환된다.
 
 해시로 바꾸면 관리자도 남의 비밀번호를 알 수 없다. 그래서 비밀번호를 잊은 학생을 도울 경로가 필요했다 — `PATCH /users/{id}/reset-password`가 임시 비밀번호를 발급한다. 평문은 그 응답에서 **한 번만** 나가고 DB에는 해시만 남는다. 관리자 화면의 "보기" 버튼은 "초기화"로 바뀌었다.
+
+---
+
+## 4-1. 화면
+
+<div align="center">
+<img src="docs/images/01-login.png" width="760"/>
+<br><sub>로그인 — 가입 후 관리자 승인이 필요하다는 안내를 미리 보여준다</sub>
+<br><br>
+<img src="docs/images/04-admin-policy.png" width="760"/>
+<br><sub>예약 정책 — 규칙마다 실제로 무엇이 달라지는지 한 줄씩 적었다. 저장하면 즉시 예약 화면에 적용된다</sub>
+</div>
 
 ---
 
