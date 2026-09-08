@@ -15,6 +15,7 @@ from app.routers.booking import router as booking_router
 from app.routers.admin_booking import router as admin_booking_router
 from app.routers.notice import router as notice_router
 from app.routers.cell import router as cell_router
+from app.routers.policy import router as policy_router
 
 
 # 1) 테이블 자동생성 (개발/테스트 용)
@@ -43,6 +44,7 @@ app.include_router(booking_router, prefix="/api", tags=["bookings"])         # /
 app.include_router(admin_booking_router, prefix="/api", tags=["admin_bookings"])  # /api/admin/bookings
 app.include_router(notice_router)
 app.include_router(cell_router, prefix="/api", tags=["cells"])
+app.include_router(policy_router, prefix="/api", tags=["policy"])
 
 
 
