@@ -378,7 +378,16 @@ header .title p  { font-size: var(--fs-sm); color: var(--c-text-muted); }
 /* --- 콘텐츠 -------------------------------------------------------------- */
 .content { padding: var(--sp-6); }
 .content h2 { font-size: var(--fs-2xl); margin-bottom: var(--sp-5); }
-.content h3 { font-size: var(--fs-lg); margin-bottom: var(--sp-3); }
+
+/* 구역 제목. 로그인 화면의 남색 패널과 같은 문법으로, 장식 없이
+   왼쪽에 얇은 남색 막대만 둬서 표·폼의 시작점을 표시한다. */
+.content h3 {
+  font-size: var(--fs-lg);
+  margin-bottom: var(--sp-3);
+  padding-left: var(--sp-3);
+  border-left: 3px solid var(--c-brand);
+  line-height: 1.35;
+}
 .content section { margin-bottom: var(--sp-7); }
 .content hr { border-top: 1px solid var(--c-border); margin: var(--sp-6) 0; }
 
@@ -391,9 +400,22 @@ header .title p  { font-size: var(--fs-sm); color: var(--c-text-muted); }
 }
 .logout-btn:hover { background: var(--c-danger-strong); }
 
-/* --- 폼 ------------------------------------------------------------------ */
+/* --- 폼 ------------------------------------------------------------------
+   기존 마크업은 <label>글자 <input></label> 형태이고 사이사이에 <br> 이 있다.
+   flex 컨테이너 안에서 <br> 은 그 자체로 flex 아이템이 되어 줄을 어지럽힌다.
+   HTML 을 건드리지 않고 배치만 바로잡는다.
+   -------------------------------------------------------------------------- */
 .content form { display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: flex-end; }
+.content form br { display: none; }
 .content label { margin-right: 0; font-size: var(--fs-sm); font-weight: var(--fw-medium); }
+
+/* 라벨 글자를 입력 위에 올린다 */
+.content form > label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  align-items: stretch;
+}
 .content input[type="text"],
 .content input[type="date"],
 .content textarea,
@@ -463,13 +485,18 @@ tbody tr:hover td { background: var(--c-brand-softer); }
 }
 .actions .approve:hover { background: var(--c-success-strong); border-color: var(--c-success-strong); }
 
-/* 되돌릴 수 있는 보조 동작이라 채우지 않는다 */
+/* 되돌릴 수 있는 보조 동작이라 채우지 않는다.
+   로그인 화면의 '회원가입'(남색 외곽선)과 같은 보조 버튼 문법을 쓴다. */
 .actions .reset-pw {
   background: var(--c-surface);
-  border: 1px solid var(--c-border-strong);
-  color: var(--c-text);
+  border: 1px solid var(--c-brand);
+  color: var(--c-brand);
 }
-.actions .reset-pw:hover { background: var(--c-surface-2); border-color: var(--c-text-faint); }
+.actions .reset-pw:hover {
+  background: var(--c-brand-soft);
+  border-color: var(--c-brand);
+  color: var(--c-brand-strong);
+}
 
 /* 되돌릴 수 없는 동작. 평소엔 조용하고, 올리면 빨갛게 채워져 경고한다 */
 .actions .delete,
@@ -506,16 +533,46 @@ tbody tr:hover td { background: var(--c-brand-softer); }
 }
 #delete-notice-btn:hover { background: var(--c-danger); color: var(--c-on-brand); }
 
-/* --- 예약 내역 필터 ------------------------------------------------------ */
-.content #controls { gap: var(--sp-3); flex-wrap: wrap; margin: var(--sp-4) 0; }
+/* --- 예약 내역 필터 ------------------------------------------------------
+   common.css 가 input/select 에 width:100% 를 주기 때문에, 그대로 두면
+   가로 배치인데도 둘이 각각 한 줄씩 차지한다. 여기서만 폭을 되돌린다.
+   -------------------------------------------------------------------------- */
+.content #controls {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+}
 .content #searchInput,
 .content #roomSelect {
+  width: auto;
+  margin-top: 0;
   border: 1px solid var(--c-border-strong);
   border-radius: var(--r-md);
   padding: 10px var(--sp-3);
   font-size: var(--fs-md);
 }
-.content #searchInput { min-width: 220px; }
+.content #searchInput { flex: 1 1 240px; min-width: 200px; }
+.content #roomSelect  { flex: 0 0 auto; min-width: 160px; }
+
+/* --- 공지 작성 폼 --------------------------------------------------------
+   제목과 내용은 한 줄씩 쓰고, 버튼 세 개(올리기·취소·삭제)는 아래 한 줄에.
+   -------------------------------------------------------------------------- */
+#notice-form { max-width: 720px; }
+#notice-form > label { flex: 1 1 100%; }
+#notice-form #notice-input { min-height: 120px; width: 100%; }
+#notice-form > button { flex: 0 0 auto; }
+
+/* --- 예약 차단 블록 폼 ---------------------------------------------------- */
+#block-form { align-items: flex-end; }
+#block-form > label { flex: 0 1 200px; }
+#block-form select,
+#block-form input[type="date"] { width: 100%; margin-top: 0; }
 
 /* --- 공지 목록 ----------------------------------------------------------- */
 .content ul#notice-list {
@@ -541,14 +598,35 @@ tbody tr:hover td { background: var(--c-brand-softer); }
    활성 표시를 색 하나에 의존하지 않고 굵기·점·링을 함께 준다.
    ========================================================================== */
 .toolbar {
+  display: flex;
+  align-items: center;
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: var(--r-md);
-  padding: var(--sp-2);
-  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  gap: var(--sp-3);
   flex-wrap: wrap;
-  margin-bottom: var(--sp-4);
+  margin-bottom: var(--sp-3);
 }
+
+/* 성격이 다른 버튼을 묶는다.
+   모드(펜·지우개·이름표)는 켜 두고 쓰는 것, 동작(복사·붙여넣기)은 즉시 실행. */
+.tool-group {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-right: var(--sp-3);
+  border-right: 1px solid var(--c-border);
+}
+.tool-group:last-of-type { border-right: none; padding-right: 0; }
+.tool-group-label {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--c-text-faint);
+  letter-spacing: 0.06em;
+  margin-right: var(--sp-1);
+}
+
 .toolbar button {
   min-height: 38px;
   padding: 0 var(--sp-4);
@@ -558,10 +636,13 @@ tbody tr:hover td { background: var(--c-brand-softer); }
   background: var(--c-surface);
   border: 1px solid var(--c-border-strong);
   border-radius: var(--r-md);
-  transition: background var(--t-fast), border-color var(--t-fast);
+  transition: background var(--t-fast), border-color var(--t-fast),
+              box-shadow var(--t-fast);
 }
 .toolbar button:hover { background: var(--c-surface-2); border-color: var(--c-text-faint); }
 
+/* 모드 버튼은 '지금 켜져 있음'이 보여야 한다.
+   색 하나에 기대지 않도록 채움 + 굵기 + 링 + 앞의 점을 함께 준다. */
 .toolbar button.active {
   background: var(--c-brand);
   border-color: var(--c-brand);
@@ -569,13 +650,37 @@ tbody tr:hover td { background: var(--c-brand-softer); }
   font-weight: var(--fw-bold);
   box-shadow: 0 0 0 3px var(--c-brand-soft);
 }
-.toolbar button.active::before { content: "● "; font-size: 0.7em; }
+.toolbar button.active::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: var(--sp-2);
+  border-radius: 50%;
+  background: currentColor;
+}
 
-/* 지우개가 켜져 있을 때만 빨강. 파괴적인 모드라 다른 모드와 색을 나눈다. */
+/* 지우개가 켜져 있을 때만 빨강. 지우는 모드인 걸 모르고 끌면
+   방이 사라지므로, 다른 모드와 색을 나눠 실수를 막는다. */
 #eraserMode.active {
   background: var(--c-danger);
   border-color: var(--c-danger);
   box-shadow: 0 0 0 3px var(--c-danger-soft);
+}
+
+/* 저장은 결과를 확정하는 동작이라 도구와 나란히 두지 않는다.
+   툴바 오른쪽 끝으로 밀고 혼자만 채워진 버튼으로 만든다. */
+.tool-save {
+  margin-left: auto;
+  min-width: 96px;
+  background: var(--c-brand) !important;
+  border-color: var(--c-brand) !important;
+  color: var(--c-on-brand) !important;
+  font-weight: var(--fw-bold) !important;
+}
+.tool-save:hover {
+  background: var(--c-brand-strong) !important;
+  border-color: var(--c-brand-strong) !important;
 }
 
 /* 층 버튼 — 기존 #28a745 는 흰 글자 대비 3.13:1 로 AA 미달이었다 */
@@ -598,20 +703,140 @@ tbody tr:hover td { background: var(--c-brand-softer); }
   font-weight: var(--fw-medium);
 }
 
+/* --- 격자 + 안내 패널 ----------------------------------------------------
+   ⚠ .editor-layout 에는 position / transform 을 절대 주지 않는다.
+     admin_making_room.js:125 가 이름표를 끌 때
+     e.pageX - gridWrapper.offsetLeft 로 좌표를 구하는데, #gridWrapper 위에
+     위치 지정된 조상이 생기면 offsetLeft 의 기준이 그 조상으로 바뀌어
+     이름표가 클릭한 곳에서 멀리 떨어진 자리에 놓인다.
+   -------------------------------------------------------------------------- */
+.editor-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+}
+
+/* 평면도는 '도면 한 장'으로 읽혀야 한다.
+   스프레드시트처럼 보이던 원인은 격자선이 칸 색만큼 진했던 것이다. */
 #gridWrapper {
-  border: 1px solid var(--c-border);
+  flex: 0 0 auto;
+  border: 1px solid var(--c-border-strong);
   border-radius: var(--r-md);
   background: var(--c-surface);
   margin: 0;
+  padding: var(--sp-2);
+  box-shadow: var(--shadow-sm);
 }
-.cell.filled { background: var(--c-brand-weak); opacity: 0.35; }
+.cell { border: 1px solid #f0f2f5; }          /* 격자선을 뒤로 물린다 */
+.cell.filled {
+  background: var(--c-brand-soft);            /* user.css 와 같은 값 */
+  border-color: #dbe3f2;
+  opacity: 1;
+}
+
+/* 방 이름표 — 노란 메모지에서 흰 카드로. 예약 화면과 같은 모양이다. */
 .sticker {
-  background: var(--c-warning-soft);
+  background: var(--c-surface);
   border: 1px solid var(--c-border-strong);
   border-radius: var(--r-sm);
+  box-shadow: var(--shadow-sm);
+  color: var(--c-text);
+  font-size: 11px;                            /* 밀집한 층에서 겹침을 줄인다 */
   font-weight: var(--fw-medium);
+  line-height: 1.3;
+  padding: 2px 5px;
 }
-.sticker:focus { outline: 2px solid var(--c-brand); }
+.sticker:hover { border-color: var(--c-brand); z-index: 20; }
+.sticker.selected {
+  border-color: var(--c-brand);
+  background: var(--c-brand-soft);
+  box-shadow: 0 0 0 2px var(--c-brand);
+  z-index: 30;
+}
+.sticker:focus { outline: 2px solid var(--c-brand); outline-offset: 1px; }
+
+/* --- 오른쪽 안내 패널 ----------------------------------------------------- */
+.editor-guide {
+  flex: 1 1 260px;
+  min-width: 240px;
+  max-width: 340px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--sp-5);
+}
+.guide-block + .guide-block {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--c-border);
+}
+.editor-guide h3 {
+  font-size: var(--fs-sm);
+  margin-bottom: var(--sp-3);
+  padding-left: var(--sp-2);
+  border-left: 3px solid var(--c-brand);
+}
+
+.guide-list { margin: 0; font-size: var(--fs-xs); }
+.guide-list dt {
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+  margin-top: var(--sp-3);
+}
+.guide-list dt:first-child { margin-top: 0; }
+.guide-list dd {
+  margin: 2px 0 0;
+  color: var(--c-text-muted);
+  line-height: var(--lh-normal);
+}
+
+.legend { list-style: none; margin: 0; padding: 0; }
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  margin-bottom: var(--sp-2);
+}
+.legend li:last-child { margin-bottom: 0; }
+.legend-swatch {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border: 1px solid #f0f2f5;
+  background: var(--c-surface);
+  border-radius: 2px;
+}
+.legend-swatch.is-filled { background: var(--c-brand-soft); border-color: #dbe3f2; }
+.legend-swatch.is-label {
+  width: auto;
+  height: auto;
+  padding: 2px 5px;
+  font-size: 11px;
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 저장하지 않으면 날아간다는 경고.
+   JS 를 못 고쳐서 '변경됨' 상태를 실제로 감지할 수는 없으므로,
+   항상 보이는 안내로 둔다. */
+.guide-warn {
+  margin-top: var(--sp-5);
+  padding: var(--sp-3);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-normal);
+  color: var(--c-warning);
+  background: var(--c-warning-soft);
+  border: 1px solid #e8d9a8;
+  border-radius: var(--r-md);
+}
+.guide-warn strong { color: var(--c-warning); font-weight: var(--fw-bold); }
 
 
 /* ==========================================================================
@@ -819,6 +1044,15 @@ tbody tr:hover td { background: var(--c-brand-softer); }
   .content { padding: var(--sp-4); }
   .content h2 { font-size: var(--fs-xl); margin-bottom: var(--sp-4); }
   .content section { margin-bottom: var(--sp-5); }
+
+  /* 로그아웃이 float:right 이라 좁은 화면에서는 제목·설명이 버튼을 피해
+     감기면서 단어 중간에서 잘린다. 자기 줄을 주고 흐름에서 뺀다. */
+  .content .logout-btn {
+    float: none;
+    display: block;
+    margin: 0 0 var(--sp-3) auto;
+  }
+  .section-desc { margin-top: 0; }
 
   /* 폼을 세로로 쌓는다. 가로 나열은 좁은 화면에서 입력창이 찌그러진다. */
   .content form { flex-direction: column; align-items: stretch; gap: var(--sp-3); }

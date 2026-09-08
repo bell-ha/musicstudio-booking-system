@@ -1,155 +1,216 @@
-/* frontend/css/user.css */
+/* frontend/css/user.css — 예약 화면(user.html) 전용 스타일
+   common.css(토큰) → admin.css → user.css 순서로 로드된다. 겹치는
+   선택자(#floorButtons, .sticker, #gridWrapper)는 이 파일이 이긴다.
+
+   user.js가 직접 참조하는 id/class는 전부 그대로 유지했다:
+   bookingDate, floorButtons, grid, gridWrapper, slotsContainer,
+   slotModal, confirmBooking, closeModal, loadSlots, greeting, logout,
+   .slot, .sticker — 이름 변경/삭제 없음. HTML 쪽도 새 wrapper만 추가.
+
+   기존에 user.html <head> 안에 있던 인라인 <style>(#gridWrapper, #grid,
+   .cell, .sticker, .hover-info, #floorButtons, .booking-toolbar)을
+   전부 이 파일로 옮겼다 — 같은 선택자가 두 곳에 나뉘어 있으면 실제로
+   적용되는 값을 추적하기 어렵다. */
 
 /* ────────────────────────────────────────────────────────── */
-/* 유저 페이지 전용 오버라이드                               */
+/* 예약 섹션 여백                                             */
 /* ────────────────────────────────────────────────────────── */
-
-/* 메인 콘텐츠 안 여백 조정 */
 .content .section {
-  margin-top: 2em;
+  margin-top: var(--sp-5);
 }
 
 /* ────────────────────────────────────────────────────────── */
-/* 슬롯 버튼(Grid 4열 고정 레이아웃)                         */
+/* 툴바 (층 버튼 + 날짜 선택)                                 */
 /* ────────────────────────────────────────────────────────── */
-.slots {
-  display: grid;
-  /* 4열 고정: 가로로 4칸씩, 세로로 늘어나며 한눈에 보임 */
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: auto;
-  gap: 12px;
-  margin-top: 16px;
-  justify-items: center;
-  overflow: visible; /* 스크롤 없이 */
+.booking-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
 }
-
-.slot {
-  padding: 8px 16px;
-  border-radius: 24px;
-  font-size: 0.9rem;
-  white-space: nowrap;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.2s, color 0.2s, border 0.2s;
-}
-
-/* 예약 가능한 슬롯 */
-.slot.available {
-  background: #eee;
-  color: #333;
-  border: 1px solid transparent;
-}
-.slot.available:hover {
-  background: #d0e4ff;
-}
-
-/* 예약된(비활성) 슬롯 */
-.slot.unavailable {
-  background: #f5f5f5;
-  color: #aaa;
-  border: 1px solid #ddd;
-  cursor: not-allowed;
-}
-
-/* 사용자가 선택한 슬롯 */
-.slot.selected {
-  background: #003399;
-  color: #fff;
-  border: 1px solid #003399;
-}
-
-/* ────────────────────────────────────────────────────────── */
-/* 모달 오버레이                                             */
-/* ────────────────────────────────────────────────────────── */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+.date-picker {
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 2000;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
-.modal.hidden {
-  display: none;
+.date-picker label {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
 }
-.modal-backdrop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+#bookingDate {
+  min-width: 0;
+  padding: 10px var(--sp-3);
+  font-size: var(--fs-sm);
+  min-height: 40px;
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
 }
-.modal-dialog {
-  position: relative;
-  background: #fff;
-  border-radius: 8px;
-  width: 80vw;
-  max-width: 1000px;
-  height: 85vh;
-  margin: 0 auto;
-  padding: 32px 48px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+#bookingDate:hover { border-color: var(--c-border-strong); }
+#bookingDate:focus { outline: none; box-shadow: var(--shadow-focus); border-color: var(--c-brand); }
 
+/* ────────────────────────────────────────────────────────── */
+/* 층 버튼 — 색만으로 "현재 층"을 구분하지 않는다              */
+/* ────────────────────────────────────────────────────────── */
+#floorButtons {
   display: flex;
-  flex-direction: column;
-  gap: 24px;
-  font-size: 0.95rem;
-  overflow-y: auto;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
-.modal-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #666;
+#floorButtons button {
+  padding: 9px var(--sp-4);
+  min-height: 40px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
   cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
 }
-.modal-dialog h3 {
-  margin: 0;
-  font-size: 1.4rem;
-  font-weight: 600;
+#floorButtons button:hover {
+  border-color: var(--c-border-strong);
 }
-
-/* ────────────────────────────────────────────────────────── */
-/* 버튼 스타일                                               */
-/* ────────────────────────────────────────────────────────── */
-.btn {
-  display: inline-block;
-  padding: 10px 20px;
+#floorButtons button.active-floor {
+  color: var(--c-on-brand);
   background: var(--c-brand);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background 0.2s, transform 0.1s;
-}
-.btn:hover {
-  background: #3e52d1;
-}
-.btn:active {
-  transform: scale(0.96);
-}
-.btn:disabled {
-  background: #bbb;
-  cursor: not-allowed;
+  border-color: var(--c-brand);
+  font-weight: var(--fw-bold);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ────────────────────────────────────────────────────────── */
-/* 격자 UI                                                   */
+/* 본문 2단 — 평면도 + 안내 패널                              */
+/* 격자(#gridWrapper)는 30×20px 고정(600px)이라 넓은 화면에서  */
+/* 오른쪽이 크게 비어 있었다. 안내/범례를 담는 패널을 오른쪽에 */
+/* 둬서 그 공간을 실제 정보로 채운다 — 격자 자체의 좌표계나    */
+/* 렌더 방식은 손대지 않는다.                                 */
+/* ────────────────────────────────────────────────────────── */
+.booking-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-6);
+}
+.booking-grid-col {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+.booking-info-col {
+  flex: 1 1 260px;
+  min-width: 240px;
+  padding: var(--sp-5);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+}
+.booking-info-col h4 {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--c-text);
+}
+.booking-info-col + .booking-info-col,
+.booking-info-col .info-block + .info-block {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--c-border);
+}
+.booking-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--sp-3);
+}
+.booking-steps li {
+  display: flex;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  line-height: var(--lh-normal);
+}
+.booking-steps li .step-num {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--c-on-brand);
+  background: var(--c-brand);
+  border-radius: var(--r-full);
+}
+.legend-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--sp-2);
+}
+.legend-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+.legend-swatch {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-sm);
+  box-sizing: border-box;
+}
+.legend-swatch.legend-corridor {
+  background: var(--c-border);
+  border: 1px solid var(--c-border-strong);
+}
+.legend-swatch.legend-room {
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-text-faint);
+}
+.legend-swatch.legend-room-selected {
+  background: var(--c-brand-soft);
+  border: 1.5px solid var(--c-brand);
+}
+.booking-info-col .scroll-hint {
+  display: none;
+  margin-top: var(--sp-4);
+  font-size: var(--fs-xs);
+  color: var(--c-text-faint);
+}
+
+@media (max-width: 900px) {
+  .booking-layout {
+    flex-direction: column;
+  }
+  .booking-info-col {
+    order: -1;                 /* 안내를 먼저 — 격자를 만지기 전에 읽게 */
+    width: 100%;
+  }
+  .booking-info-col .scroll-hint {
+    display: block;            /* 이 폭부터 #gridWrapper가 가로 스크롤(admin.css) */
+  }
+}
+
+/* ────────────────────────────────────────────────────────── */
+/* 평면도 격자                                                */
 /* ────────────────────────────────────────────────────────── */
 #gridWrapper {
   position: relative;
   width: 600px;
   height: 600px;
-  margin: 0 auto;
-  border: 1px solid #ddd;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
 }
 #grid {
   display: grid;
@@ -157,53 +218,214 @@
   height: 100%;
   grid-template-columns: repeat(30, 20px);
   grid-template-rows: repeat(30, 20px);
+  border-radius: var(--r-md);
+  overflow: hidden;
 }
 .cell {
   width: 20px;
   height: 20px;
-  border: 1px solid #eee;
+  border: 1px solid var(--c-border);
   box-sizing: border-box;
 }
+/* 복도/벽 — 평면도로 알아볼 수 있어야 하니 뚜렷하게 채운다 */
+/* 복도와 벽. 평면도에서 구조를 읽는 유일한 단서라 배경과 확실히 갈라야 한다.
+   연한 회색으로는 격자선과 구분이 안 돼 평면도가 빈 판처럼 보였다.
+   admin.css가 user.css 뒤에 로드되며 opacity 0.35로 덮고 있어
+   명시도를 한 단계 올린다. */
+#grid .cell.filled,
 .cell.filled {
-  background: var(--c-brand-weak);
+  background: #c7d3ec;
+  border-color: #a8b9dd;
+  opacity: 1;
 }
+
+/* 방 이름표 */
 .sticker {
   position: absolute;
-  background: yellow;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  font-size: 11px;
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
-  border: 1px solid #333;
   white-space: nowrap;
+  transition: transform var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
 }
-/* 스티커 클릭 시 선택된 효과 */
+.sticker:hover {
+  border-color: var(--c-brand);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+/* 선택된 방 — 색만으로 구분하지 않도록 체크 표시를 붙인다 */
 .sticker.selected {
-  outline: 3px solid #003399;
-  background: #ffec80; /* 약간 강조된 색 */
-  transform: scale(1.1);
-  transition: transform 0.15s, background 0.15s;
+  color: var(--c-brand-strong);
+  background: var(--c-brand-soft);
+  border-color: var(--c-brand);
+  font-weight: var(--fw-bold);
+  transform: scale(1.05);
+  box-shadow: 0 0 0 2px var(--c-brand-soft), var(--shadow-md);
 }
+.sticker.selected::before {
+  content: "✓ ";
+}
+
+/* "X: -, Y: -" 디버그 표시 — 갱신하는 코드가 없어 항상 고정값만
+   보인다. 요소는 남기고 화면에서만 숨긴다. */
 .hover-info {
-  position: absolute;
-  bottom: -24px;
-  left: 0;
-  font-size: 12px;
-  color: #555;
+  display: none;
 }
-#floorButtons {
+
+/* ────────────────────────────────────────────────────────── */
+/* 슬롯 모달                                                  */
+/* ────────────────────────────────────────────────────────── */
+.slot-legend {
   display: flex;
-  gap: 4px;
-  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
 }
-#floorButtons button {
-  padding: 4px 8px;
-  border: none;
-  background: #ccc;
+.slot-legend .legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.slot-legend .legend-swatch {
+  width: 14px;
+  height: 14px;
+}
+.slot-legend .legend-swatch.legend-available { background: var(--c-surface-2); border: 1px solid var(--c-border-strong); }
+.slot-legend .legend-swatch.legend-selected { background: var(--c-brand); border: 1px solid var(--c-brand); }
+.slot-legend .legend-swatch.legend-unavailable { background: var(--c-surface-2); border: 1px dashed var(--c-border-strong); }
+
+.slots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: auto;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+  justify-items: stretch;
+}
+@media (max-width: 640px) {
+  .slots { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 400px) {
+  .slots { grid-template-columns: repeat(2, 1fr); }
+}
+
+.slot {
+  padding: 10px var(--sp-2);
+  min-height: 44px;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--c-text);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
   cursor: pointer;
-  border-radius: 4px;
+  user-select: none;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
 }
-#floorButtons button.active-floor {
-  background: #28a745;
-  color: #fff;
+.slot.available:hover {
+  border-color: var(--c-brand);
+  background: var(--c-brand-softer);
+}
+
+/* 예약된(비활성) 슬롯 — 색뿐 아니라 취소선 + 문구로도 구분 */
+.slot.unavailable {
+  color: var(--c-text-faint);
+  background: var(--c-surface-2);
+  border: 1px dashed var(--c-border);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+.slot.unavailable::after {
+  content: " · 마감";
+  text-decoration: none;
+  font-size: 0.75em;
+}
+
+/* 선택된 슬롯 — 색뿐 아니라 체크 표시 + 굵게로도 구분 */
+.slot.selected {
+  color: var(--c-on-brand);
+  background: var(--c-brand);
+  border-color: var(--c-brand);
+  font-weight: var(--fw-bold);
+}
+.slot.selected::before {
+  content: "✓ ";
+}
+
+/* ────────────────────────────────────────────────────────── */
+/* 모달 오버레이                                              */
+/* ────────────────────────────────────────────────────────── */
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+}
+.modal.hidden {
+  display: none;
+}
+.modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(16, 24, 40, 0.45);
+}
+.modal-dialog {
+  position: relative;
+  width: 80vw;
+  max-width: 640px;
+  max-height: 85vh;
+  margin: 0 auto;
+  padding: var(--sp-6);
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  overflow-y: auto;
+}
+.modal-close {
+  position: absolute;
+  top: var(--sp-4);
+  right: var(--sp-4);
+  min-width: 32px;
+  min-height: 32px;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--c-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.modal-close:hover { color: var(--c-text); }
+.modal-dialog h3 {
+  margin: 0;
+  padding-right: var(--sp-6);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--c-text);
+}
+
+@media (max-width: 640px) {
+  .modal-dialog {
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+    padding: var(--sp-5) var(--sp-4);
+  }
 }

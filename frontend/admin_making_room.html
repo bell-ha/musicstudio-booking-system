@@ -39,24 +39,66 @@
     <main class="content">
       <button id="logout" class="logout-btn">로그아웃</button>
       <h2>연습실 배치 편집</h2>
-      <p>아래의 도구를 사용하여 연습실 구조를 편집할 수 있습니다.</p>
+      <p class="section-desc">층을 고른 뒤 격자를 칠해 복도와 벽을 그리고, 방 자리에 이름표를 놓습니다.</p>
 
-      <!-- 툴바 -->
+      <!-- 툴바
+           펜·지우개는 켜 두고 쓰는 '모드'라 한 묶음,
+           복사·붙여넣기는 누르면 바로 실행되는 '동작'이라 다른 묶음,
+           저장은 결과를 확정하므로 따로 뗀다. -->
       <div class="toolbar">
-        <button id="penMode">✏️ 펜</button>
-        <button id="eraserMode">🧽 지우개</button>
-        <button id="addSticker">＋ 스티커</button>
-        <button id="copyCells">📋 복사</button>
-        <button id="pasteCells">📌 붙여넣기</button>
-        <button id="saveButton">💾 저장</button>
+        <div class="tool-group" role="group" aria-label="그리기 모드">
+          <span class="tool-group-label">모드</span>
+          <button id="penMode" type="button">펜</button>
+          <button id="eraserMode" type="button">지우개</button>
+          <button id="addSticker" type="button">이름표 추가</button>
+        </div>
+        <div class="tool-group" role="group" aria-label="편집 동작">
+          <span class="tool-group-label">동작</span>
+          <button id="copyCells" type="button">복사</button>
+          <button id="pasteCells" type="button">붙여넣기</button>
+        </div>
+        <button id="saveButton" type="button" class="tool-save">저장</button>
       </div>
 
       <!-- 층 선택 -->
       <div id="floorButtons" class="floor-buttons"></div>
 
-      <!-- 격자 영역 -->
-      <div id="gridWrapper">
-        <div id="grid"></div>
+      <!-- 격자 + 안내
+           ⚠ .editor-layout 에 position/transform 을 주면 안 된다.
+              admin_making_room.js 가 이름표를 끌 때
+              e.pageX - gridWrapper.offsetLeft 로 좌표를 계산하는데,
+              #gridWrapper 위에 위치 지정된 조상이 생기면 offsetLeft 의
+              기준이 바뀌어 이름표가 엉뚱한 자리로 튄다. -->
+      <div class="editor-layout">
+        <div id="gridWrapper">
+          <div id="grid"></div>
+        </div>
+
+        <aside class="editor-guide">
+          <section class="guide-block">
+            <h3>도구</h3>
+            <dl class="guide-list">
+              <dt>펜</dt><dd>켜 둔 채로 칸을 끌면 복도·벽이 칠해집니다.</dd>
+              <dt>지우개</dt><dd>켜 둔 채로 칸을 끌면 지워집니다.</dd>
+              <dt>이름표 추가</dt><dd>방 이름표를 놓고 끌어서 위치를 맞춥니다.</dd>
+              <dt>복사 · 붙여넣기</dt><dd>층 하나를 통째로 옮겨 옵니다. 비슷한 층을 만들 때 씁니다.</dd>
+            </dl>
+          </section>
+
+          <section class="guide-block">
+            <h3>평면도 안내</h3>
+            <ul class="legend">
+              <li><span class="legend-swatch is-filled"></span>복도 · 벽</li>
+              <li><span class="legend-swatch"></span>빈 칸</li>
+              <li><span class="legend-swatch is-label">222</span>방 이름표</li>
+            </ul>
+          </section>
+
+          <p class="guide-warn">
+            고친 내용은 <strong>저장</strong>을 눌러야 반영됩니다.
+            저장하지 않고 층을 옮기거나 화면을 나가면 되돌아갑니다.
+          </p>
+        </aside>
       </div>
     </main>
   </div>
