@@ -1111,3 +1111,58 @@ tbody tr:hover td { background: var(--c-brand-softer); }
   .policy-form .form-actions #policyReset { margin-right: 0; width: 100%; }
   .policy-form .form-actions #policySave { width: 100%; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   격자를 표가 아니라 도면으로
+   ──────────────────────────────────────────────────────────────
+   칸마다 테두리를 그리면 스프레드시트로 읽힌다. 도면은 반대다 —
+   바탕에 옅은 모눈이 깔려 있고 그 위에 그린 것만 도드라진다.
+   테두리를 지우고 배경 그라디언트로 모눈을 만든다.
+   ══════════════════════════════════════════════════════════════ */
+#gridWrapper {
+  padding: var(--sp-3);
+  background: #fbfcfe;
+  border-color: var(--c-border);
+  box-shadow: inset 0 1px 3px rgba(16, 24, 48, .05), var(--shadow-sm);
+}
+
+#grid {
+  /* 20px 모눈. 5칸마다 한 단계 진하게 해서 눈금 역할을 준다. */
+  background-image:
+    linear-gradient(to right,  rgba(16,24,48,.10) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16,24,48,.10) 1px, transparent 1px),
+    linear-gradient(to right,  rgba(16,24,48,.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16,24,48,.045) 1px, transparent 1px);
+  background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+  background-position: -1px -1px;
+  outline: 1px solid var(--c-border);
+}
+
+#grid .cell {
+  border: none;                 /* 모눈은 배경이 그린다 */
+  background: transparent;
+}
+#grid .cell:hover {
+  background: rgba(0, 51, 153, .07);
+  box-shadow: inset 0 0 0 1px var(--c-brand-weak);
+}
+
+/* 복도·벽 — 도면에서 유일하게 채워지는 면이라 확실히 진하게 */
+#grid .cell.filled,
+#grid .cell.filled:hover {
+  background: #c3d0ea;
+  border: none;
+  box-shadow: inset 0 0 0 1px #aebedf;
+  opacity: 1;
+}
+
+/* 방 이름표 — 지도의 라벨처럼. 왼쪽에 색 띠를 둬서 표 셀과 구분한다 */
+#gridWrapper .sticker {
+  border-left: 3px solid var(--c-brand);
+  padding: 2px 6px 2px 5px;
+  letter-spacing: -.01em;
+  box-shadow: 0 1px 3px rgba(16, 24, 48, .16);
+}
+#gridWrapper .sticker.selected {
+  border-left-color: var(--c-brand-strong);
+}
