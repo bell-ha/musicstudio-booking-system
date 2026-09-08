@@ -240,17 +240,38 @@ cells
 
 ## 7. 실행 방법
 
+**Docker (권장)**
+```bash
+cp backend/.env.example backend/.env    # DATABASE_URL, JWT_SECRET 채우기
+docker compose up --build -d
+```
+
+**직접 실행**
 ```bash
 cd backend
-cp .env.example .env          # DB 접속 정보, SECRET_KEY 설정
+python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
+cp .env.example .env
 ./.venv/bin/python -m uvicorn app.main:app --reload
 ```
 
-API 문서: `http://localhost:8000/docs`
+화면 `http://localhost:8000` · API 문서 `http://localhost:8000/docs`
 
-**Docker**
+### 둘러보기용 계정
+
+비밀번호는 전부 `demo1234!` 입니다.
+
+| 아이디 | 역할 | 무엇을 볼 수 있나 |
+|---|---|---|
+| `demo_admin` | 관리자 | 사용자 승인, 연습실 배치 편집, 전체 예약 내역, **예약 정책** |
+| `demo_student` | 학생 | 평면도에서 방을 골라 예약, 내 예약 취소 |
+| `demo_pending` | 승인 대기 | 로그인이 막히는 화면. 가입 후 관리자 승인 전 상태 |
+
+`demo_pending`으로 로그인을 시도하면 403과 함께 안내가 뜹니다. 관리자 화면의 "승인 대기" 목록에서 이 계정을 승인하면 그때부터 로그인됩니다 — 가입부터 승인까지의 흐름을 한 번에 볼 수 있습니다.
+
+### 테스트
+
 ```bash
-docker build -t musicstudio . && docker run -p 8000:8000 --env-file backend/.env musicstudio
+cd backend && ./.venv/bin/python -m pytest -v
 ```
 
 ---
