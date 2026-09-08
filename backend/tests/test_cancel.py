@@ -15,7 +15,14 @@ from datetime import datetime as dt
 
 
 def _seed_booking(db, user, room, *, minutes_from_now: float, duration_minutes: int = 60):
-    start = dt.now(SEOUL) + timedelta(minutes=minutes_from_now)
+    # 자정을 넘기면 end_time이 start_time보다 작아져 ck_bookings_time_order에 걸린다.
+    # 이 테스트가 보는 것은 취소 규칙이지 날짜 경계가 아니므로,
+    # 기준 시각을 낮으로 옮겨 어느 시간에 돌려도 같은 날 안에 들어오게 한다.
+    # (밤 11시 이후에 돌리면 깨지던 문제다.)
+    base = dt.now(SEOUL)
+    if (base + timedelta(minutes=minutes_from_now + duration_minutes)).date() != base.date():
+        base = (base + timedelta(days=1)).replace(hour=10, minute=0, second=0, microsecond=0)
+    start = base + timedelta(minutes=minutes_from_now)
     end = start + timedelta(minutes=duration_minutes)
     b = Booking(
         user_id=user.user_id,
