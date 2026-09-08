@@ -341,3 +341,315 @@ th {
 .sticker:focus {
   outline: 2px solid #007bff;
 }
+
+
+/* ==========================================================================
+   관리자 화면 정리 — common.css 토큰 사용
+   이 파일은 common.css 뒤에 로드되므로 별도 명시도 조작이 필요없다.
+   단 user.css 는 이 파일보다 더 뒤에 오므로, user.html 과 겹치는 선택자
+   (#floorButtons, .sticker, #gridWrapper)는 user.css 가 이긴다 — 의도된 것.
+   ========================================================================== */
+
+/* --- 헤더 ---------------------------------------------------------------- */
+header {
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  box-shadow: var(--shadow-sm);
+  padding: 0 var(--sp-5);
+  z-index: var(--z-header);
+}
+header img { height: 40px; }
+header .title h1 { font-size: var(--fs-xl); color: var(--c-brand); }
+header .title p  { font-size: var(--fs-sm); color: var(--c-text-muted); }
+.hamburger span  { background: var(--c-text); }
+
+/* --- 사이드바 ------------------------------------------------------------ */
+.sidebar { width: var(--sidebar-w); background: var(--c-brand); }
+.sidebar li { border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
+.sidebar a  { color: rgba(255, 255, 255, 0.82); font-size: var(--fs-sm); padding: 14px var(--sp-5); }
+.sidebar a:hover  { background: rgba(255, 255, 255, 0.1); color: #fff; }
+.sidebar a.active {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-weight: var(--fw-medium);
+  box-shadow: inset 3px 0 0 #fff;      /* 색만으로 구분하지 않도록 왼쪽 막대 */
+}
+
+/* --- 콘텐츠 -------------------------------------------------------------- */
+.content { padding: var(--sp-6); }
+.content h2 { font-size: var(--fs-2xl); margin-bottom: var(--sp-5); }
+.content h3 { font-size: var(--fs-lg); margin-bottom: var(--sp-3); }
+.content section { margin-bottom: var(--sp-7); }
+.content hr { border-top: 1px solid var(--c-border); margin: var(--sp-6) 0; }
+
+.logout-btn {
+  background: var(--c-danger);
+  border-radius: var(--r-sm);
+  padding: 8px var(--sp-4);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+.logout-btn:hover { background: var(--c-danger-strong); }
+
+/* --- 폼 ------------------------------------------------------------------ */
+.content form { display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: flex-end; }
+.content label { margin-right: 0; font-size: var(--fs-sm); font-weight: var(--fw-medium); }
+.content input[type="text"],
+.content input[type="date"],
+.content textarea,
+.content select {
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  padding: 10px var(--sp-3);
+  font-size: var(--fs-md);          /* 16px 미만이면 iOS 가 화면을 확대한다 */
+  font-family: inherit;
+}
+.content textarea { min-width: 320px; }
+.content button {
+  background: var(--c-brand);
+  border-radius: var(--r-md);
+  padding: 10px var(--sp-4);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  min-height: 40px;
+}
+.content button:hover { background: var(--c-brand-strong); }
+
+/* --- 표 ------------------------------------------------------------------ */
+.table-container,
+.content .table-container {
+  max-height: none;                 /* 300px 고정이라 안쪽만 짧게 스크롤됐다 */
+  overflow-x: auto;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+}
+th, td { border: none; border-bottom: 1px solid var(--c-border); padding: var(--sp-3); }
+th {
+  background: var(--c-surface-2);
+  color: var(--c-text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--c-brand-softer); }
+
+/* --- 표 액션 칸: 버튼 위계 ------------------------------------------------
+   admin.js 가 만드는 마크업:
+     <td class="actions">
+       <button class="approve">승인</button>              (승인 대기 표)
+       <button class="reset-pw">비밀번호 초기화</button>   (일반 사용자 표)
+       <button class="delete">삭제</button>
+     </td>
+   승인 = 주 동작(채움), 초기화 = 보조(외곽선), 삭제 = 위험(빨간 외곽선).
+   .actions .delete 는 (0,2,0) 이라 위의 .content button (0,1,1) 을 이긴다.
+   -------------------------------------------------------------------------- */
+.actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; }
+.actions button {
+  min-height: 32px;
+  padding: 4px var(--sp-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  border-radius: var(--r-sm);
+  white-space: nowrap;
+}
+
+.actions .approve {
+  background: var(--c-success);
+  border: 1px solid var(--c-success);
+  color: var(--c-on-brand);
+}
+.actions .approve:hover { background: var(--c-success-strong); border-color: var(--c-success-strong); }
+
+/* 되돌릴 수 있는 보조 동작이라 채우지 않는다 */
+.actions .reset-pw {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  color: var(--c-text);
+}
+.actions .reset-pw:hover { background: var(--c-surface-2); border-color: var(--c-text-faint); }
+
+/* 되돌릴 수 없는 동작. 평소엔 조용하고, 올리면 빨갛게 채워져 경고한다 */
+.actions .delete,
+.content .btn-del,
+.content .cancel-cell {
+  background: var(--c-surface);
+  border: 1px solid var(--c-danger);
+  color: var(--c-danger);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  min-height: 32px;
+  padding: 4px var(--sp-3);
+}
+.actions .delete:hover,
+.content .btn-del:hover,
+.content .cancel-cell:hover {
+  background: var(--c-danger);
+  border-color: var(--c-danger);
+  color: var(--c-on-brand);
+}
+
+/* 공지 편집 취소 / 삭제 */
+#cancel-edit-btn {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  color: var(--c-text);
+}
+#cancel-edit-btn:hover { background: var(--c-surface-2); }
+#delete-notice-btn {
+  background: var(--c-surface);
+  border: 1px solid var(--c-danger);
+  color: var(--c-danger);
+}
+#delete-notice-btn:hover { background: var(--c-danger); color: var(--c-on-brand); }
+
+/* --- 예약 내역 필터 ------------------------------------------------------ */
+.content #controls { gap: var(--sp-3); flex-wrap: wrap; margin: var(--sp-4) 0; }
+.content #searchInput,
+.content #roomSelect {
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  padding: 10px var(--sp-3);
+  font-size: var(--fs-md);
+}
+.content #searchInput { min-width: 220px; }
+
+/* --- 공지 목록 ----------------------------------------------------------- */
+.content ul#notice-list {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  overflow: hidden;
+}
+.content ul#notice-list li {
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--c-border);
+  font-size: var(--fs-sm);
+}
+.content ul#notice-list li:last-child { border-bottom: none; }
+.content ul#notice-list li:hover { background: var(--c-brand-softer); }
+
+
+/* ==========================================================================
+   연습실 배치 편집기 (admin_making_room.html)
+   admin_making_room.js 는 #penMode / #eraserMode 에만 .active 를 토글한다.
+   복사·붙여넣기·저장은 상태가 없는 1회성 동작이라 토글되지 않는다.
+   "지금 무슨 모드인지"를 못 읽으면 실수로 방을 지우게 되므로,
+   활성 표시를 색 하나에 의존하지 않고 굵기·점·링을 함께 준다.
+   ========================================================================== */
+.toolbar {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: var(--sp-2);
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+}
+.toolbar button {
+  min-height: 38px;
+  padding: 0 var(--sp-4);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.toolbar button:hover { background: var(--c-surface-2); border-color: var(--c-text-faint); }
+
+.toolbar button.active {
+  background: var(--c-brand);
+  border-color: var(--c-brand);
+  color: var(--c-on-brand);
+  font-weight: var(--fw-bold);
+  box-shadow: 0 0 0 3px var(--c-brand-soft);
+}
+.toolbar button.active::before { content: "● "; font-size: 0.7em; }
+
+/* 지우개가 켜져 있을 때만 빨강. 파괴적인 모드라 다른 모드와 색을 나눈다. */
+#eraserMode.active {
+  background: var(--c-danger);
+  border-color: var(--c-danger);
+  box-shadow: 0 0 0 3px var(--c-danger-soft);
+}
+
+/* 층 버튼 — 기존 #28a745 는 흰 글자 대비 3.13:1 로 AA 미달이었다 */
+#floorButtons { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+#floorButtons button {
+  min-height: 36px;
+  padding: 0 var(--sp-4);
+  margin-right: 0;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text);
+  border-radius: var(--r-full);
+  font-size: var(--fs-sm);
+}
+#floorButtons button:hover { background: var(--c-surface-2); color: var(--c-text); }
+#floorButtons button.active-floor {
+  background: var(--c-brand);
+  border-color: var(--c-brand);
+  color: var(--c-on-brand);
+  font-weight: var(--fw-medium);
+}
+
+#gridWrapper {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  margin: 0;
+}
+.cell.filled { background: var(--c-brand-weak); opacity: 0.35; }
+.sticker {
+  background: var(--c-warning-soft);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-sm);
+  font-weight: var(--fw-medium);
+}
+.sticker:focus { outline: 2px solid var(--c-brand); }
+
+
+/* ==========================================================================
+   관리자 화면 반응형
+   공통 레이아웃(사이드바 → 상단 가로 탭)은 common.css 가 처리한다.
+   여기서는 관리자 화면 고유의 것만 다룬다.
+   ========================================================================== */
+@media (max-width: 768px) {
+  .content { padding: var(--sp-4); }
+  .content h2 { font-size: var(--fs-xl); margin-bottom: var(--sp-4); }
+  .content section { margin-bottom: var(--sp-5); }
+
+  /* 폼을 세로로 쌓는다. 가로 나열은 좁은 화면에서 입력창이 찌그러진다. */
+  .content form { flex-direction: column; align-items: stretch; gap: var(--sp-3); }
+  .content textarea { min-width: 0; width: 100%; }
+  .content input[type="text"],
+  .content input[type="date"],
+  .content select { width: 100%; }
+
+  /* 폼 안의 제출 버튼만 폭을 채운다.
+     .logout-btn 과 표 안의 액션 버튼까지 늘어나면 안 된다. */
+  .content form button { width: 100%; }
+  .content .logout-btn { width: auto; }
+  .content .actions button { width: auto; }
+  .content #controls { flex-direction: column; align-items: stretch; }
+  .content #searchInput { min-width: 0; width: 100%; }
+
+  th, td { padding: var(--sp-2); font-size: var(--fs-xs); }
+
+  /* 액션 버튼은 줄바꿈하지 않고, 표 컨테이너가 가로 스크롤을 흡수한다 */
+  .actions { flex-wrap: nowrap; }
+
+  /* 격자는 30×20px = 600px 고정이라 휴대폰 폭을 넘는다.
+     원본은 overflow:hidden 이라 잘려서 안 보였다. 화면 안에서 밀어
+     볼 수 있게 바꾼다 — 좌표계(cells의 x,y)는 그대로 유지된다. */
+  #gridWrapper {
+    max-width: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

@@ -903,6 +903,93 @@ li.empty {
   line-height: var(--lh-normal);
 }
 
+/* --- 라디오 그룹 ---------------------------------------------------------
+   선택지가 서로 배타적이고 설명이 필요한 경우(예: 예약 정책의
+   same_day_mode = NO_OVERLAP / SEQUENTIAL / ONE_PER_DAY).
+   기대 마크업:
+     <div class="radio-group">
+       <label class="radio-option">
+         <input type="radio" name="same_day_mode" value="NO_OVERLAP">
+         <span class="radio-text">
+           <strong>겹치지 않으면 허용</strong>
+           <small>같은 날 여러 건을 잡을 수 있지만 시간이 겹치면 안 됩니다.</small>
+         </span>
+       </label>
+       …
+     </div>
+   -------------------------------------------------------------------------- */
+.radio-group {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-bottom: 0;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.radio-option:hover {
+  border-color: var(--c-text-faint);
+  background: var(--c-surface-2);
+}
+
+.radio-option input[type="radio"] {
+  margin-top: 2px;
+}
+
+/* 선택된 항목. :has() 미지원 브라우저에서도 라디오 자체는 보이므로
+   기능은 그대로고 강조만 빠진다. */
+.radio-option:has(input:checked) {
+  border-color: var(--c-brand);
+  background: var(--c-brand-softer);
+  box-shadow: inset 0 0 0 1px var(--c-brand);
+}
+.radio-option:has(input:focus-visible) {
+  box-shadow: var(--shadow-focus);
+}
+
+.radio-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.radio-text strong {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+}
+.radio-text small {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  line-height: var(--lh-normal);
+}
+
+/* 시각~시각 처럼 두 입력을 나란히 (운영 시간, 주간 오픈) */
+.field-range {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.field-range input,
+.field-range select {
+  width: auto;
+  min-width: 120px;
+  margin-top: 0;
+}
+.field-range .sep {
+  color: var(--c-text-muted);
+  font-size: var(--fs-sm);
+}
+
 /* 저장/취소 줄 */
 .form-actions {
   display: flex;
@@ -915,6 +1002,15 @@ li.empty {
   flex: 1;
 }
 
+/* 저장 결과 안내. JS 가 .ok / .error 를 붙이면 색이 바뀐다. */
+.form-status {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  align-self: center;
+}
+.form-status.ok    { color: var(--c-success-strong); }
+.form-status.error { color: var(--c-danger); }
+
 /* 좁은 화면에서는 라벨을 입력 위로 */
 @media (max-width: 640px) {
   .form-row {
@@ -923,6 +1019,12 @@ li.empty {
   }
   .form-row > .field-label {
     padding-top: 0;
+  }
+  .form-actions {
+    flex-direction: column;
+  }
+  .form-actions .spacer {
+    display: none;
   }
 }
 
@@ -1103,6 +1205,18 @@ li.empty {
   }
   .consent-row {
     padding: var(--sp-3);
+  }
+
+  /* 관리자 탭이 4개 → 5개('예약 정책' 추가)로 늘어난다.
+     여백을 줄여 한 화면에 최대한 담고, 넘치는 만큼만 가로 스크롤된다.
+     탭이 잘려 보이는 것 자체가 "옆에 더 있다"는 신호가 되도록
+     마지막 탭은 오른쪽 여백을 남긴다. */
+  body .sidebar a {
+    padding: 0 var(--sp-3);
+    font-size: var(--fs-xs);
+  }
+  body .sidebar li:last-child {
+    padding-right: var(--sp-3);
   }
 }
 

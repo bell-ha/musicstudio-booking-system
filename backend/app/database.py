@@ -5,10 +5,14 @@ from dotenv import load_dotenv, find_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# ─── 1) .env 로드 (컨테이너 환경변수만 쓰는 경우 없어도 됨) ──────
-dotenv_path = find_dotenv()
+# ─── 1) .env 로드 ────────────────────────────────────────────
+# override=False가 중요하다. 이미 환경변수로 주어진 값을 .env가 덮어쓰면,
+# 테스트나 스크래치 DB를 가리키도록 환경변수를 심어도 이 모듈을 import하는
+# 순간 .env의 운영 접속 정보로 되돌아간다. 컨테이너에서도 env_file보다
+# 바깥에서 준 값이 우선이어야 한다.
+dotenv_path = find_dotenv(usecwd=True)
 if dotenv_path:
-    load_dotenv(dotenv_path, override=True)
+    load_dotenv(dotenv_path, override=False)
 
 # ─── 2) 연결 문자열 ──────────────────────────────────────────
 # Neon(PostgreSQL). 자격증명은 .env 또는 컨테이너 환경변수로만 주입한다.

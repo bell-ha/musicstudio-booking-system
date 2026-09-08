@@ -19,34 +19,38 @@
   z-index: 1;
   max-width: 640px;
   margin: 5rem auto;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 12px 36px rgba(0,0,0,.25);
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   animation: fadeInUp .25s ease-out;
 }
 
 /* 헤더/푸터 */
 .modal-header, .modal-footer {
-  padding: 16px 20px;
-  background: #f9f9fb;
-  border-bottom: 1px solid #eee;
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--c-surface-2);
+  border-bottom: 1px solid var(--c-border);
+}
+.modal-header h3 {
+  font-size: var(--fs-lg);
 }
 .modal-footer {
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--c-border);
   border-bottom: none;
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 
 /* 본문 */
 .modal-body {
-  padding: 20px;
+  padding: var(--sp-5);
   max-height: 60vh;
   overflow-y: auto;
-  line-height: 1.6;
-  font-size: 15px;
+  line-height: var(--lh-normal);
+  font-size: var(--fs-sm);
+  color: var(--c-text);
 }
 
 /* 닫기 버튼 */
@@ -56,30 +60,56 @@
   font-size: 1.4rem;
   line-height: 1;
   cursor: pointer;
-  color: #666;
+  color: var(--c-text-muted);
 }
-.modal-close:hover { color: #000; }
+.modal-close:hover { color: var(--c-text); }
 
 /* 동의서 본문 */
-.agreement p { margin: 12px 0; }
-.agreement strong { display: inline-block; margin-bottom: 4px; }
-.agreement .muted { color:#777; font-size: 12px; margin-top: 12px; }
+.agreement p { margin: var(--sp-3) 0; }
+.agreement strong { display: inline-block; margin-bottom: var(--sp-1); color: var(--c-text); }
+.agreement .muted { color: var(--c-text-muted); font-size: var(--fs-xs); margin-top: var(--sp-3); }
 
 /* 버튼 */
 .modal-footer button {
-  padding: 8px 14px;
-  border-radius: 6px;
-  border: none;
+  padding: 10px var(--sp-4);
+  min-height: 40px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
   cursor: pointer;
-  font-size: 14px;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
 }
 .modal-footer #agreeBtn {
-  background: #246bff;
-  color: #fff;
+  background: var(--c-brand);
+  border-color: var(--c-brand);
+  color: var(--c-on-brand);
+}
+.modal-footer #agreeBtn:hover {
+  background: var(--c-brand-strong);
+  border-color: var(--c-brand-strong);
 }
 .modal-footer .secondary {
-  background: #eee;
-  color: #333;
+  background: var(--c-surface);
+  border-color: var(--c-border-strong);
+  color: var(--c-text);
+}
+.modal-footer .secondary:hover {
+  background: var(--c-surface-2);
+}
+
+/* 좁은 화면에서는 여백을 줄이고 버튼을 폭에 맞춘다 */
+@media (max-width: 640px) {
+  .modal-content {
+    margin: var(--sp-4) var(--sp-3);
+    max-width: none;
+  }
+  .modal-footer {
+    flex-direction: column-reverse;
+  }
+  .modal-footer button {
+    width: 100%;
+  }
 }
 
 /* 애니메이션 */
