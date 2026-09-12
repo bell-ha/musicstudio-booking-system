@@ -346,6 +346,5 @@ cd backend && ./.venv_pg/bin/python -m pytest -v
 
 <div align="center">
 
-**이종하** · [GitHub](https://github.com/bell-ha) · [Portfolio](https://bell-ha.github.io)
 
 </div>
