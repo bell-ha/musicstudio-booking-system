@@ -42,11 +42,25 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+tasks.test {
+    useJUnitPlatform { excludeTags("experiment") }
 }
 
-// 로컬 실행 전용 서명 키. 서버에서는 JWT_SECRET 환경 변수가 없으면 애플리케이션이 뜨지 않는다.
+// 동시성 실험 (ADR 0010). 일반 빌드에서는 돌지 않는다. ./gradlew experiment [-PpoolSize=20]
+val experiment by tasks.registering(Test::class) {
+    description = "예약 겹침 방지 방식을 비교하는 동시성 실험"
+    group = "verification"
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform { includeTags("experiment") }
+    systemProperty("experiment.poolSize", findProperty("poolSize") ?: "20")
+    systemProperty("experiment.out", layout.projectDirectory.dir("../docs/experiments").asFile.path)
+    testLogging.showStandardStreams = true
+    outputs.upToDateWhen { false }
+}
+
+// 로컬 실행 전용 키. 서버에서는 JWT_SECRET, APP_CRYPTO_KEY 환경 변수가 없으면 애플리케이션이 뜨지 않는다.
 tasks.bootRun {
     environment("JWT_SECRET", System.getenv("JWT_SECRET") ?: "local-dev-only-secret-change-me-0123456789")
+    environment("APP_CRYPTO_KEY", System.getenv("APP_CRYPTO_KEY") ?: "bG9jYWwtZGV2LW9ubHkta2V5LTAxMjM0NTY3ODlhYmM=")
 }
