@@ -1,12 +1,13 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
-import { Check, ExternalLink } from 'lucide-react'
+import { Check, ExternalLink, Pipette } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { api, errorMessage, fieldErrors } from '../../api'
 import { Field } from '../../Field'
 import { isManager, ROLE_LABEL, TYPE_LABEL } from '../../labels'
 import { useOrgSite } from '../../orgSite'
 import { OrgHeader } from '../../site/OrgHeader'
-import { COLORS, colorStyle, type Site, type SiteColor } from '../../site/site'
+import { nearStatusHue, readable } from '../../site/color'
+import { COLORS, colorStyle, type PresetColor, type Site } from '../../site/site'
 import { useMyOrganization } from '../../useMyOrganization'
 import { NotMember } from '../OrganizationHomePage'
 
@@ -22,6 +23,7 @@ export function SiteSettingsPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [message, setMessage] = useState('')
   const [saved, setSaved] = useState('')
+  const [colorNote, setColorNote] = useState('')
 
   const form: Site | undefined = site && { ...site, ...edits }
   if (org === undefined || !form) return <main className="page page-wide" />
@@ -72,6 +74,16 @@ export function SiteSettingsPage() {
   }
 
   const set = (patch: Partial<Site>) => setEdits({ ...edits, ...patch })
+  const custom = !(form.color in COLORS)
+
+  function pickCustom(value: string) {
+    const { color, adjusted } = readable(value)
+    set({ color })
+    setColorNote([
+      adjusted && '흰 글자가 잘 보이도록 같은 색을 조금 진하게 맞췄어요.',
+      nearStatusHue(color) && '예약 상태 색(초록 빈 방, 빨강 오류)과 비슷해서 지도에서 헷갈릴 수 있어요.',
+    ].filter(Boolean).join(' '))
+  }
 
   return (
     <main className="page page-wide">
@@ -125,14 +137,21 @@ export function SiteSettingsPage() {
         </Field>
         <fieldset className="swatches" aria-label="기관 색">
           <legend className="field-label">기관 색</legend>
-          {(Object.keys(COLORS) as SiteColor[]).map((c) => (
+          {(Object.keys(COLORS) as PresetColor[]).map((c) => (
             <label key={c} className="swatch" style={{ background: COLORS[c].primary }} title={COLORS[c].name}>
-              <input type="radio" name="color" checked={form.color === c} onChange={() => set({ color: c })}
+              <input type="radio" name="color" checked={form.color === c} onChange={() => { set({ color: c }); setColorNote('') }}
                 aria-label={COLORS[c].name} />
               {form.color === c && <Check size={20} color="#fff" />}
             </label>
           ))}
+          {/* 직접 고르기: 흰 글자가 안 보이면 같은 색조로 진하게 맞춘다. 고르는 도중 색판이 튀지 않게 입력칸은 제어하지 않는다 */}
+          <label className={custom ? 'swatch swatch-custom swatch-custom-on' : 'swatch swatch-custom'}
+            style={custom ? { background: form.color } : undefined} title="직접 고르기">
+            <input type="color" aria-label="직접 고르기" defaultValue={custom ? form.color : '#4F46E5'} onChange={(e) => pickCustom(e.target.value)} />
+            {custom ? <Check size={20} color="#fff" /> : <Pipette size={18} />}
+          </label>
         </fieldset>
+        {colorNote && <p className="hint">{colorNote}</p>}
         <button className="button button-primary">저장</button>
       </form>
 

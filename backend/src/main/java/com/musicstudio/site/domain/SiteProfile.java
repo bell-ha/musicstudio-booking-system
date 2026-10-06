@@ -5,8 +5,6 @@ import java.time.Instant;
 import org.hibernate.annotations.DynamicUpdate;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 
 /**
@@ -35,8 +33,8 @@ public class SiteProfile {
 
     private String hoursText = "";
 
-    @Enumerated(EnumType.STRING)
-    private SiteColor color = SiteColor.INDIGO;
+    /** 프리셋 키(INDIGO 등) 또는 #RRGGBB. SiteColors가 정규화·대비를 확인한 값만 들어온다 */
+    private String color = SiteColors.DEFAULT;
 
     private Instant updatedAt;
 
@@ -48,7 +46,7 @@ public class SiteProfile {
         this.organizationId = organizationId;
     }
 
-    public void describe(String intro, String address, String phone, String hoursText, SiteColor color, Instant now) {
+    public void describe(String intro, String address, String phone, String hoursText, String color, Instant now) {
         this.intro = intro;
         this.address = address;
         this.phone = phone;
@@ -96,7 +94,7 @@ public class SiteProfile {
         return hoursText;
     }
 
-    public SiteColor getColor() {
+    public String getColor() {
         return color;
     }
 }

@@ -24,7 +24,6 @@ import com.musicstudio.site.application.NoticeService;
 import com.musicstudio.site.application.SiteService;
 import com.musicstudio.site.domain.Notice;
 import com.musicstudio.site.domain.NoticeVisibility;
-import com.musicstudio.site.domain.SiteColor;
 import com.musicstudio.site.domain.SiteProfile;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -131,7 +130,7 @@ class SiteController {
 
     record DescribeRequest(@Size(max = 2000) String intro, @Size(max = 200) String address,
                            @Size(max = 30) String phone, @Size(max = 200) String hoursText,
-                           @NotNull SiteColor color) {
+                           @NotBlank String color) {
     }
 
     record PublishRequest(String slug, @NotNull Boolean published, @NotNull Boolean acceptJoin) {
@@ -145,7 +144,7 @@ class SiteController {
      * 그 밖의 역할에게는 null이다.
      */
     record SiteResponse(String logoUrl, String intro, String address, String phone, String hoursText,
-                        SiteColor color, Boolean published, String slug, Boolean acceptJoin) {
+                        String color, Boolean published, String slug, Boolean acceptJoin) {
 
         static SiteResponse of(SiteService.Site site, MembershipRole role) {
             SiteProfile p = site.profile();

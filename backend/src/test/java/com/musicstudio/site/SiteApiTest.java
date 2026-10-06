@@ -84,8 +84,13 @@ class SiteApiTest {
     }
 
     @Test
-    void 목록_밖의_색은_400() throws Exception {
-        api.call(owner, HttpMethod.PUT, path("/site"), describe("GREEN")).andExpect(status().isBadRequest());
+    void 기관_색은_키나_진한_색만() throws Exception {
+        api.call(owner, HttpMethod.PUT, path("/site"), describe("GREEN"))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_COLOR"));
+        api.call(owner, HttpMethod.PUT, path("/site"), describe("#ffd400"))
+                .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("COLOR_TOO_LIGHT"));
+        api.call(owner, HttpMethod.PUT, path("/site"), describe("#7c2d12"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.color").value("#7C2D12"));
     }
 
     /**

@@ -28,7 +28,6 @@ import com.musicstudio.organization.domain.OrganizationType;
 import com.musicstudio.site.application.PublicSiteService;
 import com.musicstudio.site.application.SiteService;
 import com.musicstudio.site.domain.Notice;
-import com.musicstudio.site.domain.SiteColor;
 import com.musicstudio.site.domain.SiteLogo;
 import com.musicstudio.site.domain.SiteProfile;
 
@@ -87,7 +86,7 @@ class PublicSiteController {
     }
 
     record PublicSiteResponse(String name, OrganizationType type, String logoUrl, String intro, String address,
-                              String phone, String hoursText, SiteColor color, List<PublicNotice> notices,
+                              String phone, String hoursText, String color, List<PublicNotice> notices,
                               Join join) {
 
         static PublicSiteResponse of(PublicSiteService.PublicSite s) {

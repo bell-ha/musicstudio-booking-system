@@ -120,7 +120,7 @@ R1·R2는 애플리케이션 검사에서 걸리든 DB 배타 제약(SQLSTATE `2
 | # | 메서드 | 경로 | 권한 | UC | 비고 |
 |---|---|---|---|---|---|
 | 37 | GET | /site | 멤버 | 10, 12 | 로고 URL, 소개, 주소, 대표 번호, 운영 안내, 색. M 이상에게 `published`·`slug`(읽기 전용), O에게 `acceptJoin` |
-| 38 | PUT | /site | M | 10 | 소개, 주소, 대표 번호, 운영 안내, 색(6색 키). 400 `INVALID_COLOR` |
+| 38 | PUT | /site | M | 10 | 소개, 주소, 대표 번호, 운영 안내, 색(6색 키 또는 `#RRGGBB`). 400 `INVALID_COLOR`, 422 `COLOR_TOO_LIGHT`(흰 글자 대비 4.5:1 미만) |
 | 39 | PUT | /site/publishing | O | 10 | `slug`, `published`, `acceptJoin`. 400 `INVALID_SLUG`·`SLUG_RESERVED`, 409 `SLUG_TAKEN`, 422 `SLUG_REQUIRED` |
 | 40 | PUT | /site/logo | M | 10 | 본문 = 이미지 바이트. 413(200KB 초과), 415(형식), 400 `INVALID_IMAGE`(매직 바이트 불일치) → `{logoUrl}` |
 | 41 | DELETE | /site/logo | M | 10 | 204 |

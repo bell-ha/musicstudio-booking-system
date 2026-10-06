@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.musicstudio.common.error.ApiException;
-import com.musicstudio.site.domain.SiteColor;
+import com.musicstudio.site.domain.SiteColors;
 import com.musicstudio.site.domain.SiteLogo;
 import com.musicstudio.site.domain.SiteLogoRepository;
 import com.musicstudio.site.domain.SiteProfile;
@@ -48,7 +48,12 @@ public class SiteService {
     }
 
     @Transactional
-    public Site describe(long orgId, String intro, String address, String phone, String hoursText, SiteColor color) {
+    public Site describe(long orgId, String intro, String address, String phone, String hoursText, String rawColor) {
+        String color = SiteColors.normalize(rawColor)
+                .orElseThrow(() -> ApiException.invalid("INVALID_COLOR", "기관 색은 목록의 색이나 #RRGGBB 형식으로 골라 주세요"));
+        if (!SiteColors.readableWithWhite(color)) {
+            throw ApiException.policyViolation("COLOR_TOO_LIGHT", "흰 글자가 잘 보이지 않는 밝은 색이에요. 조금 더 진한 색을 골라 주세요");
+        }
         SiteProfile profile = profiles.findById(orgId).orElseGet(() -> new SiteProfile(orgId));
         profile.describe(intro, address, phone, hoursText, color, clock.instant());
         return new Site(saveProfile(profile), logos.findKey(orgId));
