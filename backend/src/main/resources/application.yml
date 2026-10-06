@@ -23,6 +23,12 @@ app:
     secret: ${JWT_SECRET:}
     # 갱신 토큰은 MVP에 없으므로 접근 토큰을 12시간 동안 쓴다.
     ttl: 12h
+  social:
+    # 비어 있으면 구글 로그인을 끈다. 값은 Google Cloud Console의 OAuth 클라이언트(웹)에서 받는다.
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
+      client-secret: ${GOOGLE_CLIENT_SECRET:}
+      allowed-redirect-uris: ${GOOGLE_REDIRECT_URIS:http://localhost:5173/auth/callback/google}
 
 management:
   endpoints:

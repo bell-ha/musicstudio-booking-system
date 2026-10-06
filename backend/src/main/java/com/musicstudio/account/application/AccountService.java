@@ -46,7 +46,7 @@ public class AccountService {
     public AccessTokens.Issued login(String email, String password) {
         // 이메일이 없는 경우와 비밀번호가 틀린 경우를 같은 응답으로 단순화한다.
         return accounts.findByEmail(email.trim().toLowerCase(Locale.ROOT))
-                .filter(a -> passwordEncoder.matches(password, a.getPasswordHash()))
+                .filter(a -> a.getPasswordHash() != null && passwordEncoder.matches(password, a.getPasswordHash()))
                 .map(a -> accessTokens.issue(a.getId()))
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "invalid-credentials",
                         "INVALID_CREDENTIALS", "이메일 또는 비밀번호가 맞지 않습니다"));
