@@ -58,17 +58,48 @@ def join(name, role):
 teacher_email, teacher, teacher_id = join("박강사", "TEACHER")
 student_email, student, student_member_id = join("이학생", "STUDENT")
 
-# ---------- 연습실: 방 5개, 1층 평면도 ----------
-rooms = [call("POST", O + "/practice/rooms", {"name": n, "equipment": eq}, owner)
-         for n, eq in [("A101", ["업라이트 피아노"]), ("A102", ["업라이트 피아노"]), ("A103", ["그랜드 피아노"]),
-                       ("A104", ["드럼"]), ("A105", ["앰프", "마이크"])]]
-floor = call("POST", O + "/practice/floors", {"name": "1층", "width": 12, "height": 7}, owner)
-corridor = [[x, 3] for x in range(12)]
-walls = [[x, 0] for x in range(12)] + [[x, 6] for x in range(12)]
-placements = [{"id": r["id"], "x": 1 + i * 2, "y": 1, "w": 2, "h": 2} for i, r in enumerate(rooms[:4])]
-placements.append({"id": rooms[4]["id"], "x": 1, "y": 4, "w": 3, "h": 2})
+# ---------- 연습실: v1처럼 벽과 복도로 건물을 그리고 그 안에 방 9개 ----------
+# 30×16 격자. 바깥벽, 가운데 복도(2줄), 위쪽 방 5개와 아래쪽 방 4개, 방 사이 벽, 방마다 복도 쪽 문.
+W, H = 30, 16
+TOP = (1, 5)       # 위쪽 방: y 1~5
+BOTTOM = (10, 14)  # 아래쪽 방: y 10~14
+cells = {}
+for x in range(W):
+    cells[(x, 0)] = cells[(x, H - 1)] = "wall"
+for y in range(H):
+    cells[(0, y)] = cells[(W - 1, y)] = "wall"
+for x in range(1, W - 1):
+    cells[(x, 6)] = cells[(x, 9)] = "wall"          # 방과 복도 사이 벽
+    cells[(x, 7)] = cells[(x, 8)] = "corridor"      # 복도
+top_rooms = [(1 + i * 5, 4) for i in range(5)]       # (x, 너비)
+bottom_rooms = [(1 + i * 6, 5) for i in range(4)]
+for x, w in top_rooms:
+    if x + w < W - 1:
+        for y in range(TOP[0], TOP[1] + 1):
+            cells[(x + w, y)] = "wall"               # 옆 방과의 벽
+    cells[(x + w // 2, 6)] = "corridor"              # 문
+for x, w in bottom_rooms:
+    if x + w < W - 1:
+        for y in range(BOTTOM[0], BOTTOM[1] + 1):
+            cells[(x + w, y)] = "wall"
+    cells[(x + w // 2, 9)] = "corridor"
+# 오른쪽 아래 계단실 (v1 평면도처럼 대각선)
+for i in range(4):
+    cells[(25 + i, 10 + i)] = "wall"
+
+names = [("A101", ["업라이트 피아노"]), ("A102", ["업라이트 피아노"]), ("A103", ["그랜드 피아노"]),
+         ("A104", ["드럼"]), ("A105", ["앰프", "마이크"]), ("B101", ["업라이트 피아노"]),
+         ("B102", ["업라이트 피아노"]), ("B103", ["전자 피아노"]), ("B104", ["기타 앰프"])]
+rooms = [call("POST", O + "/practice/rooms", {"name": n, "equipment": eq}, owner) for n, eq in names]
+spots = [{"x": x, "y": TOP[0], "w": w, "h": TOP[1] - TOP[0] + 1} for x, w in top_rooms] \
+    + [{"x": x, "y": BOTTOM[0], "w": w, "h": BOTTOM[1] - BOTTOM[0] + 1} for x, w in bottom_rooms]
+placements = [{"id": r["id"], **s} for r, s in zip(rooms, spots)]
+floor = call("POST", O + "/practice/floors", {"name": "1층", "width": W, "height": H}, owner)
 call("PUT", O + f"/practice/floors/{floor['id']}",
-     {"name": "1층", "sortOrder": 0, "layout": {"width": 12, "height": 7, "walls": walls, "corridors": corridor},
+     {"name": "1층", "sortOrder": 0,
+      "layout": {"width": W, "height": H,
+                 "walls": [[x, y] for (x, y), t in cells.items() if t == "wall"],
+                 "corridors": [[x, y] for (x, y), t in cells.items() if t == "corridor"]},
       "rooms": placements}, owner, {"If-Match": '"0"'})
 
 # 내일 14:00~15:30 A101 예약 (학생)

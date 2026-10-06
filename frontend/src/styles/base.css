@@ -161,10 +161,11 @@ a { color: var(--primary); }
 .tab[aria-checked='true'] { color: var(--primary); border-bottom-color: var(--primary); }
 .badge-unavailable { background: var(--unavailable); }
 
-/* 평면도 (DESIGN 4·5절): 화면 너비에 맞추되 칸이 44px보다 작아지면 좌우로 밀어서 본다 */
+/* 평면도 (DESIGN 4·5절): 화면 너비에 맞추고, 칸이 12px보다 작아지면 좌우로 밀어서 본다.
+   지도에서 누르는 것은 칸이 아니라 여러 칸짜리 방이라, 방이 44px 이상이면 된다 (v1도 30×30 격자를 20px 칸으로 그렸다) */
 .floor-scroll { overflow-x: auto; margin: var(--space-4) 0; }
 .floor {
-  --cell: clamp(44px, calc((min(100vw, 960px) - 32px) / var(--cols)), 64px);
+  --cell: clamp(12px, calc((min(100vw, 960px) - 32px) / var(--cols)), 64px);
   display: grid;
   grid-template-columns: repeat(var(--cols), var(--cell));
   grid-template-rows: repeat(var(--rows), var(--cell));
@@ -179,18 +180,22 @@ a { color: var(--primary); }
     linear-gradient(to bottom, var(--hairline) 1px, transparent 1px);
   background-size: var(--cell) var(--cell);
   cursor: crosshair;
-  touch-action: manipulation;
+  /* 끌어서 그리는 동안 화면이 스크롤되지 않게 한다 */
+  touch-action: none;
+  user-select: none;
+  /* 편집기는 칸이 많아도(30×20 등) 한 화면에 보이도록 작게 둔다. 누르는 대상이 방이 아니라 칸이라 44px 기준을 따르지 않는다 */
+  --cell: clamp(20px, calc((min(100vw, 960px) - 32px) / var(--cols)), 48px);
 }
 .floor-wall { background: var(--wall); }
 .floor-corridor { background: var(--surface-soft); border: 1px dashed var(--wall); }
-.floor-highlight { background: var(--primary-tint); outline: 2px solid var(--primary); outline-offset: -2px; }
+.floor-preview { background: var(--primary-tint); border: 2px dashed var(--primary); border-radius: var(--rounded-sm); pointer-events: none; }
+.floor-preview-invalid { background: var(--unavailable); border-color: var(--error); }
+.floor-editing .floor-room { min-width: 0; min-height: 0; }
 .floor-room {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  min-width: 44px;
-  min-height: 44px;
   margin: 2px;
   padding: var(--space-1);
   font: var(--text-caption);
@@ -199,6 +204,7 @@ a { color: var(--primary); }
   border: 1px solid var(--hairline);
   border-radius: var(--rounded-sm);
   text-align: center;
+  word-break: keep-all; /* 좁은 방에서 "비어 있음"을 글자 중간이 아니라 띄어쓰기에서 줄바꿈 */
   overflow: hidden;
 }
 .room-edit { border-color: var(--ink); font-weight: 600; pointer-events: none; }
