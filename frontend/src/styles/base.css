@@ -163,10 +163,11 @@ a { color: var(--primary); }
 
 /* 평면도 (DESIGN 4·5절): 화면 너비에 맞춘다(여백 16px×2, 테두리 1px×2를 뺀 폭).
    지도에서 누르는 것은 칸이 아니라 여러 칸짜리 방이라, 가장 작은 방이 44px 이상이 되는 칸 크기(--cell-min,
-   FloorGrid가 계산)를 하한으로 둔다. 그보다 좁으면 좌우로 밀어서 본다. v1도 30×30 격자를 20px 칸으로 그렸다 */
+   FloorGrid가 계산)를 하한으로 둔다. 그보다 좁으면 좌우로 밀어서 본다.
+   칸은 v1처럼 촘촘하게: v1은 30×30 격자를 20px 칸으로 그렸다. 지도는 4×2 방이 44px가 되는 24px, 편집기는 20px가 상한 */
 .floor-scroll { overflow-x: auto; margin: var(--space-4) 0; }
 .floor {
-  --cell: clamp(var(--cell-min, 12px), calc((min(100vw, 960px) - 34px) / var(--cols)), 64px);
+  --cell: clamp(var(--cell-min, 12px), calc((min(100vw, 960px) - 34px) / var(--cols)), 24px);
   display: grid;
   grid-template-columns: repeat(var(--cols), var(--cell));
   grid-template-rows: repeat(var(--rows), var(--cell));
@@ -177,16 +178,19 @@ a { color: var(--primary); }
 }
 .floor-editing {
   background-image:
+    linear-gradient(to right, var(--wall) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--wall) 1px, transparent 1px),
     linear-gradient(to right, var(--hairline) 1px, transparent 1px),
     linear-gradient(to bottom, var(--hairline) 1px, transparent 1px);
-  background-size: var(--cell) var(--cell);
+  /* v1처럼 5칸마다 굵은 선: 칸 수를 세기 쉽다 */
+  background-size: calc(var(--cell) * 5) calc(var(--cell) * 5), calc(var(--cell) * 5) calc(var(--cell) * 5), var(--cell) var(--cell), var(--cell) var(--cell);
   cursor: crosshair;
   /* 끌어서 그리는 동안 화면이 스크롤되지 않게 한다 */
   touch-action: none;
   user-select: none;
-  /* 편집기는 칸이 많아도(30×20 등) 한 화면에 들어오게 화면 폭에 맞춘다. 그리는 동안은 밀어서 볼 수 없으므로(touch-action: none)
+  /* 편집기는 칸이 많아도(30×30 등) 한 화면에 들어오게 화면 폭에 맞춘다. 그리는 동안은 밀어서 볼 수 없으므로(touch-action: none)
      휴대폰에서는 칸이 작아진다. 넓은 화면을 권하는 안내를 띄운다 */
-  --cell: clamp(8px, calc((min(100vw, 960px) - 34px) / var(--cols)), 48px);
+  --cell: clamp(8px, calc((min(100vw, 960px) - 34px) / var(--cols)), 20px);
 }
 .floor-wall { background: var(--wall); }
 .floor-corridor { background: var(--surface-soft); border: 1px dashed var(--wall); }
@@ -220,6 +224,8 @@ a { color: var(--primary); }
 /* 지도 방 타일: 상태는 색과 글자를 함께 쓴다 (DESIGN 2절) */
 .floor-room span { font: var(--text-caption); color: var(--muted); }
 button.floor-room { cursor: pointer; }
+.floor-room-compact { padding: 0; }
+.floor-room-compact span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .room-available { border: 2px solid var(--free); background: var(--free-tint); }
 .room-available span { color: var(--ink); }
 .room-booked { background: var(--booked); }

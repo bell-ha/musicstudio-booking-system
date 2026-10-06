@@ -391,7 +391,7 @@ export function FloorEditorPage() {
             <input id="width" name="width" type="number" min={1} max={100} defaultValue={30} required />
           </Field>
           <Field id="height" label="세로 칸">
-            <input id="height" name="height" type="number" min={1} max={100} defaultValue={20} required />
+            <input id="height" name="height" type="number" min={1} max={100} defaultValue={30} required />
           </Field>
         </div>
         <button className="button">층 추가</button>
