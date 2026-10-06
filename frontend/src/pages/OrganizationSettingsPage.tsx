@@ -10,6 +10,7 @@ import { NotMember } from './OrganizationHomePage'
 const MODULES = [
   { key: 'PRACTICE_ROOM', title: '연습실', meta: '평면도, 방, 예약 정책, 지도에서 예약' },
   { key: 'ACADEMY', title: '학원 관리', meta: '원생, 수강, 레슨 일정·출결, 레슨 기록' },
+  { key: 'BILLING', title: '청구·결제', meta: '청구서, 입금·환불 기록, 미납, 영수증 (학원 관리 필요)' },
 ] as const
 
 /**
@@ -48,7 +49,9 @@ export function OrganizationSettingsPage() {
 
   function toggle(key: string, on: boolean) {
     if (!on && !window.confirm('이 기능을 끌까요? 메뉴와 화면에서 사라지지만 데이터는 남아 있고, 다시 켜면 그대로 돌아와요.')) return
-    setModules(on ? [...shownModules, key] : shownModules.filter((m) => m !== key))
+    // 청구는 원생·수강에 붙어서 학원 관리 없이 켤 수 없다. 학원 관리를 끄면 청구·결제도 같이 끈다 (서버는 422)
+    const next = on ? [...shownModules, key] : shownModules.filter((m) => m !== key && !(key === 'ACADEMY' && m === 'BILLING'))
+    setModules(next)
   }
 
   return (
@@ -77,7 +80,7 @@ export function OrganizationSettingsPage() {
                 </span>
               </div>
               <button type="button" role="switch" aria-checked={on} aria-label={`${m.title} 쓰기`} className="switch"
-                onClick={() => toggle(m.key, !on)}>
+                disabled={m.key === 'BILLING' && !shownModules.includes('ACADEMY')} onClick={() => toggle(m.key, !on)}>
                 <span className="switch-knob" />
               </button>
             </li>

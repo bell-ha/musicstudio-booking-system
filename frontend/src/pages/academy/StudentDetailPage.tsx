@@ -9,6 +9,7 @@ import { isManager, type Role } from '../../labels'
 import { dateLabel, todayIn, zonedIso, zoneOf } from '../../practice/time'
 import { conflictText, slotSummary } from '../../academy/lessons'
 import { ScheduleEditor } from '../../academy/ScheduleEditor'
+import { StudentInvoices } from '../../billing/StudentInvoices'
 import { useMyOrganization } from '../../useMyOrganization'
 import { NotMember } from '../OrganizationHomePage'
 
@@ -302,6 +303,8 @@ export function StudentDetailPage() {
       ) : (
         <button className="button button-primary button-block" onClick={() => setOpen('enroll')}>수강 등록</button>
       ))}
+
+      {manager && me.modules.includes('BILLING') && <StudentInvoices orgId={orgId!} studentId={student.id} today={today} />}
 
       <h2 className="section-title">이력</h2>
       <Timeline enrollments={enrollments} records={records} renderRecordActions={(r) => r.mine && (

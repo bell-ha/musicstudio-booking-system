@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { ChevronRight, Clock, MapPin, Megaphone, Phone, Pin } from 'lucide-react'
 import { Link, useParams } from 'react-router'
-import { ROLE_LABEL, TYPE_LABEL } from '../labels'
+import { isManager, ROLE_LABEL, TYPE_LABEL } from '../labels'
 import { orgMenu } from '../orgMenu'
 import { api } from '../api'
 import { useOrgSite } from '../orgSite'
 import { TodayLessons } from '../academy/TodayLessons'
+import { BillingSummary } from '../billing/BillingSummary'
 import { OrgHeader } from '../site/OrgHeader'
 import { dateOf, type Notice } from '../site/site'
 import { useMyOrganization } from '../useMyOrganization'
@@ -53,6 +54,7 @@ export function OrganizationHomePage() {
       )}
 
       {org.role !== 'STUDENT' && org.modules.includes('ACADEMY') && <TodayLessons org={org} />}
+      {isManager(org.role) && org.modules.includes('BILLING') && <BillingSummary orgId={String(org.organizationId)} />}
 
       <section>
         <h2 className="group-title">공지</h2>

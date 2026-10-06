@@ -11,6 +11,8 @@ import { MembersPage } from './pages/MembersPage'
 import { NewOrganizationPage } from './pages/NewOrganizationPage'
 import { OrganizationHomePage } from './pages/OrganizationHomePage'
 import { OrganizationSettingsPage } from './pages/OrganizationSettingsPage'
+import { BillingPage } from './pages/billing/BillingPage'
+import { ReceiptPage } from './pages/billing/ReceiptPage'
 import { CatalogPage } from './pages/academy/CatalogPage'
 import { MyLessonsPage } from './pages/academy/MyLessonsPage'
 import { SchedulePage } from './pages/academy/SchedulePage'
@@ -52,6 +54,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="join-code" element={<JoinCodePage />} />
           <Route path="notices" element={<NoticesPage />} />
           <Route path="settings" element={<OrganizationSettingsPage />} />
+          <Route path="billing" element={<BillingPage />} />
+          <Route path="billing/receipts/:paymentId" element={<ReceiptPage />} />
           <Route path="site" element={<SiteSettingsPage />} />
           <Route path="academy/catalog" element={<CatalogPage />} />
           <Route path="academy/students" element={<StudentsPage />} />

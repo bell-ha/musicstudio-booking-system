@@ -5,6 +5,13 @@ import { STATUS_LABEL } from '../../academy/format'
 import { Timeline } from '../../academy/Timeline'
 import { addDays, localTime, SESSION_LABEL, slotSummary } from '../../academy/lessons'
 import type { Session, StudentDetail } from '../../academy/types'
+import { won } from '../../academy/format'
+import { STATE_LABEL, type InvoiceState } from '../../billing/types'
+
+type MyInvoice = {
+  id: number; title: string; amount: number; paid: number; balance: number; dueDate: string; state: InvoiceState; overdue: boolean
+  payments: { kind: 'PAYMENT' | 'REFUND'; method: string; amount: number; paidOn: string }[]
+}
 import { dateLabel, todayIn, zoneOf } from '../../practice/time'
 import { useMyOrganization } from '../../useMyOrganization'
 import { NotMember } from '../OrganizationHomePage'
@@ -17,6 +24,7 @@ export function MyLessonsPage() {
   const [message, setMessage] = useState('')
   const [sessions, setSessions] = useState<Session[]>([])
   const [loadedAt, setLoadedAt] = useState(0)
+  const [invoices, setInvoices] = useState<MyInvoice[]>([])
   const tz = zoneOf(me?.timezone)
 
   useEffect(() => {
@@ -30,6 +38,10 @@ export function MyLessonsPage() {
     const today = todayIn(zoneOf(me.timezone))
     api<Session[]>(`/organizations/${orgId}/academy/students/me/sessions?from=${addDays(today, -14)}&to=${addDays(today, 27)}`)
       .then((list) => { setLoadedAt(Date.now()); setSessions(list) }).catch(() => setSessions([]))
+    // UC-64: 학원이 수납을 쓰면 내 청구서와 납부 내역
+    if (me.modules.includes('BILLING')) {
+      api<MyInvoice[]>(`/organizations/${orgId}/billing/me/invoices`).then(setInvoices).catch(() => setInvoices([]))
+    }
   }, [me, orgId])
 
   if (me === undefined) return <main className="page" />
@@ -79,6 +91,24 @@ export function MyLessonsPage() {
               </>
             )
           })()}
+          {invoices.length > 0 && (
+            <>
+              <h2 className="group-title">청구서</h2>
+              <ul className="group">
+                {invoices.map((i) => (
+                  <li key={i.id} className="row row-compact">
+                    <span className="row-text">
+                      <span className="row-title">{i.title} <span className={i.overdue ? 'badge badge-warning' : i.state === 'PAID' ? 'badge badge-done' : 'badge'}>
+                        {i.overdue ? '기한 지남' : STATE_LABEL[i.state]}</span></span>
+                      <span className="row-meta tnum">기한 {dateLabel(i.dueDate)} · 청구 {won(i.amount)}
+                        {i.payments.length > 0 && ` · 납부 ${i.payments.map((p) => `${dateLabel(p.paidOn)} ${p.kind === 'REFUND' ? '환불 ' : ''}${won(p.amount)}`).join(', ')}`}</span>
+                    </span>
+                    <span className="row-amount tnum">{i.balance > 0 ? won(i.balance) : ''}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
           <h2 className="section-title">레슨 기록</h2>
           <Timeline enrollments={detail.enrollments} records={detail.records} />
         </>
