@@ -42,6 +42,11 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+// Docker 이미지가 이 이름으로 jar를 찾는다. 버전 문자열이 바뀌어도 깨지지 않게 고정한다.
+tasks.bootJar {
+    archiveFileName = "app.jar"
+}
+
 tasks.test {
     useJUnitPlatform { excludeTags("experiment") }
 }

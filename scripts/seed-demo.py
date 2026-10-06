@@ -43,7 +43,7 @@ def user(name, role):
 
 
 owner_email, owner = user("김원장", "owner")
-org = call("POST", "/organizations", {"name": "하모니 음악학원", "type": "ACADEMY", "timezone": "Asia/Seoul"}, owner)
+org = call("POST", "/organizations", {"name": f"하모니 음악학원 {SUFFIX}", "type": "ACADEMY", "timezone": "Asia/Seoul"}, owner)
 O = f"/organizations/{org['id']}"
 
 
@@ -105,6 +105,6 @@ print(f"""
   강사  {teacher_email}
   학생  {student_email}
 
-학원: 하모니 음악학원 (가입 코드: {call('GET', O + '/join-code', token=owner)['joinCode']})
+학원: 하모니 음악학원 {SUFFIX} (가입 코드: {call('GET', O + '/join-code', token=owner)['joinCode']})
 내일 A101 14:00~15:30에 학생 예약이 있고, 이학생 수강은 곧 끝납니다(만료 임박).
 """)

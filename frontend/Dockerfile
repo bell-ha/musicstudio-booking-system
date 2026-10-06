@@ -12,5 +12,6 @@ RUN npm run build
 # 실행 단계: Nginx가 정적 파일을 주고 /api는 백엔드로 넘긴다 (ADR 0012).
 FROM nginx:1.29-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY --from=build /src/dist /usr/share/nginx/html
 EXPOSE 80
