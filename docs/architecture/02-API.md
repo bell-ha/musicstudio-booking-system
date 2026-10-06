@@ -70,7 +70,7 @@ R1·R2는 애플리케이션 검사에서 걸리든 DB 배타 제약(SQLSTATE `2
 | 2 | POST | /api/v1/auth/login | 누구나 | 01 | 접근 토큰 |
 | 3 | GET | /api/v1/me/organizations | 로그인 | 09 | 내 기관, 역할, 상태(대기 포함), 켜진 모듈 |
 | 4 | POST | /api/v1/organizations | 로그인 | 02 | 만든 사람이 소유자. 연습실이 켜지면 기본 정책을 채운다 |
-| 5 | PATCH | /organizations/{orgId} | O | 03 | 이름, 시간대, `modules` |
+| 5 | PATCH | /organizations/{orgId} | O | 03 | 이름, `modules`. 시간대는 바꾸지 않는다(이미 잡힌 예약·회차의 현지 날짜가 어긋난다). 모듈을 꺼도 데이터는 남는다 |
 | 6 | PATCH | /join-code | M | 06 | `enabled`, `joinForm` (신청 때 받을 항목) |
 | 7 | POST | /join-code/regenerate | M | 06 | 새 코드. 이전 코드 무효 |
 | 8 | POST | /invitations | M (관리자 초대는 O) | 04 | 응답에만 링크 원문 |

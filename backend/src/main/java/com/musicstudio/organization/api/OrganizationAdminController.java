@@ -2,6 +2,7 @@ package com.musicstudio.organization.api;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.musicstudio.organization.application.JoinService;
+import com.musicstudio.organization.application.OrganizationService;
+import com.musicstudio.organization.domain.Module;
+import com.musicstudio.organization.domain.OrganizationType;
 import com.musicstudio.organization.application.MemberService;
 import com.musicstudio.organization.domain.JoinField;
 import com.musicstudio.organization.domain.MembershipRepository.MemberRow;
@@ -24,6 +28,7 @@ import com.musicstudio.organization.domain.MembershipStatus;
 import com.musicstudio.organization.domain.Organization;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -35,10 +40,21 @@ class OrganizationAdminController {
 
     private final JoinService joinService;
     private final MemberService memberService;
+    private final OrganizationService organizationService;
 
-    OrganizationAdminController(JoinService joinService, MemberService memberService) {
+    OrganizationAdminController(JoinService joinService, MemberService memberService,
+                                OrganizationService organizationService) {
         this.joinService = joinService;
         this.memberService = memberService;
+        this.organizationService = organizationService;
+    }
+
+    /** UC-03: 이름과 모듈. 시간대는 만들 때 정하고 바꾸지 않는다 (예약·회차의 현지 날짜가 어긋나서) */
+    @PatchMapping
+    @OrgRole(MembershipRole.OWNER)
+    SettingsResponse update(CurrentMember me, @Valid @RequestBody SettingsRequest request) {
+        Organization o = organizationService.update(me.organizationId(), request.name(), request.modules());
+        return new SettingsResponse(o.getId(), o.getName(), o.getType(), o.getTimezone(), o.getModules());
     }
 
     @GetMapping("/join-code")
@@ -80,6 +96,12 @@ class OrganizationAdminController {
                                 @RequestBody MemberChangeRequest request) {
         return MemberResponse.of(memberService.change(me.organizationId(), me.role(), membershipId,
                 request.role(), request.status()));
+    }
+
+    record SettingsRequest(@Size(max = 50) String name, Set<Module> modules) {
+    }
+
+    record SettingsResponse(Long id, String name, OrganizationType type, String timezone, Set<Module> modules) {
     }
 
     record JoinCodeRequest(Boolean enabled, List<JoinField> joinForm) {

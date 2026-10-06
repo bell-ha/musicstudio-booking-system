@@ -72,6 +72,19 @@ public class Organization {
         return timezone;
     }
 
+    /**
+     * UC-03. 이름과 모듈만 바꾼다. 모듈을 꺼도 데이터는 지우지 않는다(다시 켜면 그대로).
+     * 시간대는 바꾸지 않는다: 이미 만든 예약·회차의 현지 날짜(local_date)가 어긋난다.
+     */
+    public void update(String name, Set<Module> modules) {
+        if (name != null) {
+            this.name = name;
+        }
+        if (modules != null) {
+            this.modules = modules.stream().map(Enum::name).sorted().toArray(String[]::new);
+        }
+    }
+
     public Set<Module> getModules() {
         return Arrays.stream(modules).map(Module::valueOf)
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(Module.class)));

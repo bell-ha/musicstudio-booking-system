@@ -41,6 +41,17 @@ public class OrganizationService {
         return organization;
     }
 
+    /** UC-03 (소유자). 빼먹은 값은 그대로 둔다 */
+    @Transactional
+    public Organization update(long orgId, String name, Set<Module> modules) {
+        if (name != null && name.isBlank()) {
+            throw ApiException.invalid("INVALID_NAME", "기관 이름을 입력해 주세요");
+        }
+        Organization organization = organizations.findById(orgId).orElseThrow();
+        organization.update(name == null ? null : name.strip(), modules);
+        return organization;
+    }
+
     @Transactional(readOnly = true)
     public List<MembershipRepository.MyOrganization> myOrganizations(long userId) {
         return memberships.findMyOrganizations(userId);

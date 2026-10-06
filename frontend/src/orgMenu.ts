@@ -1,6 +1,6 @@
 import {
   BookOpen, CalendarCheck, CalendarDays, ClipboardList, DoorOpen, GraduationCap, KeyRound, Link2, Map, NotebookPen,
-  Megaphone, Palette, PencilRuler, SlidersHorizontal, Tags, Users, type LucideIcon,
+  Megaphone, Palette, Settings, PencilRuler, SlidersHorizontal, Tags, Users, type LucideIcon,
 } from 'lucide-react'
 import { isManager, type MyOrganization } from './labels'
 
@@ -55,6 +55,7 @@ export function orgMenu(org: MyOrganization): MenuGroup[] {
     ] : []),
   ] })
   if (manager) groups.push({ title: '기관 관리', items: [
+    ...(org.role === 'OWNER' ? [{ to: 'settings', title: '기관 설정', meta: '이름, 쓰는 기능(연습실·학원 관리)', icon: Settings }] : []),
     { to: 'site', title: '사이트 꾸미기', meta: '로고, 소개, 연락처, 기관 색, 공개 페이지', icon: Palette },
     { to: 'members', title: '멤버', meta: '가입 신청 승인, 역할 변경, 비활성화', icon: Users },
     { to: 'invite', title: '초대 링크', meta: '역할을 정해 한 번 쓰는 링크를 만들어요', icon: Link2 },

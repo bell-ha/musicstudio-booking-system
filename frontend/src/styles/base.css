@@ -527,3 +527,5 @@ button.floor-room { cursor: pointer; }
 }
 .day-chip-on { background: var(--primary); color: var(--on-primary); }
 .input-time { height: 40px; padding: 0 var(--space-3); border: none; border-radius: var(--rounded-sm); background: var(--canvas); font: var(--text-body); font-feature-settings: 'tnum'; }
+.room-row > .row { flex: 1; min-width: 0; }
+.group + .hint { margin-top: var(--space-2); padding: 0 var(--space-1); }

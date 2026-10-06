@@ -17,13 +17,14 @@ export function OrgLayout() {
   const { orgId } = useParams()
   const navigate = useNavigate()
   const [orgs, setOrgs] = useState<MyOrganization[]>()
+  const [orgVersion, setOrgVersion] = useState(0)
 
   const [site, setSite] = useState<Site>()
   const [siteVersion, setSiteVersion] = useState(0)
 
   useEffect(() => {
     api<MyOrganization[]>('/me/organizations').then(setOrgs).catch(() => setOrgs([]))
-  }, [orgId])
+  }, [orgId, orgVersion])
 
   useEffect(() => {
     api<Site>(`/organizations/${orgId}/site`).then(setSite).catch(() => setSite(undefined))
@@ -77,7 +78,7 @@ export function OrgLayout() {
           </nav>
         )}
         <div className="shell-main">
-          <Outlet context={{ site, reloadSite: () => setSiteVersion((v) => v + 1) } satisfies OrgOutlet} />
+          <Outlet context={{ site, reloadSite: () => setSiteVersion((v) => v + 1), reloadOrg: () => setOrgVersion((v) => v + 1) } satisfies OrgOutlet} />
         </div>
       </div>
 
