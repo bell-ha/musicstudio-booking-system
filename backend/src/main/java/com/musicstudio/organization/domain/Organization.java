@@ -1,8 +1,10 @@
 package com.musicstudio.organization.domain;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -34,6 +36,11 @@ public class Organization {
     private String[] modules;
 
     private String joinCode;
+
+    private boolean joinCodeEnabled = true;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<JoinField> joinForm = new ArrayList<>();
 
     private Instant createdAt;
 
@@ -72,5 +79,26 @@ public class Organization {
 
     public String getJoinCode() {
         return joinCode;
+    }
+
+    public boolean isJoinCodeEnabled() {
+        return joinCodeEnabled;
+    }
+
+    public List<JoinField> getJoinForm() {
+        return joinForm;
+    }
+
+    public void changeJoinCode(String joinCode) {
+        this.joinCode = joinCode;
+    }
+
+    public void configureJoinCode(Boolean enabled, List<JoinField> joinForm) {
+        if (enabled != null) {
+            this.joinCodeEnabled = enabled;
+        }
+        if (joinForm != null) {
+            this.joinForm = new ArrayList<>(joinForm);
+        }
     }
 }

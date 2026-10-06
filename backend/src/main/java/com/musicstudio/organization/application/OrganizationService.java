@@ -1,6 +1,5 @@
 package com.musicstudio.organization.application;
 
-import java.security.SecureRandom;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
@@ -9,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.musicstudio.common.error.ApiException;
+import com.musicstudio.organization.domain.JoinCodes;
 import com.musicstudio.organization.domain.Membership;
 import com.musicstudio.organization.domain.MembershipRepository;
 import com.musicstudio.organization.domain.Module;
@@ -18,10 +18,6 @@ import com.musicstudio.organization.domain.OrganizationType;
 
 @Service
 public class OrganizationService {
-
-    // 헷갈리는 글자(0, O, 1, I)를 뺐다. 8자리면 약 1조 가지라 충돌은 유니크 제약에 맡긴다.
-    private static final char[] CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final OrganizationRepository organizations;
     private final MembershipRepository memberships;
@@ -40,7 +36,7 @@ public class OrganizationService {
         }
         Set<Module> enabled = (modules == null || modules.isEmpty()) ? type.defaultModules() : modules;
         Organization organization = organizations.save(
-                new Organization(name.trim(), type, timezone, enabled, newJoinCode()));
+                new Organization(name.trim(), type, timezone, enabled, JoinCodes.next()));
         memberships.save(Membership.owner(organization.getId(), userId));
         return organization;
     }
@@ -48,13 +44,5 @@ public class OrganizationService {
     @Transactional(readOnly = true)
     public List<MembershipRepository.MyOrganization> myOrganizations(long userId) {
         return memberships.findMyOrganizations(userId);
-    }
-
-    private static String newJoinCode() {
-        char[] code = new char[8];
-        for (int i = 0; i < code.length; i++) {
-            code[i] = CODE_CHARS[RANDOM.nextInt(CODE_CHARS.length)];
-        }
-        return new String(code);
     }
 }
