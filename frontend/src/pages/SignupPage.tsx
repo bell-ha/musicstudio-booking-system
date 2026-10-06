@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { api, ApiError, errorMessage, fieldErrors, token } from '../api'
+import { takeReturnTo } from '../returnTo'
 import { Field } from '../Field'
+import { GoogleButton } from '../GoogleButton'
 
 export function SignupPage() {
   const navigate = useNavigate()
@@ -33,7 +35,7 @@ export function SignupPage() {
     try {
       const login = await api<{ accessToken: string }>('/auth/login', { method: 'POST', body: { email, password } })
       token.set(login.accessToken)
-      navigate('/', { replace: true })
+      navigate(takeReturnTo(), { replace: true })
     } catch {
       navigate('/login', { replace: true, state: { notice: '가입은 됐어요. 로그인해 주세요.' } })
     }
@@ -55,6 +57,7 @@ export function SignupPage() {
         {message && <p className="alert" role="alert">{message}</p>}
         <button className="button button-primary" disabled={submitting}>가입하기</button>
       </form>
+      <GoogleButton />
       <p className="helper">이미 계정이 있나요? <Link to="/login">로그인</Link></p>
     </main>
   )

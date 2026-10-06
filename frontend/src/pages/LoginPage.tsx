@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { api, ApiError, errorMessage, token } from '../api'
+import { takeReturnTo } from '../returnTo'
 import { Field } from '../Field'
+import { GoogleButton } from '../GoogleButton'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -20,7 +22,7 @@ export function LoginPage() {
         body: { email: form.get('email'), password: form.get('password') },
       })
       token.set(login.accessToken)
-      navigate('/', { replace: true })
+      navigate(takeReturnTo(), { replace: true })
     } catch (error) {
       setMessage(error instanceof ApiError && error.problem.status === 401
         ? '이메일이나 비밀번호가 맞지 않아요.'
@@ -44,6 +46,7 @@ export function LoginPage() {
         {message && <p className="alert" role="alert">{message}</p>}
         <button className="button button-primary" disabled={submitting}>로그인</button>
       </form>
+      <GoogleButton />
       <p className="helper">처음인가요? <Link to="/signup">가입하기</Link></p>
     </main>
   )

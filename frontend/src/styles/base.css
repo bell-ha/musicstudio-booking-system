@@ -63,6 +63,7 @@ a { color: var(--primary); }
 .button-primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 .button-primary:active { background: var(--primary-pressed); }
 .button:disabled { opacity: 0.6; cursor: default; }
+.button-block { display: flex; width: 100%; margin-top: var(--space-3); }
 
 .alert { font: var(--text-caption); color: var(--error); margin: 0; }
 .notice { margin: 0 0 var(--space-4); }
@@ -92,3 +93,48 @@ a { color: var(--primary); }
 .empty p { margin: 0 0 var(--space-4); }
 
 .helper { font: var(--text-caption); color: var(--muted); text-align: center; margin: var(--space-6) 0 0; }
+
+.section { margin-top: var(--space-6); }
+.card-link { display: block; text-decoration: none; color: inherit; }
+.card-link:active { background: var(--primary-tint); }
+
+.button-danger { color: var(--error); }
+
+.tabs { display: flex; gap: var(--space-1); margin-bottom: var(--space-4); overflow-x: auto; }
+.tab {
+  min-height: var(--touch);
+  padding: 0 var(--space-3);
+  font: var(--text-body-strong);
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab[aria-selected='true'] { color: var(--primary); border-bottom-color: var(--primary); }
+
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+
+.select,
+.input-readonly,
+.form-row input:not([type]) {
+  height: var(--touch);
+  padding: 0 var(--space-3);
+  font: var(--text-body);
+  color: var(--ink);
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-sm);
+}
+.input-readonly { width: 100%; margin-top: var(--space-3); }
+.form-row { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); }
+.form-row input:not([type]) { flex: 1; min-width: 0; }
+
+.check { display: flex; align-items: center; gap: var(--space-2); min-height: var(--touch); font: var(--text-body); color: var(--ink); }
+.check input { width: 20px; height: 20px; accent-color: var(--primary); }
+
+.fieldset { margin: 0; min-width: 0; } /* fieldset은 기본이 내용 너비라 좁은 화면에서 넘친다 */
+.fieldset legend { padding: 0 var(--space-1); }
+
+.join-code { font: var(--title-lg); color: var(--ink); letter-spacing: 0.1em; font-feature-settings: 'tnum'; margin: 0 0 var(--space-2); }
