@@ -51,7 +51,16 @@ export function FloorGrid({ width, height, walls, corridors, rooms, renderRoom, 
     if (!cell) return
     const k = `${cell[0]},${cell[1]}`
     if (phase === 'move' && k === last.current) return // 같은 칸 안에서 움직인 것은 무시
+    // 빠르게 끌면 이벤트 사이에 칸을 건너뛴다. 직전 칸과 지금 칸 사이를 선으로 채워 그린 선이 끊기지 않게 한다
+    const from = phase === 'move' && last.current ? last.current.split(',').map(Number) : null
     last.current = k
+    if (from) {
+      const steps = Math.max(Math.abs(cell[0] - from[0]), Math.abs(cell[1] - from[1]))
+      for (let i = 1; i < steps; i++) {
+        onCellPointer(Math.round(from[0] + ((cell[0] - from[0]) * i) / steps),
+          Math.round(from[1] + ((cell[1] - from[1]) * i) / steps), 'move')
+      }
+    }
     onCellPointer(cell[0], cell[1], phase)
   }
 
