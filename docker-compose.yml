@@ -1,8 +1,11 @@
-# 로컬 개발용 PostgreSQL이다. 애플리케이션 서비스는 아직 넣지 않는다.
-# 계정과 비밀번호는 개발용 값이다. 운영(RDS)에서는 쓰지 않는다.
+# 로컬 실행용 구성이다. 계정, 비밀번호, 키는 모두 개발용 값이다. 운영(EC2 + RDS)에서는 쓰지 않는다.
 #
-# 실행: docker compose up -d
-# 접속: psql -h localhost -U musicstudio musicstudio
+# 개발할 때 (DB만):        docker compose up -d
+#   백엔드는 ./gradlew bootRun, 프론트는 npm run dev로 따로 띄운다.
+# 전체를 컨테이너로:         docker compose --profile full up -d --build
+#   http://localhost:3000 에서 화면을 본다. Nginx가 정적 파일을 주고 /api는 백엔드로 넘긴다.
+#
+# DB 접속: psql -h localhost -U musicstudio musicstudio
 
 services:
   postgres:
@@ -21,6 +24,42 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
+
+  backend:
+    profiles: [full]
+    build: ./backend
+    image: musicstudio-v2-backend
+    container_name: musicstudio-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/musicstudio
+      SPRING_DATASOURCE_USERNAME: musicstudio
+      SPRING_DATASOURCE_PASSWORD: musicstudio
+      JWT_SECRET: local-dev-only-secret-change-me-0123456789          # 개발용 값
+      APP_CRYPTO_KEY: bG9jYWwtZGV2LW9ubHkta2V5LTAxMjM0NTY3ODlhYmM=     # 개발용 값 (base64 32바이트)
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080 && printf \"GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n\" >&3 && grep -q UP <&3'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+  frontend:
+    profiles: [full]
+    build:
+      context: ./frontend
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+    image: musicstudio-v2-frontend
+    container_name: musicstudio-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
