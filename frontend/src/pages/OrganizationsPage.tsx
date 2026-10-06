@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { ChevronRight, KeyRound, LogOut, Music, Plus } from 'lucide-react'
+import { ChevronRight, KeyRound, LogOut, Plus } from 'lucide-react'
+import { BrandMark } from '../BrandMark'
 import { Link, useNavigate } from 'react-router'
 import { api, errorMessage, token } from '../api'
 import { ROLE_LABEL, TYPE_LABEL, type MyOrganization } from '../labels'
@@ -24,7 +25,7 @@ export function OrganizationsPage() {
   return (
     <main className="page">
       <header className="app-bar">
-        <div className="brand brand-small" aria-hidden="true"><Music size={20} /></div>
+        <div className="brand-row"><BrandMark size={36} /><span className="brand-name">마디</span></div>
         <button type="button" className="shell-link" onClick={logout} aria-label="로그아웃" title="로그아웃"><LogOut size={20} /></button>
       </header>
       <h1>내 기관</h1>

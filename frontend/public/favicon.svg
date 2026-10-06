@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 마디(Madi): 두 세로줄(마디줄) 사이의 음표 하나 -->
+  <rect width="64" height="64" rx="15" fill="#4F46E5"/>
+  <rect x="12" y="15" width="4" height="34" rx="2" fill="#fff" opacity=".55"/>
+  <rect x="48" y="15" width="4" height="34" rx="2" fill="#fff" opacity=".55"/>
+  <rect x="34.5" y="17" width="3.6" height="23" rx="1.8" fill="#fff"/>
+  <path d="M36.3 17c4.2 1.4 7.6 4.6 7.6 9.2 -1.6-2.6-4.4-3.9-7.6-4.1z" fill="#fff"/>
+  <ellipse cx="30.4" cy="41" rx="7.2" ry="5.4" transform="rotate(-22 30.4 41)" fill="#fff"/>
+</svg>

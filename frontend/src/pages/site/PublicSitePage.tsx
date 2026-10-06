@@ -82,7 +82,7 @@ export function PublicSitePage() {
           </section>
         )}
 
-        <p className="helper">음악학원·연습실 운영 플랫폼에서 만든 페이지예요.</p>
+        <p className="helper">마디로 만든 페이지예요.</p>
       </main>
 
       {site.join.open && (

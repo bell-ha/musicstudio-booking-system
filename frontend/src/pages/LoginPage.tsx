@@ -1,4 +1,4 @@
-import { Music } from 'lucide-react'
+import { BrandMark } from '../BrandMark'
 import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { api, ApiError, errorMessage, token } from '../api'
@@ -35,9 +35,9 @@ export function LoginPage() {
 
   return (
     <main className="page page-auth">
-      <div className="brand" aria-hidden="true"><Music size={28} /></div>
+      <div className="brand"><BrandMark /></div>
       <h1>로그인</h1>
-      <p className="page-sub">다시 만나서 반가워요</p>
+      <p className="page-sub">마디에 다시 오신 걸 환영해요</p>
       {notice && <p className="notice">{notice}</p>}
       <form className="form" onSubmit={submit}>
         <Field id="email" label="이메일">

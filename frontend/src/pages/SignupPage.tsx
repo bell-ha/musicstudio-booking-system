@@ -1,4 +1,4 @@
-import { Music } from 'lucide-react'
+import { BrandMark } from '../BrandMark'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { api, ApiError, errorMessage, fieldErrors, token } from '../api'
@@ -44,9 +44,9 @@ export function SignupPage() {
 
   return (
     <main className="page page-auth">
-      <div className="brand" aria-hidden="true"><Music size={28} /></div>
+      <div className="brand"><BrandMark /></div>
       <h1>가입하기</h1>
-      <p className="page-sub">학원·연습실을 한곳에서</p>
+      <p className="page-sub">마디 — 연습실 예약부터 레슨·수납까지 한곳에서</p>
       <form className="form" onSubmit={submit} noValidate>
         <Field id="name" label="이름" error={errors.name}>
           <input id="name" name="name" autoComplete="name" required />
