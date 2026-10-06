@@ -141,7 +141,19 @@ public class JoinService {
 
     @Transactional
     public Applied apply(long userId, String code, Map<String, String> answers) {
-        Organization org = lookup(code);
+        return applyTo(lookup(code), userId, answers);
+    }
+
+    /**
+     * 가입 코드 없이 기관 ID로 신청한다. 공개 소개 페이지(UC-14)가 주소로 기관을 찾은 뒤 부른다.
+     * 그 입구가 열려 있는지(공개, 가입 받기, 가입 코드 사용 중)는 부르는 쪽이 확인한다.
+     */
+    @Transactional
+    public Applied applyToOrganization(long userId, long orgId, Map<String, String> answers) {
+        return applyTo(organizations.findById(orgId).orElseThrow(), userId, answers);
+    }
+
+    private Applied applyTo(Organization org, long userId, Map<String, String> answers) {
         Map<String, String> profile = validateAnswers(org.getJoinForm(), answers);
         Optional<Membership> existing = memberships.findByOrganizationIdAndUserId(org.getId(), userId);
         if (existing.isPresent()) {

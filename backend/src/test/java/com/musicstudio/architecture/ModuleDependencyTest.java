@@ -12,8 +12,8 @@ import com.tngtech.archunit.lang.ArchRule;
  *
  * <pre>
  * practice ──┐
- *            ├──▶ organization ──▶ account ──▶ common
- * academy ───┘
+ * academy ───┼──▶ organization ──▶ account ──▶ common
+ * site ──────┘
  * </pre>
  *
  * 아직 클래스가 없는 패키지가 있어서 allowEmptyShould(true)를 둔다.
@@ -37,14 +37,28 @@ class ModuleDependencyTest {
     static final ArchRule 기관은_기능_모듈에_의존하지_않는다 = noClasses()
             .that().resideInAPackage("com.musicstudio.organization..")
             .should().dependOnClassesThat().resideInAnyPackage(
+                    "com.musicstudio.practice..", "com.musicstudio.academy..", "com.musicstudio.site..")
+            .allowEmptyShould(true);
+
+    @ArchTest
+    static final ArchRule 사이트는_연습실과_학원관리에_의존하지_않는다 = noClasses()
+            .that().resideInAPackage("com.musicstudio.site..")
+            .should().dependOnClassesThat().resideInAnyPackage(
                     "com.musicstudio.practice..", "com.musicstudio.academy..")
+            .allowEmptyShould(true);
+
+    @ArchTest
+    static final ArchRule 연습실과_학원관리는_사이트에_의존하지_않는다 = noClasses()
+            .that().resideInAnyPackage("com.musicstudio.practice..", "com.musicstudio.academy..")
+            .should().dependOnClassesThat().resideInAPackage("com.musicstudio.site..")
             .allowEmptyShould(true);
 
     @ArchTest
     static final ArchRule 계정은_기관과_기능_모듈에_의존하지_않는다 = noClasses()
             .that().resideInAPackage("com.musicstudio.account..")
             .should().dependOnClassesThat().resideInAnyPackage(
-                    "com.musicstudio.organization..", "com.musicstudio.practice..", "com.musicstudio.academy..")
+                    "com.musicstudio.organization..", "com.musicstudio.practice..", "com.musicstudio.academy..",
+                    "com.musicstudio.site..")
             .allowEmptyShould(true);
 
     @ArchTest
@@ -52,7 +66,7 @@ class ModuleDependencyTest {
             .that().resideInAPackage("com.musicstudio.common..")
             .should().dependOnClassesThat().resideInAnyPackage(
                     "com.musicstudio.account..", "com.musicstudio.organization..",
-                    "com.musicstudio.practice..", "com.musicstudio.academy..")
+                    "com.musicstudio.practice..", "com.musicstudio.academy..", "com.musicstudio.site..")
             .allowEmptyShould(true);
 
     @ArchTest

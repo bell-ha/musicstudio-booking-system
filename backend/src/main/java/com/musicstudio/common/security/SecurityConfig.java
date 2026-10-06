@@ -40,7 +40,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**", "/actuator/health/**", "/error").permitAll()
+                        .requestMatchers("/api/v1/auth/**", "/api/v1/public/**", "/actuator/health/**", "/error").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(o -> o
                         .bearerTokenResolver(ignoringAuthPaths())
@@ -51,11 +51,13 @@ public class SecurityConfig {
     }
 
     /**
-     * 가입·로그인 요청에 남은(만료된) 토큰이 붙어 와도 401을 내지 않도록 그 경로에서는 토큰을 읽지 않는다.
+     * 가입·로그인과 공개 소개 페이지(로그인 없음) 요청에 남은(만료된) 토큰이 붙어 와도 401을 내지 않도록
+     * 그 경로에서는 토큰을 읽지 않는다.
      */
     private static BearerTokenResolver ignoringAuthPaths() {
         DefaultBearerTokenResolver resolver = new DefaultBearerTokenResolver();
-        return request -> request.getRequestURI().startsWith("/api/v1/auth/") ? null : resolver.resolve(request);
+        return request -> request.getRequestURI().startsWith("/api/v1/auth/")
+                || request.getRequestURI().startsWith("/api/v1/public/") ? null : resolver.resolve(request);
     }
 
     private AuthenticationEntryPoint unauthenticated() {
