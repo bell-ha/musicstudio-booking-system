@@ -37,6 +37,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: musicstudio
       JWT_SECRET: local-dev-only-secret-change-me-0123456789          # 개발용 값
       APP_CRYPTO_KEY: bG9jYWwtZGV2LW9ubHkta2V5LTAxMjM0NTY3ODlhYmM=     # 개발용 값 (base64 32바이트)
+      # 구글 로그인 (ADR 0013). 저장소 루트의 .env에 넣는다. 비어 있으면 구글 로그인이 꺼진다.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URIS: http://localhost:3000/auth/callback/google,http://localhost:5173/auth/callback/google
     depends_on:
       postgres:
         condition: service_healthy
@@ -52,7 +56,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     image: musicstudio-v2-frontend
     container_name: musicstudio-frontend
     ports:
