@@ -117,6 +117,8 @@ class BillingApiTest {
     @Test
     void 부분_납부와_완납과_초과와_환불() throws Exception {
         long invoice = invoice(100000);
+        api.call(owner, HttpMethod.GET, billing("/invoices/" + invoice), null)
+                .andExpect(jsonPath("$.invoice.enrollmentId").doesNotExist()); // 직접 만든 청구서는 수강 없음(0이 아니라 null)
         pay(invoice, "PAYMENT", 40000, UUID.randomUUID()).andExpect(status().isCreated())
                 .andExpect(jsonPath("$.invoice.state").value("PARTIAL")).andExpect(jsonPath("$.invoice.paid").value(40000));
         pay(invoice, "PAYMENT", 60001, UUID.randomUUID())

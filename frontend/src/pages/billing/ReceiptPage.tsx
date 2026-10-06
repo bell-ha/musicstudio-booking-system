@@ -41,7 +41,8 @@ export function ReceiptPage() {
           <div><dt>번호</dt><dd className="tnum">{receipt.number}</dd></div>
           <div><dt>받는 분</dt><dd>{receipt.studentName}</dd></div>
           <div><dt>항목</dt><dd>{receipt.title}</dd></div>
-          <div><dt>받은 날</dt><dd className="tnum">{dateLabel(receipt.paidOn)}</dd></div>
+          {/* 종이로 남는 문서라 연도까지 */}
+          <div><dt>받은 날</dt><dd className="tnum">{`${receipt.paidOn.slice(0, 4)}년 ${dateLabel(receipt.paidOn)}`}</dd></div>
           <div><dt>방법</dt><dd>{METHOD_LABEL[receipt.method]}</dd></div>
           <div className="receipt-total"><dt>금액</dt><dd className="tnum">{won(receipt.amount)}</dd></div>
         </dl>

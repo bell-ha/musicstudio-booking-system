@@ -73,6 +73,7 @@ export function InvoiceSheet({ orgId, invoiceId, today, onChanged, onClose }: {
         { method: 'POST', body: { reason } })
       setVoiding(null)
       setReason('')
+      setMessage('')
       load()
       onChanged()
     } catch (error) {
@@ -150,7 +151,8 @@ export function InvoiceSheet({ orgId, invoiceId, today, onChanged, onClose }: {
                     {live(p) && p.kind === 'PAYMENT' && (
                       <Link className="link-button link-plain" to={`/orgs/${orgId}/billing/receipts/${p.id}`}>영수증</Link>
                     )}
-                    {live(p) && <button type="button" className="link-button" onClick={() => { setVoiding(p.id); setReason('') }}>취소</button>}
+                    {/* 무효 청구서의 장부는 되돌릴 수 없다(입금·환불 취소가 서로를 막는다) */}
+                    {live(p) && inv?.state !== 'VOID' && <button type="button" className="link-button" onClick={() => { setVoiding(p.id); setReason('') }}>취소</button>}
                   </li>
                 ))}
               </ul>

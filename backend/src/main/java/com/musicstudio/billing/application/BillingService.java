@@ -294,9 +294,10 @@ public class BillingService {
             boolean voided = rs.getTimestamp("voided_at") != null;
             InvoiceState state = InvoiceState.of(amount, paid, voided);
             LocalDate due = rs.getDate("due_date").toLocalDate();
-            long enrollment = rs.getLong("enrollment_id");
+            // getLong + wasNull은 인자 평가 순서 때문에 다른 열을 본다(교차 리뷰 32 1-3). 비어 있으면 null
+            Long enrollment = rs.getObject("enrollment_id", Long.class);
             return new Invoice(rs.getLong("id"), rs.getLong("student_id"), rs.getString("student_name"),
-                    rs.wasNull() ? null : enrollment, rs.getBoolean("auto"), rs.getString("title"), amount, paid,
+                    enrollment, rs.getBoolean("auto"), rs.getString("title"), amount, paid,
                     voided ? 0 : amount - paid, due, state,
                     !voided && paid < amount && due.isBefore(today), rs.getString("void_reason"),
                     rs.getTimestamp("created_at").toInstant());

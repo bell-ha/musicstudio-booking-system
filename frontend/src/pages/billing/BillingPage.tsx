@@ -102,9 +102,9 @@ export function BillingPage() {
         </form>
       )}
 
-      <div className="tabs section" role="tablist" aria-label="청구서 거르기">
+      <div className="tabs section" role="group" aria-label="청구서 거르기">
         {FILTERS.map(([value, label]) => (
-          <button key={value} type="button" role="tab" className="tab" aria-selected={filter === value}
+          <button key={value} type="button" className="tab" aria-pressed={filter === value}
             onClick={() => setParams(value ? { state: value } : { state: '' })}>{label}</button>
         ))}
       </div>
@@ -120,7 +120,7 @@ export function BillingPage() {
                   <span className={i.state === 'VOID' ? 'avatar avatar-muted' : 'avatar'} aria-hidden="true">{i.studentName.slice(0, 1)}</span>
                   <span className="row-text">
                     <span className="row-title">{i.studentName} <span className={badge.className}>{badge.text}</span></span>
-                    <span className="row-meta">{i.title} · 기한 {dateLabel(i.dueDate)}</span>
+                    <span className="row-meta">기한 {dateLabel(i.dueDate)} · {i.title}</span>
                   </span>
                   <span className="row-amount tnum">{i.state === 'PAID' || i.state === 'VOID' ? won(i.amount) : won(i.balance)}</span>
                   <ChevronRight className="row-chevron" size={20} />

@@ -599,3 +599,10 @@ button.floor-room { cursor: pointer; }
   body, .shell { background: #fff; }
   .receipt { box-shadow: none; padding: 0; }
 }
+/* 금액은 숫자 중간에서 줄을 바꾸지 않는다(전체 overflow-wrap: anywhere 예외). 시트에서는 영수증 줄 모양 (리뷰 32 1-1) */
+.money dd, .row-amount, .receipt-lines dd { white-space: nowrap; overflow-wrap: normal; }
+.sheet .money { grid-template-columns: 1fr; gap: 0; }
+.sheet .money div { display: flex; justify-content: space-between; align-items: baseline; border-radius: 0; }
+.sheet .money div:first-child { border-radius: var(--rounded-md) var(--rounded-md) 0 0; }
+.sheet .money div:last-child { border-radius: 0 0 var(--rounded-md) var(--rounded-md); }
+a.link-button { display: inline-flex; align-items: center; min-height: var(--touch); text-decoration: none; }
