@@ -59,7 +59,7 @@
 
 R1·R2는 애플리케이션 검사에서 걸리든 DB 배타 제약(SQLSTATE `23P01`)에서 걸리든 **같은 응답**을 준다. 예외 처리기가 제약 이름(`ex_booking_room`, `ex_booking_member`)을 코드로 바꾼다.
 
-## 2. 엔드포인트 (48개)
+## 2. 엔드포인트 (55개)
 
 권한: 누구나 / 로그인 / **O** 소유자 / **M** 관리자 이상 / **T** 강사 / **S** 학생 / 멤버 = 그 기관의 활성 멤버
 
@@ -115,6 +115,13 @@ R1·R2는 애플리케이션 검사에서 걸리든 DB 배타 제약(SQLSTATE `2
 | 34 | POST | /academy/lesson-records | T | 46 | 본문에 `enrollmentId`. 403 담당 아님 |
 | 35 | PATCH | /academy/lesson-records/{recordId} | T(쓴 사람) | 46 | |
 | 36 | DELETE | /academy/lesson-records/{recordId} | T(쓴 사람) | 46 | 실제로 지우는 유일한 곳 (UC-46 2a) |
+| 49 | PUT | /academy/enrollments/{id}/schedule | M | 49 | `{version, from?, slots:[{dayOfWeek, startTime}]}`(1~3개). → `{created, firstDate, lastDate}`. 409 `SCHEDULE_CONFLICT`(`conflicts`: 날짜·시각·누구와), `CONFLICTING_UPDATE`, `INVALID_TRANSITION` |
+| 50 | GET | /academy/sessions | M, T | 50 | `?from&to`(42일 이하)`&teacherId&mine&unmarked`. 강사는 자기 회차만 |
+| 51 | GET | /academy/students/me/sessions | S | 53 | 연결된 원생의 회차. 메모는 휴강 사유만 |
+| 52 | PUT | /academy/sessions/{id}/attendance | T(그 회차 강사), M | 51 | `{status: ATTENDED, ABSENT, EXCUSED, note?}`. 422 `TOO_EARLY`(출석·결석은 시작 뒤), 403 `NOT_ASSIGNED`. 같은 값은 멱등 |
+| 53 | POST | /academy/sessions/{id}/cancel | M | 52 | `{reason}`. 출결한 회차는 409 |
+| 54 | POST | /academy/enrollments/{id}/makeups | M | 52 | `{startsAt}`. 422 `IN_THE_PAST`, 422 `NO_REMAINING`, 409 `SCHEDULE_CONFLICT` |
+| 55 | POST | /academy/sessions/cancel-day | M | 52 | `{date, reason}` → `{canceled, appended}` |
 
 ### 기관 사이트 (0.3)
 | # | 메서드 | 경로 | 권한 | UC | 비고 |
