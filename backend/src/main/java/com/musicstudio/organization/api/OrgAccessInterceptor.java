@@ -110,6 +110,9 @@ class OrgAccessInterceptor implements HandlerInterceptor {
         if (pattern.startsWith("/api/v1/organizations/{orgId}/academy")) {
             return Module.ACADEMY;
         }
+        if (pattern.startsWith("/api/v1/organizations/{orgId}/billing")) {
+            return Module.BILLING;
+        }
         return null;
     }
 

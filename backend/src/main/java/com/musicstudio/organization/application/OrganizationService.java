@@ -1,6 +1,7 @@
 package com.musicstudio.organization.application;
 
 import java.time.ZoneId;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -47,8 +48,13 @@ public class OrganizationService {
         if (name != null && name.isBlank()) {
             throw ApiException.invalid("INVALID_NAME", "기관 이름을 입력해 주세요");
         }
+        Set<Module> wanted = modules == null ? null : EnumSet.copyOf(modules.isEmpty() ? EnumSet.noneOf(Module.class) : modules);
+        if (wanted != null && wanted.contains(Module.BILLING) && !wanted.contains(Module.ACADEMY)) {
+            // 청구는 원생·수강에 붙는다. 학원 관리를 끄면서 청구·결제만 남기는 것도 같은 이유로 막는다
+            throw ApiException.policyViolation("BILLING_NEEDS_ACADEMY", "청구·결제는 학원 관리를 켜야 쓸 수 있어요");
+        }
         Organization organization = organizations.findById(orgId).orElseThrow();
-        organization.update(name == null ? null : name.strip(), modules);
+        organization.update(name == null ? null : name.strip(), wanted);
         return organization;
     }
 

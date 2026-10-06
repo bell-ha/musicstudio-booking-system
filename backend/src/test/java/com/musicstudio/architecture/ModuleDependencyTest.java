@@ -14,6 +14,7 @@ import com.tngtech.archunit.lang.ArchRule;
  * practice ──┐
  * academy ───┼──▶ organization ──▶ account ──▶ common
  * site ──────┘
+ * billing ─▶ academy (수강 등록 이벤트를 받는다. academy는 billing을 모른다)
  * </pre>
  *
  * 아직 클래스가 없는 패키지가 있어서 allowEmptyShould(true)를 둔다.
@@ -45,6 +46,20 @@ class ModuleDependencyTest {
             .that().resideInAPackage("com.musicstudio.site..")
             .should().dependOnClassesThat().resideInAnyPackage(
                     "com.musicstudio.practice..", "com.musicstudio.academy..")
+            .allowEmptyShould(true);
+
+    @ArchTest
+    static final ArchRule 다른_모듈은_수납에_의존하지_않는다 = noClasses()
+            .that().resideInAnyPackage("com.musicstudio.organization..", "com.musicstudio.academy..",
+                    "com.musicstudio.practice..", "com.musicstudio.site..", "com.musicstudio.account..",
+                    "com.musicstudio.common..")
+            .should().dependOnClassesThat().resideInAPackage("com.musicstudio.billing..")
+            .allowEmptyShould(true);
+
+    @ArchTest
+    static final ArchRule 수납은_연습실과_사이트에_의존하지_않는다 = noClasses()
+            .that().resideInAPackage("com.musicstudio.billing..")
+            .should().dependOnClassesThat().resideInAnyPackage("com.musicstudio.practice..", "com.musicstudio.site..")
             .allowEmptyShould(true);
 
     @ArchTest

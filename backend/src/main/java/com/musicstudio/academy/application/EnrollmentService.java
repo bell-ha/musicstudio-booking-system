@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.Set;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import com.musicstudio.academy.domain.Product;
 import com.musicstudio.academy.domain.ProductRepository;
 import com.musicstudio.academy.domain.Student;
 import com.musicstudio.academy.domain.StudentRepository;
+import com.musicstudio.academy.domain.SubjectRepository;
 import com.musicstudio.common.error.ApiException;
 import com.musicstudio.organization.domain.Membership;
 import com.musicstudio.organization.domain.MembershipRepository;
@@ -41,11 +43,14 @@ public class EnrollmentService {
     private final MembershipRepository memberships;
     private final StudentService studentService;
     private final LessonScheduleService lessons;
+    private final SubjectRepository subjects;
+    private final ApplicationEventPublisher events;
     private final EntityManager entityManager;
 
     EnrollmentService(EnrollmentRepository enrollments, StudentRepository students, ProductRepository products,
                       LessonRecordRepository records, MembershipRepository memberships, StudentService studentService,
-                      LessonScheduleService lessons, EntityManager entityManager) {
+                      LessonScheduleService lessons, SubjectRepository subjects, ApplicationEventPublisher events,
+                      EntityManager entityManager) {
         this.enrollments = enrollments;
         this.students = students;
         this.products = products;
@@ -53,6 +58,8 @@ public class EnrollmentService {
         this.memberships = memberships;
         this.studentService = studentService;
         this.lessons = lessons;
+        this.subjects = subjects;
+        this.events = events;
         this.entityManager = entityManager;
     }
 
@@ -66,7 +73,11 @@ public class EnrollmentService {
         Product product = products.findByIdAndOrganizationId(productId, orgId)
                 .orElseThrow(() -> ApiException.notFound("상품을 찾을 수 없습니다"));
         requireTeacher(orgId, teacherMembershipId);
-        return enrollments.save(new Enrollment(orgId, studentId, product, teacherMembershipId, startsOn));
+        Enrollment saved = enrollments.saveAndFlush(new Enrollment(orgId, studentId, product, teacherMembershipId, startsOn));
+        String subject = subjects.findById(product.getSubjectId()).map(x -> x.getName()).orElse("");
+        events.publishEvent(new EnrollmentRegistered(orgId, saved.getId(), studentId, saved.getPrice(), startsOn,
+                subject.isEmpty() ? product.getName() : subject + " · " + product.getName()));
+        return saved;
     }
 
     /**

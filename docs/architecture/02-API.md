@@ -17,6 +17,7 @@
 | 기관 범위 | `/api/v1/organizations/{orgId}` |
 | 연습실 모듈 | `/api/v1/organizations/{orgId}/practice` |
 | 학원 관리 모듈 | `/api/v1/organizations/{orgId}/academy` |
+| 수납 모듈 (BILLING) | `/api/v1/organizations/{orgId}/billing` |
 | 공개(로그인 없음) | `/api/v1/public` — 기관 범위 검사 밖, 응답은 정해 둔 항목만 |
 
 모듈 API를 접두사로 나눠서 "모듈이 꺼졌으면 막는다"(ADR 0006)를 필터 한 곳에서 처리한다. 아래 표에서 기관 범위 경로는 `/api/v1/organizations/{orgId}`를 빼고 적는다.
@@ -59,7 +60,7 @@
 
 R1·R2는 애플리케이션 검사에서 걸리든 DB 배타 제약(SQLSTATE `23P01`)에서 걸리든 **같은 응답**을 준다. 예외 처리기가 제약 이름(`ex_booking_room`, `ex_booking_member`)을 코드로 바꾼다.
 
-## 2. 엔드포인트 (55개)
+## 2. 엔드포인트 (63개)
 
 권한: 누구나 / 로그인 / **O** 소유자 / **M** 관리자 이상 / **T** 강사 / **S** 학생 / 멤버 = 그 기관의 활성 멤버
 
@@ -138,6 +139,18 @@ R1·R2는 애플리케이션 검사에서 걸리든 DB 배타 제약(SQLSTATE `2
 | 46 | GET | /api/v1/public/sites/{slug} | 누구나 | 13 | 이름, 유형, 로고 URL, 소개, 연락처, 운영 안내, 색, `PUBLIC` 공지 최근 10개, `join: {open, form}`. 없거나 비공개면 같은 404 |
 | 47 | GET | /api/v1/public/logos/{logoKey} | 누구나 | 10, 13 | `Cache-Control: public, max-age=31536000, immutable`, `nosniff`. 키는 무작위 UUID (ADR 0015) |
 | 48 | POST | /api/v1/sites/{slug}/join-requests | 로그인 | 14 | 10번과 같은 응답. 공개 + 가입 받기 + 가입 코드 사용 중이 아니면 404. 가입 코드는 노출하지 않는다 |
+
+### 수납 (`/billing`, 0.3)
+| # | 메서드 | 경로 | 권한 | UC | 비고 |
+|---|---|---|---|---|---|
+| 56 | POST | /billing/invoices | M | 60 | `{studentId, enrollmentId?, title, amount, dueDate}`. 수강 등록 때는 자동(0원 제외) |
+| 57 | GET | /billing/invoices | M | 62 | `?state=UNPAID|PARTIAL|PAID|VOID|OVERDUE|OPEN&studentId`. `{outstanding, overdueCount, invoices}` |
+| 58 | GET | /billing/invoices/{id} | M | 61 | 청구서와 장부(취소 포함, 기록자) |
+| 59 | POST | /billing/invoices/{id}/void | M | 60 | `{reason}`. 납부가 남아 있으면 409 `HAS_PAYMENTS` |
+| 60 | POST | /billing/invoices/{id}/payments | M | 61 | `{requestId, kind, method, amount, paidOn, memo?}`. 새 기록 201, 같은 requestId 200, 다른 내용 409 `IDEMPOTENCY_KEY_REUSED`, 422 `OVERPAID`(`balance`)·`REFUND_EXCEEDS_PAID`, 409 `INVOICE_VOID` |
+| 61 | POST | /billing/payments/{id}/void | M | 61 | `{reason}`. 반대 방향으로 되돌린다. 422 `REFUND_FIRST` |
+| 62 | GET | /billing/payments/{id}/receipt | M | 63 | 번호 `R-{id}` |
+| 63 | GET | /billing/me/invoices | S | 64 | 연결된 원생의 청구서와 장부(메모·기록자 없음) |
 
 학생의 "내 수강 정보"(UC-48)는 3번 응답에 연결된 `studentId`가 있고, 31번으로 읽는다. 별도 엔드포인트를 두지 않는다.
 
