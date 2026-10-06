@@ -1,4 +1,4 @@
-# main에 푸시하거나 PR을 열면 백엔드를 빌드하고 테스트한다.
+# main에 푸시하거나 PR을 열면 백엔드와 프론트엔드를 빌드하고 테스트한다.
 # 테스트는 Testcontainers로 PostgreSQL을 띄운다. ubuntu 러너에는 Docker가 있다.
 
 name: CI
@@ -45,3 +45,25 @@ jobs:
           name: test-reports
           path: backend/build/reports/tests
           retention-days: 7
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - name: 린트
+        run: npm run lint
+      - name: 테스트
+        run: npm test
+      - name: 빌드 (타입 검사 포함)
+        run: npm run build
