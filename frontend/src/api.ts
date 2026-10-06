@@ -31,8 +31,11 @@ export async function api<T>(
   path: string,
   init: { method?: string; body?: unknown; headers?: Record<string, string> } = {},
 ): Promise<T> {
+  // 파일(Blob)은 바이트 그대로 보낸다 (로고 업로드). 형식은 파일의 것을 쓰고, 그 밖의 본문은 JSON
+  const raw = init.body instanceof Blob
   const headers: Record<string, string> = { ...init.headers }
-  if (init.body !== undefined) headers['Content-Type'] = 'application/json'
+  if (init.body !== undefined && !raw) headers['Content-Type'] = 'application/json'
+  if (raw && !headers['Content-Type']) headers['Content-Type'] = (init.body as Blob).type || 'application/octet-stream'
   // 가입·로그인에는 토큰을 보내지 않는다. 만료된 토큰이 붙으면 서버가 permitAll 경로에서도 401을 준다
   const accessToken = token.get()
   if (accessToken && !path.startsWith('/auth/')) headers.Authorization = `Bearer ${accessToken}`
@@ -40,7 +43,7 @@ export async function api<T>(
   const response = await fetch(`/api/v1${path}`, {
     method: init.method ?? 'GET',
     headers,
-    body: init.body === undefined ? undefined : JSON.stringify(init.body),
+    body: init.body === undefined ? undefined : raw ? (init.body as Blob) : JSON.stringify(init.body),
   })
 
   if (!response.ok) {

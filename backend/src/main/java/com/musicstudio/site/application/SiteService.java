@@ -72,21 +72,24 @@ public class SiteService {
     }
 
     /**
-     * 형식은 Content-Type이 아니라 파일 앞부분으로 확인한다. 선언한 형식과 내용이 다르면 거절한다.
-     * SVG는 스크립트를 담을 수 있어서 받지 않는다 (애초에 허용 목록에 없다).
+     * 형식은 Content-Type이 아니라 파일 앞부분(매직 바이트)으로 정한다. 선언은 "이미지인가"만 본다:
+     * 확장자만 .jpg로 바뀐 PNG(메신저·캡처 도구에서 흔하다)를 브라우저는 image/jpeg로 보내지만 내용은 정상이다.
+     * 저장·응답하는 형식은 내용에서 알아낸 것이라 nosniff와도 맞다.
+     * SVG는 스크립트를 담을 수 있어서 받지 않는다 (매직 바이트 목록에 없다).
      */
     @Transactional
     public UUID replaceLogo(long orgId, String declaredType, byte[] bytes) {
-        String type = declaredType == null ? "" : declaredType.split(";")[0].trim().toLowerCase();
-        if (!Set.of("image/png", "image/jpeg", "image/webp").contains(type)) {
+        String declared = declaredType == null ? "" : declaredType.split(";")[0].trim().toLowerCase();
+        if (!declared.startsWith("image/")) {
             throw new ApiException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "unsupported-media-type", "UNSUPPORTED_IMAGE",
                     "PNG, JPEG, WebP 이미지만 올릴 수 있습니다");
         }
         if (bytes.length > MAX_LOGO_BYTES) {
             throw tooLarge();
         }
-        if (!type.equals(sniff(bytes))) {
-            throw ApiException.invalid("INVALID_IMAGE", "이미지 파일이 아니거나 형식이 맞지 않습니다");
+        String type = sniff(bytes);
+        if (type == null) {
+            throw ApiException.invalid("INVALID_IMAGE", "PNG, JPEG, WebP 이미지만 올릴 수 있습니다");
         }
         SiteLogo logo = logos.findById(orgId).orElseGet(() -> new SiteLogo(orgId));
         logo.replace(type, bytes, clock.instant());
@@ -142,8 +145,8 @@ public class SiteService {
         try {
             return profiles.saveAndFlush(profile);
         } catch (DataIntegrityViolationException e) {
-            // 주소 중복이 아니면 같은 기관이 동시에 처음 저장한 경우다
-            throw profile.getSlug() != null
+            // 제약 이름으로 나눈다. 주소 중복이 아니면 같은 기관의 첫 저장이 동시에 일어나 PK가 겹친 것이다
+            throw String.valueOf(e.getMostSpecificCause().getMessage()).contains("uq_site_profile_slug")
                     ? ApiException.conflict("SLUG_TAKEN", "이미 쓰고 있는 주소입니다")
                     : ApiException.conflict("TRY_AGAIN", "잠시 후 다시 시도해 주세요");
         }

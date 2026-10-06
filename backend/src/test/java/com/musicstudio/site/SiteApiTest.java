@@ -9,7 +9,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,6 +86,43 @@ class SiteApiTest {
     @Test
     void 목록_밖의_색은_400() throws Exception {
         api.call(owner, HttpMethod.PUT, path("/site"), describe("GREEN")).andExpect(status().isBadRequest());
+    }
+
+    /**
+     * 꾸미기(관리자)와 공개 설정(소유자)은 같은 행의 다른 칸을 고친다. 동시에 저장해도 서로의 칸을 덮어쓰지 않아야 한다.
+     * 모든 칸을 쓰는 UPDATE면 나중 커밋이 먼저 읽은 낡은 값으로 상대 칸을 되돌린다 (교차 리뷰에서 30번 중 27번 재현).
+     */
+    @Test
+    void 꾸미기와_공개_설정을_동시에_저장해도_서로의_칸을_지우지_않는다() throws Exception {
+        String manager = member("MANAGER");
+        String slug = slug();
+        api.call(owner, HttpMethod.PUT, path("/site/publishing"), publishing(slug, false, false)).andExpect(status().isOk());
+        int lost = 0;
+        for (int round = 1; round <= 30; round++) {
+            boolean published = round % 2 == 1;
+            String intro = "v" + round;
+            String describe = "{\"intro\":\"%s\",\"color\":\"INDIGO\"}".formatted(intro);
+            ExecutorService pool = Executors.newFixedThreadPool(2);
+            CountDownLatch start = new CountDownLatch(1);
+            Future<Integer> a = pool.submit(() -> {
+                start.await();
+                return api.call(manager, HttpMethod.PUT, path("/site"), describe).andReturn().getResponse().getStatus();
+            });
+            Future<Integer> b = pool.submit(() -> {
+                start.await();
+                return api.call(owner, HttpMethod.PUT, path("/site/publishing"), publishing(slug, published, false))
+                        .andReturn().getResponse().getStatus();
+            });
+            start.countDown();
+            org.assertj.core.api.Assertions.assertThat(List.of(a.get(), b.get())).containsOnly(200);
+            pool.shutdown();
+            String site = api.call(owner, HttpMethod.GET, path("/site"), null).andReturn().getResponse().getContentAsString();
+            if (!intro.equals(com.jayway.jsonpath.JsonPath.read(site, "$.intro"))
+                    || published != (Boolean) com.jayway.jsonpath.JsonPath.read(site, "$.published")) {
+                lost++;
+            }
+        }
+        org.assertj.core.api.Assertions.assertThat(lost).as("한쪽 저장이 사라진 횟수").isZero();
     }
 
     // ---------- 공개 설정 (39) ----------
@@ -177,13 +219,20 @@ class SiteApiTest {
 
     @Test
     void 로고는_형식을_내용으로_확인하고_크기를_제한한다() throws Exception {
-        uploadLogo("image/svg+xml", "<svg onload=alert(1)/>".getBytes()).andExpect(status().isUnsupportedMediaType());
+        uploadLogo("text/html", PNG).andExpect(status().isUnsupportedMediaType());
+        uploadLogo("image/svg+xml", "<svg onload=alert(1)/>".getBytes())
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_IMAGE"));
         uploadLogo("image/png", "not an image".getBytes())
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_IMAGE"));
         byte[] big = new byte[200 * 1024 + 1];
         System.arraycopy(PNG, 0, big, 0, PNG.length);
         uploadLogo("image/png", big).andExpect(status().isContentTooLarge());
-        uploadLogo("image/jpeg", PNG).andExpect(status().isBadRequest()); // 선언과 내용이 다르다
+    }
+
+    @Test
+    void 확장자만_jpg인_PNG도_받고_내용대로_PNG로_내보낸다() throws Exception {
+        String url = ApiClient.read(uploadLogo("image/jpeg", PNG).andExpect(status().isOk()), "$.logoUrl");
+        mvc.perform(MockMvcRequestBuilders.get(url)).andExpect(header().string("Content-Type", "image/png"));
     }
 
     @Test

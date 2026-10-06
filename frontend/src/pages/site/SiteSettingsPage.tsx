@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Check, ExternalLink } from 'lucide-react'
 import { Link, useParams } from 'react-router'
-import { api, ApiError, errorMessage, fieldErrors, token } from '../../api'
+import { api, errorMessage, fieldErrors } from '../../api'
 import { Field } from '../../Field'
 import { isManager, ROLE_LABEL, TYPE_LABEL } from '../../labels'
 import { useOrgSite } from '../../orgSite'
@@ -28,13 +28,14 @@ export function SiteSettingsPage() {
   if (org === null || !isManager(org.role)) return <NotMember />
   const owner = org.role === 'OWNER'
 
-  async function run(action: () => Promise<unknown>, done: string) {
+  /** 저장한 폼의 칸(saves)만 고친 목록에서 지운다. 소개를 쓰다가 로고를 올려도 쓰던 소개가 남는다 */
+  async function run(action: () => Promise<unknown>, done: string, saves: (keyof Site)[] = []) {
     setErrors({})
     setMessage('')
     setSaved('')
     try {
       await action()
-      setEdits({})
+      setEdits((current) => Object.fromEntries(Object.entries(current).filter(([k]) => !saves.includes(k as keyof Site))))
       setSaved(done)
       reloadSite()
     } catch (error) {
@@ -48,17 +49,17 @@ export function SiteSettingsPage() {
     run(() => api(`/organizations/${orgId}/site`, {
       method: 'PUT',
       body: { intro: form!.intro, address: form!.address, phone: form!.phone, hoursText: form!.hoursText, color: form!.color },
-    }), '저장했어요.')
+    }), '저장했어요.', ['intro', 'address', 'phone', 'hoursText', 'color'])
   }
 
   function publish(event: FormEvent) {
     event.preventDefault()
     run(() => api(`/organizations/${orgId}/site/publishing`, {
       method: 'PUT', body: { slug: form!.slug ?? '', published: !!form!.published, acceptJoin: !!form!.acceptJoin },
-    }), '공개 설정을 저장했어요.')
+    }), '공개 설정을 저장했어요.', ['slug', 'published', 'acceptJoin'])
   }
 
-  /** api()는 JSON만 보내서 이미지는 fetch로 바이트를 그대로 보낸다 (API 40) */
+  /** 바이트 그대로 (API 40). api()를 거쳐서 토큰이 만료됐으면 로그인했다가 돌아온다 */
   function uploadLogo(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     event.target.value = ''
@@ -67,14 +68,7 @@ export function SiteSettingsPage() {
       setMessage('200KB 이하 이미지만 올릴 수 있어요.')
       return
     }
-    run(async () => {
-      const response = await fetch(`/api/v1/organizations/${orgId}/site/logo`, {
-        method: 'PUT', headers: { 'Content-Type': file.type, Authorization: `Bearer ${token.get()}` }, body: file,
-      })
-      if (!response.ok) {
-        throw new ApiError({ status: response.status, ...await response.json().catch(() => ({})) })
-      }
-    }, '로고를 바꿨어요.')
+    run(() => api(`/organizations/${orgId}/site/logo`, { method: 'PUT', body: file }), '로고를 바꿨어요.')
   }
 
   const set = (patch: Partial<Site>) => setEdits({ ...edits, ...patch })
