@@ -17,6 +17,11 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+          # 레슨 회차는 일정 하나에 수십~백여 행을 한 번에 넣는다. 묶어서 보내야 왕복이 한 번이다
+          # (시퀀스를 50씩 늘리는 것도 이때 ID를 한 번에 받기 위해서다)
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
 app:
   jwt:
     # 32바이트 이상. 로컬은 build.gradle.kts의 bootRun이 넣어 준다.

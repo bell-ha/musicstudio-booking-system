@@ -1,8 +1,12 @@
 package com.musicstudio.academy.api;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
+import com.musicstudio.academy.application.LessonScheduleService;
 import com.musicstudio.academy.application.StudentService;
 import com.musicstudio.academy.domain.Enrollment;
 import com.musicstudio.academy.domain.EnrollmentRepository.EnrollmentRow;
@@ -51,15 +55,28 @@ final class StudentDtos {
         }
     }
 
+    /**
+     * 수강과 레슨 일정 요약(UC-49): 고정 일정, 횟수권 남은 회차(총 − 출석·결석), 자동으로 못 이어 붙인 회차(shortfall),
+     * 다음·마지막 회차 날짜.
+     */
     record EnrollmentDetail(Long id, String productName, String subjectName, ProductKind kind, Long teacherMembershipId,
                             String teacherName, EnrollmentStatus status, Long price, LocalDate startsOn,
-                            LocalDate endsOn, Short totalSessions, LocalDate pausedAt, long version) {
-        static EnrollmentDetail of(EnrollmentRow r, boolean showPrice) {
+                            LocalDate endsOn, Short totalSessions, LocalDate pausedAt, long version,
+                            List<SlotInfo> schedule, Integer remainingSessions, int shortfall,
+                            LocalDate nextLessonDate, LocalDate lastLessonDate) {
+        static EnrollmentDetail of(EnrollmentRow r, boolean showPrice, Map<Long, LessonScheduleService.Summary> lessons) {
             Enrollment e = r.getEnrollment();
+            LessonScheduleService.Summary l = lessons.getOrDefault(e.getId(),
+                    new LessonScheduleService.Summary(List.of(), null, 0, null, null));
             return new EnrollmentDetail(e.getId(), r.getProductName(), r.getSubjectName(), r.getKind(),
                     e.getTeacherMembershipId(), r.getTeacherName(), e.getStatus(), showPrice ? e.getPrice() : null,
-                    e.getStartsOn(), e.getEndsOn(), e.getTotalSessions(), e.getPausedAt(), e.getVersion());
+                    e.getStartsOn(), e.getEndsOn(), e.getTotalSessions(), e.getPausedAt(), e.getVersion(),
+                    l.slots().stream().map(x -> new SlotInfo(x.day(), x.time())).toList(), l.remaining(), l.shortfall(),
+                    l.next(), l.last());
         }
+    }
+
+    record SlotInfo(DayOfWeek dayOfWeek, LocalTime startTime) {
     }
 
     record RecordInfo(Long id, Long enrollmentId, Long authorMembershipId, String authorName, LocalDate lessonDate,
@@ -76,18 +93,19 @@ final class StudentDtos {
     }
 
     record Detail(Info student, List<EnrollmentDetail> enrollments, List<RecordInfo> records) {
-        static Detail of(StudentService.Detail d, boolean manager, long requester) {
+        static Detail of(StudentService.Detail d, boolean manager, long requester,
+                         Map<Long, LessonScheduleService.Summary> lessons) {
             return new Detail(Info.of(d.student(), manager),
-                    d.enrollments().stream().map(r -> EnrollmentDetail.of(r, manager)).toList(),
+                    d.enrollments().stream().map(r -> EnrollmentDetail.of(r, manager, lessons)).toList(),
                     d.records().stream().map(r -> RecordInfo.of(r, requester)).toList());
         }
 
         /** 학생 본인: 자기 연락처는 원문, 금액과 관리 메모는 없음. */
-        static Detail forStudent(StudentService.Detail d, long requester) {
+        static Detail forStudent(StudentService.Detail d, long requester, Map<Long, LessonScheduleService.Summary> lessons) {
             Info full = Info.of(d.student(), true);
             Info own = new Info(full.id(), full.name(), full.birthYear(), full.phone(), full.guardianName(),
                     full.guardianPhone(), null, full.active(), full.membershipId());
-            return new Detail(own, d.enrollments().stream().map(r -> EnrollmentDetail.of(r, false)).toList(),
+            return new Detail(own, d.enrollments().stream().map(r -> EnrollmentDetail.of(r, false, lessons)).toList(),
                     d.records().stream().map(r -> RecordInfo.of(r, requester)).toList());
         }
     }

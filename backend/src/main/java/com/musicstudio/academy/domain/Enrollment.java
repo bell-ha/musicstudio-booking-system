@@ -15,7 +15,8 @@ import jakarta.persistence.Version;
 /**
  * 수강 (UC-42, UC-43).
  * 상태: ACTIVE → PAUSED → ACTIVE, ACTIVE·PAUSED → ENDED | REFUNDED. ENDED와 REFUNDED는 끝이다.
- * 기간권의 종료일은 일시정지한 날수만큼 늘어난다(재개할 때 계산). 횟수권은 MVP에서 회차를 세지 않는다.
+ * 기간권의 종료일은 일시정지한 날수만큼 늘어난다(재개할 때 계산).
+ * 회차(LessonSession)는 고정 일정에서 만든다. 횟수권의 남은 회차는 출결에서 센다 (LessonScheduleService).
  * 종료일이 지나도 자동으로 끝내지 않는다. 관리자가 end를 누른다.
  */
 @Entity
@@ -137,6 +138,10 @@ public class Enrollment {
 
     public Long getId() {
         return id;
+    }
+
+    public Long getOrganizationId() {
+        return organizationId;
     }
 
     public Long getStudentId() {

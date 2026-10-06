@@ -40,17 +40,19 @@ public class EnrollmentService {
     private final LessonRecordRepository records;
     private final MembershipRepository memberships;
     private final StudentService studentService;
+    private final LessonScheduleService lessons;
     private final EntityManager entityManager;
 
     EnrollmentService(EnrollmentRepository enrollments, StudentRepository students, ProductRepository products,
                       LessonRecordRepository records, MembershipRepository memberships, StudentService studentService,
-                      EntityManager entityManager) {
+                      LessonScheduleService lessons, EntityManager entityManager) {
         this.enrollments = enrollments;
         this.students = students;
         this.products = products;
         this.records = records;
         this.memberships = memberships;
         this.studentService = studentService;
+        this.lessons = lessons;
         this.entityManager = entityManager;
     }
 
@@ -67,12 +69,19 @@ public class EnrollmentService {
         return enrollments.save(new Enrollment(orgId, studentId, product, teacherMembershipId, startsOn));
     }
 
-    /** extend, change-teacher, pause, resume, end, refund. 허용되지 않는 전이는 409. */
+    /**
+     * extend, change-teacher, pause, resume, end, refund. 허용되지 않는 전이는 409.
+     * 회차도 같은 트랜잭션에서 맞춘다 (FR-AC-17): 정지·종료·환불은 앞으로의 회차를 지우고, 재개·연장은 다시 채우고,
+     * 강사 변경은 앞으로의 회차를 새 강사로 옮긴다. 새 강사와 겹치면 수강 변경 전체가 되돌아간다.
+     */
     @Transactional
     public Enrollment act(long orgId, long enrollmentId, String action, long expectedVersion, Integer months,
                           Integer sessions, Long teacherMembershipId) {
         Enrollment e = enrollments.findByIdAndOrganizationId(enrollmentId, orgId)
                 .orElseThrow(() -> ApiException.notFound("수강을 찾을 수 없습니다"));
+        // 회차를 건드리는 다른 경로(일정 저장, 출결, 보강)와 같은 잠금(수강 → 강사 → 원생). 잡은 뒤 다시 읽는다
+        lessons.lockBeforeAction(e, "change-teacher".equals(action) ? teacherMembershipId : null);
+        Long oldTeacher = e.getTeacherMembershipId();
         // @Version은 정확히 겹친 두 요청만 잡는다. 낡은 화면에서 한 번 더 연장하는 것은 읽어 간 버전으로 막는다.
         if (e.getVersion() != expectedVersion) {
             throw conflictingUpdate();
@@ -101,6 +110,7 @@ public class EnrollmentService {
         if (!ok) {
             throw ApiException.conflict("INVALID_TRANSITION", "지금 상태에서는 할 수 없습니다");
         }
+        lessons.afterAction(e, action, oldTeacher);
         try {
             entityManager.flush();
         } catch (ObjectOptimisticLockingFailureException | jakarta.persistence.OptimisticLockException ex) {
