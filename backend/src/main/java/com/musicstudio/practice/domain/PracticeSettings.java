@@ -1,8 +1,11 @@
 package com.musicstudio.practice.domain;
 
+import java.time.ZoneId;
+
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -26,12 +29,20 @@ public class PracticeSettings {
     @JdbcTypeCode(SqlTypes.JSON)
     private PracticePolicy practicePolicy;
 
+    /** 기관 시간대. organization 모듈이 관리하므로 읽기만 한다. */
+    @Column(insertable = false, updatable = false)
+    private String timezone;
+
     protected PracticeSettings() {
     }
 
     /** 저장한 적이 없으면 기본 정책. */
     public PracticePolicy policy() {
         return practicePolicy == null ? PracticePolicy.DEFAULT : practicePolicy;
+    }
+
+    public ZoneId zone() {
+        return ZoneId.of(timezone);
     }
 
     public void changePolicy(PracticePolicy policy) {

@@ -62,7 +62,7 @@ public record PracticePolicy(Map<DayOfWeek, List<String>> hours,
             } else {
                 hours.forEach((day, range) -> {
                     if (range != null && !validRange(range)) {
-                        errors.put("hours." + day.name().substring(0, 3), "시작이 끝보다 앞서고 시간 단위에 맞아야 합니다");
+                        errors.put("hours." + day.name(), "시작이 끝보다 앞서고 시간 단위에 맞아야 합니다");
                     }
                 });
             }

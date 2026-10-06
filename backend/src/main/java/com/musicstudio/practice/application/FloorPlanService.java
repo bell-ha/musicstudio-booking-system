@@ -178,12 +178,12 @@ public class FloorPlanService {
         for (RoomPlacement p : placements) {
             String name = rooms.get(p.id()).getName();
             if (p.w() < 1 || p.h() < 1 || p.x() < 0 || p.y() < 0 || p.x() + p.w() > width || p.y() + p.h() > height) {
-                throw invalidLayout(name + "이(가) 격자 밖에 있습니다");
+                throw invalidLayout("방 " + name + "의 자리가 격자를 벗어납니다");
             }
             for (int x = p.x(); x < p.x() + p.w(); x++) {
                 for (int y = p.y(); y < p.y() + p.h(); y++) {
                     if (cell[x][y] != null) {
-                        throw invalidLayout(name + "이(가) " + cell[x][y] + "와(과) 겹칩니다");
+                        throw invalidLayout("방 " + name + "의 자리에 이미 " + cell[x][y] + "이 있습니다");
                     }
                     cell[x][y] = name;
                 }
@@ -193,7 +193,7 @@ public class FloorPlanService {
 
     private static int[] inGrid(List<Integer> c, int width, int height, String what) {
         if (c == null || c.size() != 2 || c.get(0) < 0 || c.get(1) < 0 || c.get(0) >= width || c.get(1) >= height) {
-            throw invalidLayout(what + " 칸 " + c + "이(가) 격자 밖에 있습니다");
+            throw invalidLayout(what + " 칸 " + c + "의 위치가 격자를 벗어납니다");
         }
         return new int[] {c.get(0), c.get(1)};
     }
