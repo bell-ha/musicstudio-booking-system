@@ -24,6 +24,9 @@ import { RoomsPage } from './pages/practice/RoomsPage'
 import { OrganizationsPage } from './pages/OrganizationsPage'
 import { SignupPage } from './pages/SignupPage'
 import { OrgLayout } from './OrgLayout'
+import { NoticesPage } from './pages/site/NoticesPage'
+import { PublicSitePage } from './pages/site/PublicSitePage'
+import { SiteSettingsPage } from './pages/site/SiteSettingsPage'
 import { RequireLogin } from './RequireLogin'
 import './styles/tokens.css'
 import './styles/base.css'
@@ -38,12 +41,15 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/" element={<RequireLogin><OrganizationsPage /></RequireLogin>} />
         <Route path="/organizations/new" element={<RequireLogin><NewOrganizationPage /></RequireLogin>} />
         <Route path="/invite" element={<InvitePage />} />
+        <Route path="/s/:slug" element={<PublicSitePage />} />
         <Route path="/join" element={<RequireLogin><JoinRequestPage /></RequireLogin>} />
         <Route path="/orgs/:orgId" element={<RequireLogin><OrgLayout /></RequireLogin>}>
           <Route index element={<OrganizationHomePage />} />
           <Route path="members" element={<MembersPage />} />
           <Route path="invite" element={<InvitationPage />} />
           <Route path="join-code" element={<JoinCodePage />} />
+          <Route path="notices" element={<NoticesPage />} />
+          <Route path="site" element={<SiteSettingsPage />} />
           <Route path="academy/catalog" element={<CatalogPage />} />
           <Route path="academy/students" element={<StudentsPage />} />
           <Route path="academy/my-students" element={<StudentsPage mine />} />

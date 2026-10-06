@@ -1,6 +1,6 @@
 import {
   BookOpen, CalendarCheck, ClipboardList, DoorOpen, GraduationCap, KeyRound, Link2, Map, NotebookPen,
-  PencilRuler, SlidersHorizontal, Tags, Users, type LucideIcon,
+  Megaphone, Palette, PencilRuler, SlidersHorizontal, Tags, Users, type LucideIcon,
 } from 'lucide-react'
 import { isManager, type MyOrganization } from './labels'
 
@@ -18,7 +18,13 @@ export function orgMenu(org: MyOrganization): MenuGroup[] {
   const academy = org.modules.includes('ACADEMY')
   const groups: MenuGroup[] = []
 
+  // 공지는 모든 기관, 모든 역할 (기관 사이트, FR-SITE-03)
+  const news: MenuGroup = { title: '소식', items: [
+    { to: 'notices', title: '공지', meta: '학원 소식과 안내', icon: Megaphone },
+  ] }
+
   if (org.role === 'STUDENT') {
+    groups.push(news)
     if (practice) groups.push({ title: '연습실', items: [
       { to: 'practice', title: '연습실 예약', meta: '지도에서 빈 방을 찾아 예약해요', icon: Map, tab: '예약' },
       { to: 'practice/my', title: '내 예약', meta: '예약을 보고 취소해요', icon: CalendarCheck, tab: '내 예약' },
@@ -30,6 +36,7 @@ export function orgMenu(org: MyOrganization): MenuGroup[] {
   }
 
   const manager = isManager(org.role)
+  groups.push(news)
   if (academy) groups.push({ title: '학원', items: [
     ...(manager ? [
       { to: 'academy/students', title: '원생', meta: '원생 등록, 수강 관리, 만료 임박', icon: GraduationCap, tab: '원생' },
@@ -47,6 +54,7 @@ export function orgMenu(org: MyOrganization): MenuGroup[] {
     ] : []),
   ] })
   if (manager) groups.push({ title: '기관 관리', items: [
+    { to: 'site', title: '사이트 꾸미기', meta: '로고, 소개, 연락처, 기관 색, 공개 페이지', icon: Palette },
     { to: 'members', title: '멤버', meta: '가입 신청 승인, 역할 변경, 비활성화', icon: Users },
     { to: 'invite', title: '초대 링크', meta: '역할을 정해 한 번 쓰는 링크를 만들어요', icon: Link2 },
     { to: 'join-code', title: '가입 코드', meta: '코드를 받은 사람이 신청하면 승인해요', icon: KeyRound },

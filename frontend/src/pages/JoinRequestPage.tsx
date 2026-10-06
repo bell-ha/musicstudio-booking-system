@@ -1,11 +1,15 @@
-import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useSearchParams } from 'react-router'
 import { api, errorMessage, fieldErrors } from '../api'
 import { Field } from '../Field'
+import type { PublicSite } from '../site/site'
 
 type Lookup = { organizationName: string; joinForm: { key: string; label: string; required: boolean }[] }
 
-/** UC-06. 코드 확인 → 기관이 정한 정보 입력 → 신청 */
+/**
+ * UC-06. 코드 확인 → 기관이 정한 정보 입력 → 신청.
+ * UC-14. 공개 소개 페이지에서 오면(?slug=) 코드 단계를 건너뛰고 주소로 신청한다. 가입 코드는 보지 않는다.
+ */
 export function JoinRequestPage() {
   const [code, setCode] = useState('')
   const [lookup, setLookup] = useState<Lookup | null>(null)
@@ -13,6 +17,16 @@ export function JoinRequestPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const slug = useSearchParams()[0].get('slug')
+
+  useEffect(() => {
+    if (!slug) return
+    api<PublicSite>(`/public/sites/${encodeURIComponent(slug)}`)
+      .then((site) => site.join.open
+        ? setLookup({ organizationName: site.name, joinForm: site.join.form })
+        : setMessage('지금은 이 페이지에서 가입 신청을 받지 않아요.'))
+      .catch(() => setMessage('찾을 수 없는 페이지예요.'))
+  }, [slug])
 
   async function send(request: () => Promise<void>) {
     setSubmitting(true)
@@ -40,7 +54,9 @@ export function JoinRequestPage() {
     const form = new FormData(event.currentTarget)
     const answers = Object.fromEntries(lookup!.joinForm.map((item) => [item.key, String(form.get(item.key) ?? '').trim()]))
     send(async () => {
-      const created = await api<{ organizationName: string }>('/join-requests', { method: 'POST', body: { code, answers } })
+      const created = slug
+        ? await api<{ organizationName: string }>(`/sites/${encodeURIComponent(slug)}/join-requests`, { method: 'POST', body: { answers } })
+        : await api<{ organizationName: string }>('/join-requests', { method: 'POST', body: { code, answers } })
       setDone(created.organizationName)
     })
   }
@@ -57,8 +73,10 @@ export function JoinRequestPage() {
 
   return (
     <main className="page">
-      <h1>가입 코드로 신청하기</h1>
-      {!lookup ? (
+      <h1>{slug ? '가입 신청하기' : '가입 코드로 신청하기'}</h1>
+      {slug && !lookup ? (
+        message && <p className="alert" role="alert">{message}</p>
+      ) : !lookup ? (
         <form className="form" onSubmit={checkCode}>
           <Field id="code" label="가입 코드" error={errors.code}>
             <input id="code" value={code} onChange={(e) => setCode(e.target.value)}

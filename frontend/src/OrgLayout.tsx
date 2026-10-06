@@ -4,10 +4,13 @@ import { Link, NavLink, Outlet, useNavigate, useParams } from 'react-router'
 import { api, token } from './api'
 import { ROLE_LABEL, type MyOrganization } from './labels'
 import { orgMenu } from './orgMenu'
+import type { OrgOutlet } from './orgSite'
+import { colorStyle, type Site } from './site/site'
 
 /**
  * 기관 안의 모든 화면을 감싸는 틀 (DESIGN 5절).
- * 위: 앱 바(기관 이름, 기관 전환, 로그아웃). 1024px 이상: 왼쪽 메뉴. 그보다 좁으면: 아래 탭 바.
+ * 위: 앱 바(로고, 기관 이름, 기관 전환, 로그아웃). 1024px 이상: 왼쪽 메뉴. 그보다 좁으면: 아래 탭 바.
+ * 기관 색(FR-SITE-02)은 이 틀의 루트에 CSS 변수로 건다. 그래서 기관 안의 모든 화면에 적용된다.
  * 각 화면에 "기관으로 돌아가기"를 두지 않아도 어디서든 다른 메뉴로 갈 수 있다.
  */
 export function OrgLayout() {
@@ -15,9 +18,16 @@ export function OrgLayout() {
   const navigate = useNavigate()
   const [orgs, setOrgs] = useState<MyOrganization[]>()
 
+  const [site, setSite] = useState<Site>()
+  const [siteVersion, setSiteVersion] = useState(0)
+
   useEffect(() => {
     api<MyOrganization[]>('/me/organizations').then(setOrgs).catch(() => setOrgs([]))
   }, [orgId])
+
+  useEffect(() => {
+    api<Site>(`/organizations/${orgId}/site`).then(setSite).catch(() => setSite(undefined))
+  }, [orgId, siteVersion])
 
   const active = orgs?.filter((o) => o.status === 'ACTIVE') ?? []
   const org = active.find((o) => String(o.organizationId) === orgId)
@@ -31,10 +41,12 @@ export function OrgLayout() {
   }
 
   return (
-    <div className="shell">
+    <div className="shell" style={colorStyle(site?.color)}>
       <header className="shell-bar">
-        {/* 로고 자리: 사이트 설정(UC-10)에서 로고를 올리기 전까지 이름 첫 글자 */}
-        <Link to={base} className="shell-logo" aria-hidden="true" tabIndex={-1}>{org?.name.slice(0, 1)}</Link>
+        {/* 로고. 올리기 전에는 이름 첫 글자 */}
+        <Link to={base} className="shell-logo" aria-hidden="true" tabIndex={-1}>
+          {site?.logoUrl ? <img src={site.logoUrl} alt="" /> : org?.name.slice(0, 1)}
+        </Link>
         {/* 기관이 여럿이면 이름 자리가 곧 기관 전환 */}
         {active.length > 1 ? (
           <select aria-label="기관 바꾸기" className="shell-org shell-switch" value={orgId}
@@ -64,7 +76,9 @@ export function OrgLayout() {
             <Link to="/" className="side-link side-foot">내 기관 목록</Link>
           </nav>
         )}
-        <div className="shell-main"><Outlet /></div>
+        <div className="shell-main">
+          <Outlet context={{ site, reloadSite: () => setSiteVersion((v) => v + 1) } satisfies OrgOutlet} />
+        </div>
       </div>
 
       {tabs.length > 0 && (
