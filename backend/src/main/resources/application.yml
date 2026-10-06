@@ -17,9 +17,12 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
-  mvc:
-    problemdetails:
-      enabled: true
+app:
+  jwt:
+    # 32바이트 이상. 로컬은 build.gradle.kts의 bootRun이 넣어 준다.
+    secret: ${JWT_SECRET:}
+    # 갱신 토큰은 MVP에 없으므로 접근 토큰을 12시간 동안 쓴다.
+    ttl: 12h
 
 management:
   endpoints:

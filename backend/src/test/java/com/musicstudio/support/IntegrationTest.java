@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Import;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@SpringBootTest
+@SpringBootTest(properties = "app.jwt.secret=test-only-secret-0123456789abcdefghijklmnop")
 @Import(TestcontainersConfiguration.class)
 public @interface IntegrationTest {
 }
