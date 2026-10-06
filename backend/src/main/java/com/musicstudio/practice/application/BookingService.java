@@ -60,9 +60,11 @@ public class BookingService {
 
     /**
      * 1. 트랜잭션 밖: 잠금 없이 싼 실패를 먼저 거른다 (방, 정책 R3·R5·R6).
-     * 2. 트랜잭션 안: 같은 사람·같은 날을 advisory lock으로 줄 세우고 R2(같은 사람 겹침)와 R4(하루 한도)를 검사한다.
-     *    예약은 자정을 넘지 않으므로 같은 사람의 겹침과 합계는 항상 같은 날 안에서 생긴다.
-     * 3. R1(같은 방, 다른 사람)은 잠그지 않는다. INSERT에서 배타 제약이 막는다.
+     * 2. 트랜잭션 안: advisory lock 두 개를 방 → 사람 순서로 잡는다.
+     *    잠금 순서는 방 → 사람으로 고정한다. 나중에 잠금을 거는 다른 경로(대신 예약, 점검 일괄 취소 등)도 이 순서를 따른다.
+     *    - 방·날짜: 같은 방 요청을 줄 세운다. EXCLUDE 제약만 두면 몰릴 때 대기 트랜잭션끼리 교착이 난다(실험 0001).
+     *    - 사람·날짜: R2(같은 사람 겹침)와 R4(하루 한도)를 검사한다. 예약은 자정을 넘지 않으므로 같은 날 안에서 끝난다.
+     * 3. 배타 제약(R1, R2)은 잠금을 빠뜨린 경로가 생겨도 겹친 예약을 막는 마지막 방어선이다.
      */
     public PracticeBooking book(long orgId, long memberId, long roomId, Instant startsAt, Instant endsAt) {
         Room room = rooms.findByIdAndOrganizationId(roomId, orgId).orElseThrow(() -> ApiException.notFound("방을 찾을 수 없습니다"));
@@ -75,9 +77,8 @@ public class BookingService {
         LocalDate date = BookingRules.check(policy, zone, Instant.now(clock), startsAt, endsAt);
 
         return tx.execute(status -> {
-            jdbc.sql("select pg_advisory_xact_lock(hashtextextended(:key, 0))")
-                    .param("key", "pr:member:" + memberId + ":" + date)
-                    .query().listOfRows();
+            lock("pr:room:" + roomId + ":" + date);
+            lock("pr:member:" + memberId + ":" + date);
 
             List<PracticeBooking> sameDay = bookings.findByMemberIdAndUsageDateAndCanceledAtIsNull(memberId, date);
             for (PracticeBooking b : sameDay) {
@@ -215,6 +216,11 @@ public class BookingService {
         } catch (ApiException e) {
             return e.code();
         }
+    }
+
+    /** 트랜잭션 단위 advisory lock. 커밋·롤백 때 저절로 풀린다. */
+    private void lock(String key) {
+        jdbc.sql("select pg_advisory_xact_lock(hashtextextended(:key, 0))").param("key", key).query().listOfRows();
     }
 
     private static ApiException personOverlap() {

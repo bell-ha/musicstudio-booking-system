@@ -105,17 +105,23 @@ public class StudentService {
                 .filter(l -> f.active() == null ? l.student().isActive() : l.student().isActive() == f.active())
                 .filter(l -> f.q() == null || f.q().isBlank()
                         || l.student().getName().toLowerCase().contains(f.q().trim().toLowerCase()))
-                .filter(l -> !mine || l.enrollments().stream()
-                        .anyMatch(r -> r.getEnrollment().getTeacherMembershipId() == requesterMembershipId))
-                .filter(l -> f.subjectId() == null || l.enrollments().stream()
-                        .anyMatch(r -> f.subjectId().equals(r.getSubjectId())))
-                .filter(l -> f.teacherId() == null || l.enrollments().stream()
-                        .anyMatch(r -> f.teacherId().equals(r.getEnrollment().getTeacherMembershipId())))
-                .filter(l -> f.expiringWithinDays() == null || l.enrollments().stream()
-                        .anyMatch(r -> r.getEnrollment().getStatus() == EnrollmentStatus.ACTIVE
-                                && r.getEnrollment().getEndsOn() != null
-                                && !r.getEnrollment().getEndsOn().isAfter(today.plusDays(f.expiringWithinDays()))))
+                .filter(l -> !enrollmentFiltered(f, mine) || l.enrollments().stream()
+                        .anyMatch(r -> matches(r, f, mine, requesterMembershipId, today)))
                 .toList();
+    }
+
+    private static boolean enrollmentFiltered(Filter f, boolean mine) {
+        return mine || f.subjectId() != null || f.teacherId() != null || f.expiringWithinDays() != null;
+    }
+
+    /** 과목·강사·만료 임박·내 담당은 같은 수강 하나에 함께 걸린다 (피아노는 김강사, 보컬은 박강사면 "피아노+박강사"에 안 나온다). */
+    private static boolean matches(StudentRow r, Filter f, boolean mine, long requester, LocalDate today) {
+        var e = r.getEnrollment();
+        return (!mine || e.getTeacherMembershipId() == requester)
+                && (f.subjectId() == null || f.subjectId().equals(r.getSubjectId()))
+                && (f.teacherId() == null || f.teacherId().equals(e.getTeacherMembershipId()))
+                && (f.expiringWithinDays() == null || (e.getStatus() == EnrollmentStatus.ACTIVE && e.getEndsOn() != null
+                        && !e.getEndsOn().isAfter(today.plusDays(f.expiringWithinDays()))));
     }
 
     // ---------- 상세 ----------

@@ -48,7 +48,8 @@ class OrganizationController {
     @GetMapping("/me/organizations")
     List<MyOrganizationResponse> myOrganizations(@AuthenticationPrincipal Jwt jwt) {
         return organizationService.myOrganizations(AccessTokens.userId(jwt)).stream()
-                .map(r -> new MyOrganizationResponse(r.getOrganization().getId(), r.getOrganization().getName(),
+                .map(r -> new MyOrganizationResponse(r.getOrganization().getId(), r.getMembership().getId(),
+                        r.getOrganization().getName(),
                         r.getOrganization().getType(), r.getMembership().getRole(), r.getMembership().getStatus(),
                         r.getOrganization().getModules(), r.getOrganization().getTimezone()))
                 .toList();
@@ -64,7 +65,7 @@ class OrganizationController {
                                 String joinCode) {
     }
 
-    record MyOrganizationResponse(Long organizationId, String name, OrganizationType type, MembershipRole role,
+    record MyOrganizationResponse(Long organizationId, Long membershipId, String name, OrganizationType type, MembershipRole role,
                                   MembershipStatus status, Set<Module> modules, String timezone) {
     }
 }

@@ -69,10 +69,14 @@ public class EnrollmentService {
 
     /** extend, change-teacher, pause, resume, end, refund. 허용되지 않는 전이는 409. */
     @Transactional
-    public Enrollment act(long orgId, long enrollmentId, String action, Integer months, Integer sessions,
-                          Long teacherMembershipId) {
+    public Enrollment act(long orgId, long enrollmentId, String action, long expectedVersion, Integer months,
+                          Integer sessions, Long teacherMembershipId) {
         Enrollment e = enrollments.findByIdAndOrganizationId(enrollmentId, orgId)
                 .orElseThrow(() -> ApiException.notFound("수강을 찾을 수 없습니다"));
+        // @Version은 정확히 겹친 두 요청만 잡는다. 낡은 화면에서 한 번 더 연장하는 것은 읽어 간 버전으로 막는다.
+        if (e.getVersion() != expectedVersion) {
+            throw conflictingUpdate();
+        }
         LocalDate today = studentService.today(orgId);
         boolean ok = switch (action) {
             case "pause" -> e.pause(today);
@@ -100,9 +104,13 @@ public class EnrollmentService {
         try {
             entityManager.flush();
         } catch (ObjectOptimisticLockingFailureException | jakarta.persistence.OptimisticLockException ex) {
-            throw ApiException.conflict("CONFLICTING_UPDATE", "다른 관리자가 먼저 바꿨습니다. 다시 불러와 주세요");
+            throw conflictingUpdate();
         }
         return e;
+    }
+
+    private static ApiException conflictingUpdate() {
+        return ApiException.conflict("CONFLICTING_UPDATE", "다른 관리자가 먼저 바꿨습니다. 다시 불러와 주세요");
     }
 
     // ---------- 레슨 기록 ----------

@@ -31,6 +31,7 @@ import com.musicstudio.organization.api.OrgRole;
 import com.musicstudio.organization.domain.MembershipRole;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -142,10 +143,9 @@ class AcademyController {
     @PostMapping("/enrollments/{enrollmentId}/{action}")
     @OrgRole(MembershipRole.MANAGER)
     StudentDtos.EnrollmentInfo act(CurrentMember me, @PathVariable long enrollmentId, @PathVariable String action,
-                                   @RequestBody(required = false) ActionRequest req) {
-        ActionRequest body = req == null ? new ActionRequest(null, null, null) : req;
+                                   @Valid @RequestBody ActionRequest req) {
         return StudentDtos.EnrollmentInfo.of(enrollments.act(me.organizationId(), enrollmentId, action,
-                body.months(), body.sessions(), body.teacherMembershipId()));
+                req.version(), req.months(), req.sessions(), req.teacherMembershipId()));
     }
 
     // ---------- 레슨 기록 (담당 여부는 서비스가 검사한다) ----------
@@ -153,8 +153,9 @@ class AcademyController {
     @PostMapping("/lesson-records")
     @ResponseStatus(HttpStatus.CREATED)
     @OrgRole({MembershipRole.TEACHER, MembershipRole.MANAGER})
-    StudentDtos.RecordInfo writeRecord(CurrentMember me, @Valid @RequestBody RecordRequest req) {
-        LessonRecord r = enrollments.writeRecord(me.organizationId(), me.membershipId(), req.enrollmentId(), req.toInput());
+    StudentDtos.RecordInfo writeRecord(CurrentMember me, @Valid @RequestBody NewRecordRequest req) {
+        LessonRecord r = enrollments.writeRecord(me.organizationId(), me.membershipId(), req.enrollmentId(),
+                req.record().toInput());
         return StudentDtos.RecordInfo.of(r, null, me.membershipId());
     }
 
@@ -189,7 +190,7 @@ class AcademyController {
     record ProductPatch(@Size(min = 1, max = 100) String name, @Min(0) Long price) {
     }
 
-    record StudentRequest(@NotBlank @Size(max = 50) String name, Integer birthYear, String phone, String guardianName,
+    record StudentRequest(@NotBlank @Size(max = 50) String name, @Min(1900) @Max(2100) Integer birthYear, String phone, String guardianName,
                           String guardianPhone, @Size(max = 1000) String memo, Boolean active) {
         StudentInput toInput() {
             return new StudentInput(name, birthYear, phone, guardianName, guardianPhone, memo, active);
@@ -203,10 +204,20 @@ class AcademyController {
                          @NotNull LocalDate startsOn) {
     }
 
-    record ActionRequest(Integer months, Integer sessions, Long teacherMembershipId) {
+    /** version: 화면이 읽어 간 수강 버전. 그사이 다른 관리자가 바꿨으면 409 (이중 연장 방지). */
+    record ActionRequest(@NotNull Long version, Integer months, Integer sessions, Long teacherMembershipId) {
     }
 
-    record RecordRequest(Long enrollmentId, @NotNull LocalDate lessonDate, @Size(max = 2000) String progress,
+    /** 34번: 어느 수강의 기록인지가 필요하다. */
+    record NewRecordRequest(@NotNull Long enrollmentId, @NotNull LocalDate lessonDate,
+                            @Size(max = 2000) String progress, @Size(max = 2000) String homework,
+                            @Size(max = 2000) String memo, boolean visibleToStudent) {
+        RecordRequest record() {
+            return new RecordRequest(lessonDate, progress, homework, memo, visibleToStudent);
+        }
+    }
+
+    record RecordRequest(@NotNull LocalDate lessonDate, @Size(max = 2000) String progress,
                          @Size(max = 2000) String homework, @Size(max = 2000) String memo, boolean visibleToStudent) {
         RecordInput toInput() {
             return new RecordInput(lessonDate, progress, homework, memo, visibleToStudent);

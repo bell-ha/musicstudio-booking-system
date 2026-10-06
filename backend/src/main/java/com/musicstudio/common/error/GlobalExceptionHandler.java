@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -30,6 +31,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ProblemDetail problem = ProblemTypes.of(e.status(), e.type(), e.getMessage());
         problem.setProperty("code", e.code());
         e.properties().forEach(problem::setProperty);
+        return problem;
+    }
+
+    /** 교착·잠금 대기 실패. 잠금 순서를 지키면 나오지 않아야 하지만, 나오더라도 500이 아니라 다시 시도하게 한다. */
+    @ExceptionHandler(PessimisticLockingFailureException.class)
+    ProblemDetail handleLockFailure(PessimisticLockingFailureException e) {
+        log.warn("잠금 실패", e);
+        ProblemDetail problem = ProblemTypes.of(HttpStatus.CONFLICT, "conflict", "잠시 후 다시 시도해 주세요");
+        problem.setProperty("code", "TRY_AGAIN");
         return problem;
     }
 

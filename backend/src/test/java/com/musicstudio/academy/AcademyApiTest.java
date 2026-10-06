@@ -245,6 +245,40 @@ class AcademyApiTest {
                 .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("MODULE_DISABLED"));
     }
 
+    @Test
+    void 낡은_화면에서_한_번_더_연장하면_409() throws Exception {
+        long e = id(enroll(student("김민지"), periodProduct, membershipId(owner), "2026-10-01"));
+        act(e, "extend", "{\"months\":1}").andExpect(status().isOk());
+
+        post(owner, "/enrollments/" + e + "/extend", "{\"version\":0,\"months\":1}")
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("CONFLICTING_UPDATE"));
+    }
+
+    @Test
+    void 기록에_수강이_없거나_출생연도가_범위_밖이면_400() throws Exception {
+        post(owner, "/lesson-records", "{\"lessonDate\":\"2026-10-09\",\"visibleToStudent\":false}")
+                .andExpect(status().isBadRequest());
+        post(owner, "/students", "{\"name\":\"이름\",\"birthYear\":99999}").andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 과목과_강사_필터는_같은_수강에_함께_걸린다() throws Exception {
+        String kim = member("TEACHER");
+        String park = member("TEACHER");
+        long vocal = id(post(owner, "/subjects", "{\"name\":\"보컬\"}"));
+        long vocalProduct = id(post(owner, "/products", """
+                {"subjectId":%d,"name":"보컬 3개월","kind":"PERIOD","periodMonths":3,"lessonMinutes":50,"price":1}"""
+                .formatted(vocal)));
+        long student = student("김민지");
+        enroll(student, periodProduct, membershipId(kim), "2026-10-01");    // 피아노는 김강사
+        enroll(student, vocalProduct, membershipId(park), "2026-10-01");    // 보컬은 박강사
+
+        api.call(owner, HttpMethod.GET, path("/students?subjectId=%d&teacherId=%d".formatted(subjectId, membershipId(park))), null)
+                .andExpect(jsonPath("$", hasSize(0)));
+        api.call(owner, HttpMethod.GET, path("/students?subjectId=%d&teacherId=%d".formatted(subjectId, membershipId(kim))), null)
+                .andExpect(jsonPath("$", hasSize(1)));
+    }
+
     // ---------- 도우미 ----------
 
     private String path(String rest) {
@@ -265,8 +299,11 @@ class AcademyApiTest {
                 .formatted(student, product, teacherMembership, startsOn));
     }
 
+    /** 화면처럼 지금 버전을 함께 보낸다. body는 버전 말고 더 보낼 값({"months":1} 등). */
     private ResultActions act(long enrollment, String action, String body) throws Exception {
-        return post(owner, "/enrollments/" + enrollment + "/" + action, body);
+        Long version = jdbc.queryForObject("select version from enrollment where id = ?", Long.class, enrollment);
+        String extra = body == null ? "" : "," + body.substring(1, body.length() - 1);
+        return post(owner, "/enrollments/" + enrollment + "/" + action, "{\"version\":" + version + extra + "}");
     }
 
     private ResultActions writeRecord(String token, long enrollment, boolean visible) throws Exception {
