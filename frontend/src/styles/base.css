@@ -141,6 +141,7 @@ a { color: var(--primary); }
 .join-code { font: var(--title-lg); color: var(--ink); letter-spacing: 0.1em; font-feature-settings: 'tnum'; margin: 0 0 var(--space-2); }
 
 .page-wide { max-width: 960px; }
+.page-editor { max-width: 1440px; } /* 평면도 편집은 원장님이 컴퓨터에서 한다. 넓은 화면을 다 쓴다 */
 .input-small { width: 72px; }
 .form-row input[type='number'],
 .form-row input[type='time'],
@@ -188,15 +189,15 @@ a { color: var(--primary); }
   /* 끌어서 그리는 동안 화면이 스크롤되지 않게 한다 */
   touch-action: none;
   user-select: none;
-  /* 편집기는 칸이 많아도(30×30 등) 한 화면에 들어오게 화면 폭에 맞춘다. 그리는 동안은 밀어서 볼 수 없으므로(touch-action: none)
-     휴대폰에서는 칸이 작아진다. 넓은 화면을 권하는 안내를 띄운다 */
-  --cell: clamp(8px, calc((min(100vw, 960px) - 34px) / var(--cols)), 20px);
+  /* 편집기는 컴퓨터 기준: 1440px까지 넓게 쓰고 칸은 v1과 같은 20px(60×40이면 1200px).
+     그래도 넘치면 스크롤 막대로 민다. 휴대폰에서는 칸이 작아지므로 컴퓨터를 권하는 안내를 띄운다 */
+  --cell: clamp(10px, calc((min(100vw, 1440px) - 34px) / var(--cols)), 20px);
 }
 .floor-wall { background: var(--wall); }
 .floor-corridor { background: var(--surface-soft); border: 1px dashed var(--wall); }
 .floor:not(.floor-editing) .floor-corridor { border: none; } /* 지도에서는 복도를 바탕색만으로 (작은 칸에서 격자처럼 보이지 않게) */
 .wide-only-hint { display: none; }
-@media (max-width: 639px) { .wide-only-hint { display: block; } }
+@media (max-width: 1023px) { .wide-only-hint { display: block; } }
 .floor-preview { background: var(--primary-tint); border: 2px dashed var(--primary); border-radius: var(--rounded-sm); pointer-events: none; }
 .floor-preview-invalid { background: var(--unavailable); border-color: var(--error); }
 .floor-editing .floor-room { min-width: 0; min-height: 0; }

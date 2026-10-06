@@ -295,10 +295,10 @@ export function FloorEditorPage() {
   const preview = dragRect ? { ...dragRect, invalid: draft ? blocked(draft, dragRect) : false } : pending
 
   return (
-    <main className="page page-wide">
+    <main className="page page-editor">
       <h1>평면도 편집</h1>
       <p className="card-meta">펜으로 벽과 복도를 그리고, 그 안에 방을 사각형으로 그려요.</p>
-      <p className="notice wide-only-hint">칸이 작아서 그리기 어려워요. 평면도는 넓은 화면(태블릿, PC)에서 편집하는 걸 권해요.</p>
+      <p className="notice wide-only-hint">칸이 작아서 그리기 어려워요. 평면도 편집은 컴퓨터에서 하는 걸 권해요.</p>
 
       {data && data.floors.length > 0 && (
         <div className="tabs" role="tablist">
@@ -388,10 +388,10 @@ export function FloorEditorPage() {
         </Field>
         <div className="form-row">
           <Field id="width" label="가로 칸">
-            <input id="width" name="width" type="number" min={1} max={100} defaultValue={30} required />
+            <input id="width" name="width" type="number" min={1} max={100} defaultValue={60} required />
           </Field>
           <Field id="height" label="세로 칸">
-            <input id="height" name="height" type="number" min={1} max={100} defaultValue={30} required />
+            <input id="height" name="height" type="number" min={1} max={100} defaultValue={40} required />
           </Field>
         </div>
         <button className="button">층 추가</button>
