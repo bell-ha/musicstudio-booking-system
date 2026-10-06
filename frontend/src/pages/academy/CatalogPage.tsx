@@ -1,3 +1,4 @@
+import { Pencil, Tags } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useParams } from 'react-router'
 import { api, errorMessage, fieldErrors } from '../../api'
@@ -82,18 +83,22 @@ export function CatalogPage() {
   const subjects = catalog?.subjects ?? []
 
   return (
-    <main className="page">
+    <main className="page page-wide">
       <h1>과목·상품</h1>
       {message && <p className="alert" role="alert">{message}</p>}
 
-      {subjects.map((s) => (
-        <section key={s.id} className="section">
-          <p className="card-title">{s.name}</p>
-          <ul className="list">
-            {catalog!.products.filter((p) => p.subjectId === s.id).map((p) => (
-              <li key={p.id} className="card">
+      <div className="groups">
+      {subjects.map((s) => {
+        const products = catalog!.products.filter((p) => p.subjectId === s.id)
+        return (
+        <section key={s.id}>
+          <h2 className="group-title">{s.name} · 상품 {products.length}개</h2>
+          <ul className="group">
+            {products.length === 0 && <li className="row row-compact"><span className="row-meta">아직 상품이 없어요. 아래에서 추가해 주세요.</span></li>}
+            {products.map((p) => (
+              <li key={p.id}>
                 {editing === p.id ? (
-                  <form className="form" onSubmit={(e) => updateProduct(p, e)}>
+                  <form className="form card-inset" onSubmit={(e) => updateProduct(p, e)}>
                     <Field id={`name-${p.id}`} label="상품 이름"><input id={`name-${p.id}`} name="name" defaultValue={p.name} required /></Field>
                     <Field id={`price-${p.id}`} label="가격 (원)"><input id={`price-${p.id}`} name="price" type="number" min={0} defaultValue={p.price} required /></Field>
                     <p className="card-meta">가격을 바꿔도 이미 등록된 수강의 금액은 그대로예요.</p>
@@ -103,17 +108,22 @@ export function CatalogPage() {
                     </div>
                   </form>
                 ) : (
-                  <>
-                    <p className="card-title">{p.name}</p>
-                    <p className="card-meta tnum">{productTerms(p)}</p>
-                    <div className="actions"><button className="button" onClick={() => setEditing(p.id)}>수정</button></div>
-                  </>
+                  <button type="button" className="row row-button" onClick={() => setEditing(p.id)}>
+                    <span className="row-icon"><Tags size={20} /></span>
+                    <span className="row-text">
+                      <span className="row-title">{p.name}</span>
+                      <span className="row-meta tnum">{productTerms(p)}</span>
+                    </span>
+                    <Pencil className="row-chevron" size={18} />
+                  </button>
                 )}
               </li>
             ))}
           </ul>
         </section>
-      ))}
+        )
+      })}
+      </div>
       {catalog && subjects.length === 0 && <p className="card empty">과목을 먼저 추가해 주세요. (예: 피아노, 보컬)</p>}
 
       <form className="form card section" onSubmit={addSubject}>
@@ -133,10 +143,14 @@ export function CatalogPage() {
           <Field id="productName" label="상품 이름" error={errors.name}>
             <input id="productName" name="productName" placeholder="예: 피아노 주 1회 3개월" required />
           </Field>
-          <div className="form-row">
-            <label className="check"><input type="radio" checked={kind === 'PERIOD'} onChange={() => setKind('PERIOD')} />기간권</label>
-            <label className="check"><input type="radio" checked={kind === 'COUNT'} onChange={() => setKind('COUNT')} />횟수권</label>
-          </div>
+          <fieldset className="segmented" aria-label="상품 종류">
+            {(['PERIOD', 'COUNT'] as const).map((k) => (
+              <label key={k} className={kind === k ? 'segment segment-on' : 'segment'}>
+                <input type="radio" name="kind" checked={kind === k} onChange={() => setKind(k)} />
+                {k === 'PERIOD' ? '기간권 (N개월)' : '횟수권 (N회)'}
+              </label>
+            ))}
+          </fieldset>
           <Field id="count" label={kind === 'PERIOD' ? '기간 (개월)' : '횟수 (회)'}>
             <input id="count" name="count" type="number" min={1} defaultValue={kind === 'PERIOD' ? 3 : 10} key={kind} required />
           </Field>
