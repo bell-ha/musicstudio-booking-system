@@ -34,6 +34,8 @@ export function StudentDetailPage() {
   const [catalog, setCatalog] = useState<Catalog | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [open, setOpen] = useState<{ id: number; action: 'extend' | 'change-teacher' | 'schedule' | 'makeup' } | 'enroll' | null>(null)
+  // 상태를 바꾸는 동작(정지·연장·강사 변경·종료·환불)은 자주 쓰지 않아서 접어 둔다
+  const [managing, setManaging] = useState<number | null>(null)
   const [notice, setNotice] = useState('')
   const [editingRecord, setEditingRecord] = useState<number | null>(null)
   const [writing, setWriting] = useState<number | null>(null)
@@ -150,7 +152,7 @@ export function StudentDetailPage() {
   )
 
   return (
-    <main className="page">
+    <main className="page page-wide">
       <header className="app-bar">
         <h1>{student.name}</h1>
         {manager && <Link className="button" to={`/orgs/${orgId}/academy/students/${student.id}/edit`}>정보 수정</Link>}
@@ -214,6 +216,10 @@ export function StudentDetailPage() {
                   {e.status === 'ACTIVE' && e.schedule.length > 0 && (
                     <button className="button" onClick={() => setOpen({ id: e.id, action: 'makeup' })}>보강 넣기</button>
                   )}
+                  <button className="button button-quiet" aria-expanded={managing === e.id}
+                    onClick={() => setManaging(managing === e.id ? null : e.id)}>
+                    수강 변경 {managing === e.id ? '▴' : '▾'}
+                  </button>
                 </div>
               )}
               {typeof open === 'object' && open?.id === e.id && open.action === 'schedule' && (
@@ -234,7 +240,7 @@ export function StudentDetailPage() {
                 </form>
               )}
 
-              {manager && ACTIONS[e.status].length > 0 && (
+              {manager && managing === e.id && ACTIONS[e.status].length > 0 && (
                 <div className="actions">
                   {ACTIONS[e.status].map((a) => (
                     <button key={a} className={a === 'end' || a === 'refund' ? 'button button-danger' : 'button'}

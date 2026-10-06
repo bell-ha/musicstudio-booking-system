@@ -529,3 +529,14 @@ button.floor-room { cursor: pointer; }
 .input-time { height: 40px; padding: 0 var(--space-3); border: none; border-radius: var(--rounded-sm); background: var(--canvas); font: var(--text-body); font-feature-settings: 'tnum'; }
 .room-row > .row { flex: 1; min-width: 0; }
 .group + .hint { margin-top: var(--space-2); padding: 0 var(--space-1); }
+/* 이름 첫 글자 아바타 (원생, 기관) */
+.avatar {
+  flex: 0 0 40px; height: 40px; display: grid; place-items: center; border-radius: 999px;
+  background: var(--primary-tint); color: var(--primary); font: 700 16px/1 var(--font);
+}
+.avatar-muted { background: var(--fill); color: var(--muted); }
+.row-sub { font: var(--text-caption); color: var(--muted); font-weight: 400; }
+.chips-inline { margin-top: 4px; }
+.brand-small { width: 40px; height: 40px; margin: 0; border-radius: var(--rounded-sm); }
+.tab[aria-pressed='true'] { color: var(--on-primary); background: var(--ink); }
+.button-quiet { background: var(--fill); color: var(--body); }

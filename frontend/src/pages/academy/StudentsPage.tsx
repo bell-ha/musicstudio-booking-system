@@ -1,3 +1,4 @@
+import { ChevronRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { api, errorMessage } from '../../api'
@@ -73,7 +74,7 @@ export function StudentsPage({ mine = false }: { mine?: boolean }) {
   const set = (patch: Partial<typeof filter>) => setFilter((f) => ({ ...f, ...patch }))
 
   return (
-    <main className="page">
+    <main className="page page-wide">
       <header className="app-bar">
         <h1>{mine ? '담당 학생' : '원생'}</h1>
         {admin && <Link className="button button-primary" to={`/orgs/${orgId}/academy/students/new`}>원생 등록</Link>}
@@ -92,8 +93,11 @@ export function StudentsPage({ mine = false }: { mine?: boolean }) {
               <option value="">모든 강사</option>
               {teachers.map((t) => <option key={t.membershipId} value={t.membershipId}>{t.name}</option>)}
             </select>
-            <label className="check"><input type="checkbox" checked={filter.expiring} onChange={(e) => set({ expiring: e.target.checked })} />만료 임박 (14일)</label>
-            <label className="check"><input type="checkbox" checked={filter.inactive} onChange={(e) => set({ inactive: e.target.checked })} />비활성 원생</label>
+            {/* 켜고 끄는 거르기는 칩으로 (DESIGN 0.2 칩 탭) */}
+            <button type="button" className="tab" aria-pressed={filter.expiring} aria-selected={filter.expiring}
+              onClick={() => set({ expiring: !filter.expiring })}>만료 임박 14일</button>
+            <button type="button" className="tab" aria-pressed={filter.inactive} aria-selected={filter.inactive}
+              onClick={() => set({ inactive: !filter.inactive })}>비활성</button>
           </div>
         )}
       </div>
@@ -102,23 +106,31 @@ export function StudentsPage({ mine = false }: { mine?: boolean }) {
       {students?.length === 0 && (
         <p className="card empty section">{mine ? '지금 맡고 있는 수강이 없어요.' : '조건에 맞는 원생이 없어요.'}</p>
       )}
-      <ul className="list section">
-        {students?.map((s) => (
-          <li key={s.id}>
-            <Link className="card card-link" to={`/orgs/${orgId}/academy/students/${s.id}`}>
-              <p className="card-title">
-                {s.name}
-                {s.birthYear && <span className="card-meta"> {s.birthYear}년생</span>}
-                {!s.active && <span className="badge">비활성</span>}
-              </p>
-              <p className="card-meta tnum">{s.phone ?? '연락처 없음'}{s.linked && ' · 계정 연결됨'}</p>
-              {s.enrollments.length > 0 && (
-                <div className="chips">{s.enrollments.map((e) => <EnrollmentChip key={e.id} e={e} today={today} />)}</div>
-              )}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {students && students.length > 0 && (
+        <>
+          <h2 className="group-title">{students.length}명</h2>
+          <ul className="group">
+            {students.map((s) => (
+              <li key={s.id}>
+                <Link className="row" to={`/orgs/${orgId}/academy/students/${s.id}`}>
+                  <span className={s.active ? 'avatar' : 'avatar avatar-muted'} aria-hidden="true">{s.name.slice(0, 1)}</span>
+                  <span className="row-text">
+                    <span className="row-title">
+                      {s.name}
+                      {s.birthYear && <span className="row-sub"> {s.birthYear}년생</span>}
+                      {!s.active && <span className="badge">비활성</span>}
+                    </span>
+                    {s.enrollments.length > 0
+                      ? <span className="chips chips-inline">{s.enrollments.map((e) => <EnrollmentChip key={e.id} e={e} today={today} />)}</span>
+                      : <span className="row-meta tnum">{s.phone ?? '연락처 없음'}{s.linked && ' · 계정 연결됨'}</span>}
+                  </span>
+                  <ChevronRight className="row-chevron" size={20} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </main>
   )
 }
