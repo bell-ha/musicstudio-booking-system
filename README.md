@@ -105,7 +105,13 @@ PostgreSQL 17 (EXCLUDE 제약, advisory lock, 연락처 AES-GCM)
 Apple M1 Max(10코어) 노트북 한 대에서 부하 발생기(JVM)와 PostgreSQL 17(Docker, CPU 10개, 메모리 7GiB)이 함께 돈다. 커넥션 풀은 HikariCP 20개, `deadlock_timeout`은 기본값 1초다. 네트워크 지연이 거의 없는 조건이라 절대값보다 **방식 사이의 차이**를 봐 주면 좋겠다.
 
 ## 실행
-필요한 것: Java 25, Node 24, Docker
+**한 번에 보기 (Docker만 있으면 됨)**
+```bash
+docker compose --profile full up -d --build   # DB + 백엔드 + 프론트(Nginx) → http://localhost:3000
+python3 scripts/seed-demo.py                  # 데모 학원·계정·평면도·예약을 넣고 로그인 정보를 출력
+```
+
+**개발할 때** (필요한 것: Java 25, Node 24, Docker)
 ```bash
 docker compose up -d                          # PostgreSQL 17 (개발용)
 cd backend && ./gradlew bootRun               # :8080 (로컬 키는 자동 설정)
