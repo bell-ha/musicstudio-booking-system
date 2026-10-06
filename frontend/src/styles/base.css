@@ -561,3 +561,11 @@ button.floor-room { cursor: pointer; }
 @media (max-width: 479px) { .hero-logo:has(img) { max-width: 100px; } }
 .shell-logo:has(img) { flex: 0 0 auto; width: auto; min-width: 32px; max-width: 72px; padding: 0 4px; background: var(--canvas); }
 .shell-logo img { display: block; width: auto; height: auto; max-width: 100%; max-height: 26px; }
+/* 로그인·가입: 제목 아래 여백이 작아서 .page-sub의 음수 여백이 제목과 겹쳤다 (글씨 겹침 검사로 찾음) */
+.page-auth .page-sub { margin-top: 0; }
+/* 평면도 편집기: 칸이 작아지면(휴대폰) 방 이름이 칸을 넘어 옆 방 이름과 겹쳤다. 칸 안에서 줄이고 넘치면 말줄임 */
+.floor-editing .floor-room {
+  padding: 0 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-size: clamp(8px, calc(var(--cell) * 0.62), 13px); line-height: 1.1;
+}
+.floor-editing .floor-room > * { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
