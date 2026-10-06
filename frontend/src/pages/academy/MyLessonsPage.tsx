@@ -16,6 +16,7 @@ export function MyLessonsPage() {
   const [detail, setDetail] = useState<StudentDetail | null>(null)
   const [message, setMessage] = useState('')
   const [sessions, setSessions] = useState<Session[]>([])
+  const [loadedAt, setLoadedAt] = useState(0)
   const tz = zoneOf(me?.timezone)
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export function MyLessonsPage() {
     // UC-53: 지난 2주 출결과 앞으로 4주 일정 (서버는 42일까지 한 번에 준다)
     const today = todayIn(zoneOf(me.timezone))
     api<Session[]>(`/organizations/${orgId}/academy/students/me/sessions?from=${addDays(today, -14)}&to=${addDays(today, 27)}`)
-      .then(setSessions).catch(() => setSessions([]))
+      .then((list) => { setLoadedAt(Date.now()); setSessions(list) }).catch(() => setSessions([]))
   }, [me, orgId])
 
   if (me === undefined) return <main className="page" />
@@ -57,9 +58,9 @@ export function MyLessonsPage() {
             ))}
           </ul>
           {sessions.length > 0 && (() => {
-            const today = todayIn(tz)
-            const upcoming = sessions.filter((x) => x.localDate >= today)
-            const past = sessions.filter((x) => x.localDate < today).reverse()
+            // 오늘 이미 끝난 레슨은 지난 쪽으로 (리뷰 29 3-1)
+            const upcoming = sessions.filter((x) => Date.parse(x.endsAt) > loadedAt)
+            const past = sessions.filter((x) => Date.parse(x.endsAt) <= loadedAt).reverse()
             const row = (x: Session) => (
               <li key={x.id} className="row row-compact">
                 <span className="row-time tnum">{x.localDate.slice(5).replace('-', '/')}</span>

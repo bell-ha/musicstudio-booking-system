@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useParams } from 'react-router'
 import { api, errorMessage } from '../../api'
@@ -19,7 +19,13 @@ export function SchedulePage() {
   const { orgId } = useParams()
   const me = useMyOrganization(orgId)
   const tz = zoneOf(me?.timezone)
-  const [week, setWeek] = useState(() => mondayOf(todayIn(tz)))
+  // 고른 주가 없으면 기관 시간대의 이번 주. 첫 렌더에는 기관 정보가 없어서 초기값으로 계산하면 브라우저 시간대가 된다 (리뷰 29 1-2)
+  const [picked, setPicked] = useState<string | null>(null)
+  const week = picked ?? mondayOf(todayIn(tz))
+  const setWeek = setPicked
+  const [refresh, setRefresh] = useState(0)
+  const [cancelingDay, setCancelingDay] = useState<string | null>(null)
+  const [reason, setReason] = useState('')
   const [sessions, setSessions] = useState<Session[]>()
   const [unmarked, setUnmarked] = useState<Session[]>([])
   const [open, setOpen] = useState<Session | null>(null)
@@ -27,15 +33,19 @@ export function SchedulePage() {
   const [notice, setNotice] = useState('')
   const [message, setMessage] = useState('')
 
-  const load = useCallback(() => {
-    const base = `/organizations/${orgId}/academy/sessions`
-    api<Session[]>(`${base}?from=${week}&to=${addDays(week, 6)}`).then((list) => { setNow(Date.now()); setSessions(list) }).catch((e) => setMessage(errorMessage(e)))
-    api<Session[]>(`${base}?unmarked=true`).then(setUnmarked).catch(() => setUnmarked([]))
-  }, [orgId, week])
+  const load = () => setRefresh((v) => v + 1)
 
+  // 주를 빨리 넘기면 늦게 온 지난 주의 응답이 덮지 않게 한다 (리뷰 29 1-1)
   useEffect(() => {
-    if (me && me.role !== 'STUDENT') load()
-  }, [me, load])
+    if (!me || me.role === 'STUDENT') return
+    let current = true
+    const base = `/organizations/${orgId}/academy/sessions`
+    api<Session[]>(`${base}?from=${week}&to=${addDays(week, 6)}`)
+      .then((list) => { if (current) { setNow(Date.now()); setSessions(list) } })
+      .catch((e) => current && setMessage(errorMessage(e)))
+    api<Session[]>(`${base}?unmarked=true`).then((list) => current && setUnmarked(list)).catch(() => current && setUnmarked([]))
+    return () => { current = false }
+  }, [me, orgId, week, refresh])
 
   if (me === undefined) return <main className="page page-wide" />
   if (me === null || me.role === 'STUDENT') return <NotMember />
@@ -43,13 +53,17 @@ export function SchedulePage() {
   const today = todayIn(tz)
 
   async function cancelDay(date: string) {
-    const reason = window.prompt(`${dateLabel(date)} 레슨을 모두 휴강할까요? 사유를 적어 주세요 (예: 추석 연휴)`)
-    if (!reason?.trim()) return
+    if (!reason.trim()) {
+      setMessage('휴강 사유를 적어 주세요.')
+      return
+    }
     try {
       const r = await api<{ canceled: number; appended: number; skipped: number }>(
         `/organizations/${orgId}/academy/sessions/cancel-day`, { method: 'POST', body: { date, reason } })
       setNotice(`${r.canceled}개 회차를 휴강했어요.${r.appended > 0 ? ` 횟수권은 ${r.appended}회를 뒤에 이어 붙였어요.` : ''}`
         + (r.skipped > 0 ? ` 그사이 새로 생긴 회차 ${r.skipped}개는 남았어요. 한 번 더 눌러 주세요.` : ''))
+      setCancelingDay(null)
+      setReason('')
       load()
     } catch (error) {
       setMessage(errorMessage(error))
@@ -97,10 +111,18 @@ export function SchedulePage() {
                 <h2 className={date === today ? 'group-title day-today' : 'group-title'}>
                   {DAY_SHORT[day]} {date.slice(5).replace('-', '/')}{date === today && ' · 오늘'}
                 </h2>
-                {manager && open.length > 0 && date >= today && (
-                  <button type="button" className="link-button" onClick={() => cancelDay(date)}>이날 휴강</button>
+                {manager && open.length > 0 && date >= today && cancelingDay !== date && (
+                  <button type="button" className="link-button" onClick={() => { setCancelingDay(date); setReason('') }}>이날 휴강</button>
                 )}
               </div>
+              {cancelingDay === date && (
+                <div className="card-inset form-row wrap">
+                  <input aria-label={`${dateLabel(date)} 휴강 사유`} placeholder="사유 (예: 추석 연휴)" value={reason} maxLength={500}
+                    onChange={(e) => setReason(e.target.value)} />
+                  <button type="button" className="button button-danger" onClick={() => cancelDay(date)}>{open.length}개 휴강</button>
+                  <button type="button" className="button" onClick={() => setCancelingDay(null)}>취소</button>
+                </div>
+              )}
               <ul className="group">
                 {list.length === 0 && <li className="row row-compact"><span className="row-meta">레슨 없음</span></li>}
                 {list.map((s) => (

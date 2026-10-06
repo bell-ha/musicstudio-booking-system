@@ -10,10 +10,12 @@ import type { EnrollmentDetail, Slot } from './types'
  * 바꾸면 적용 시작일 이후의 출결 안 한 회차만 다시 만든다(지난 회차·출결한 회차는 그대로).
  * 겹치면 서버가 409와 겹치는 날짜를 주고, 아무것도 바뀌지 않는다.
  */
-export function ScheduleEditor({ orgId, enrollment, today, onSaved, onCancel }: {
+export function ScheduleEditor({ orgId, enrollment, today, initialMessage, onSaved, onCancel }: {
   orgId: string
   enrollment: EnrollmentDetail
   today: string
+  /** 재개·연장이 겹쳐서 이 편집기로 왔을 때 겹친 날짜 */
+  initialMessage?: string
   onSaved: (notice: string) => void
   onCancel: () => void
 }) {
@@ -21,7 +23,7 @@ export function ScheduleEditor({ orgId, enrollment, today, onSaved, onCancel }: 
     enrollment.schedule.length > 0 ? enrollment.schedule.map((s) => ({ ...s, startTime: s.startTime.slice(0, 5) }))
       : [{ dayOfWeek: 'MONDAY', startTime: '16:00' }])
   const [from, setFrom] = useState(today > enrollment.startsOn ? today : enrollment.startsOn)
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState(initialMessage ?? '')
 
   const set = (i: number, patch: Partial<Slot>) => setSlots(slots.map((s, j) => (j === i ? { ...s, ...patch } : s)))
 
@@ -46,14 +48,16 @@ export function ScheduleEditor({ orgId, enrollment, today, onSaved, onCancel }: 
       <p className="card-title">고정 일정</p>
       {slots.map((s, i) => (
         <div key={i} className="slot-row">
-          <div className="day-chips" role="radiogroup" aria-label={`${i + 1}번째 요일`}>
+          {/* 진짜 radio: Tab 한 번으로 그룹에 들어가고 화살표로 고른다 (리뷰 29 접근성 1) */}
+          <fieldset className="day-chips" aria-label={`${i + 1}번째 요일`}>
             {DAYS.map((d) => (
-              <button key={d} type="button" role="radio" aria-checked={s.dayOfWeek === d}
-                className={s.dayOfWeek === d ? 'day-chip day-chip-on' : 'day-chip'} onClick={() => set(i, { dayOfWeek: d })}>
+              <label key={d} className={s.dayOfWeek === d ? 'day-chip day-chip-on' : 'day-chip'}>
+                <input type="radio" name={`day-${enrollment.id}-${i}`} checked={s.dayOfWeek === d}
+                  onChange={() => set(i, { dayOfWeek: d })} />
                 {DAY_SHORT[d]}
-              </button>
+              </label>
             ))}
-          </div>
+          </fieldset>
           <input type="time" step={300} value={s.startTime} aria-label={`${i + 1}번째 시각`} className="input-time"
             onChange={(e) => set(i, { startTime: e.target.value })} />
           {slots.length > 1 && (
@@ -64,7 +68,10 @@ export function ScheduleEditor({ orgId, enrollment, today, onSaved, onCancel }: 
         </div>
       ))}
       {slots.length < 3 && (
-        <button type="button" className="button" onClick={() => setSlots([...slots, { dayOfWeek: 'THURSDAY', startTime: slots[0].startTime }])}>
+        <button type="button" className="button" onClick={() => setSlots([...slots, {
+          // 아직 고르지 않은 첫 요일 (같은 요일·시각이 둘이면 서버가 거절한다)
+          dayOfWeek: DAYS.find((d) => !slots.some((x) => x.dayOfWeek === d)) ?? 'MONDAY', startTime: slots[0].startTime,
+        }])}>
           <Plus size={16} /> 요일 더하기 (주 {slots.length + 1}회)
         </button>
       )}

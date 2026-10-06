@@ -454,7 +454,7 @@ button.floor-room { cursor: pointer; }
 
 /* 공개 범위 세그먼트 */
 .segmented { display: flex; gap: var(--space-1); margin: 0; padding: var(--space-1); border: none; background: var(--fill); border-radius: var(--rounded-md); }
-.segment { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 40px; border-radius: var(--rounded-sm); font: var(--text-body-strong); color: var(--muted); cursor: pointer; }
+.segment { flex: 1; display: flex; align-items: center; justify-content: center; min-height: var(--touch); border-radius: var(--rounded-sm); font: var(--text-body-strong); color: var(--muted); cursor: pointer; }
 .segment input { position: absolute; opacity: 0; pointer-events: none; }
 .segment-on { background: var(--canvas); color: var(--ink); box-shadow: 0 1px 3px rgb(0 0 0 / 0.08); }
 .segment:has(input:focus-visible) { outline: 2px solid var(--primary); }
@@ -513,18 +513,21 @@ button.floor-room { cursor: pointer; }
 .week-nav { display: flex; align-items: center; gap: var(--space-1); }
 .day-head { display: flex; align-items: baseline; justify-content: space-between; }
 .day-today { color: var(--primary); }
-.link-button { background: none; border: none; padding: var(--space-2); font: var(--text-caption); color: var(--error); cursor: pointer; }
+.link-button { min-height: var(--touch); background: none; border: none; padding: 0 var(--space-2); font: var(--text-caption); color: var(--error); cursor: pointer; }
 .groups section { min-width: 0; }
 .row-icon-warn { background: #fef3c7; color: #92400e; }
 /* 고정 일정 편집 (수강 카드 안) */
 .card-inset { margin-top: var(--space-3); padding: var(--space-4); border-radius: var(--rounded-md); background: var(--fill); }
 .card-inset .field input { background: var(--canvas); border-color: transparent; }
 .slot-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-.day-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+/* 요일 7개가 360px에서도 한 줄: 같은 폭으로 나눠 갖고 높이는 44px (DESIGN 8절) */
+.day-chips { display: flex; gap: 4px; flex: 1 1 100%; flex-wrap: nowrap; margin: 0; padding: 0; border: none; min-width: 0; }
 .day-chip {
-  width: 36px; height: 36px; border-radius: 999px; border: none; cursor: pointer;
-  background: var(--canvas); color: var(--body); font: var(--text-body-strong);
+  flex: 1; min-width: 0; height: var(--touch); display: grid; place-items: center; border-radius: var(--rounded-sm);
+  background: var(--canvas); color: var(--body); font: var(--text-body-strong); cursor: pointer;
 }
+.day-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.day-chip:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 1px; }
 .day-chip-on { background: var(--primary); color: var(--on-primary); }
 .input-time { height: 40px; padding: 0 var(--space-3); border: none; border-radius: var(--rounded-sm); background: var(--canvas); font: var(--text-body); font-feature-settings: 'tnum'; }
 .room-row > .row { flex: 1; min-width: 0; }

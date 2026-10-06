@@ -37,6 +37,7 @@ export function StudentDetailPage() {
   // 상태를 바꾸는 동작(정지·연장·강사 변경·종료·환불)은 자주 쓰지 않아서 접어 둔다
   const [managing, setManaging] = useState<number | null>(null)
   const [notice, setNotice] = useState('')
+  const [cardMessage, setCardMessage] = useState<{ id: number; text: string; editor: boolean } | null>(null)
   const [editingRecord, setEditingRecord] = useState<number | null>(null)
   const [writing, setWriting] = useState<number | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -72,9 +73,11 @@ export function StudentDetailPage() {
   const canWrite = (e: EnrollmentDetail) => (e.status === 'ACTIVE' || e.status === 'PAUSED')
     && (me.membershipId === undefined || e.teacherMembershipId === me.membershipId)
 
-  async function run(request: Promise<unknown>) {
+  /** target: 겹침(409 SCHEDULE_CONFLICT)이 나면 그 수강 카드 안에 동작에 맞는 출구를 보여 준다 (리뷰 29 1-4) */
+  async function run(request: Promise<unknown>, target?: { id: number; kind: Action | 'makeup' }) {
     setErrors({})
     setMessage('')
+    setCardMessage(null)
     try {
       await request
       setOpen(null)
@@ -83,9 +86,20 @@ export function StudentDetailPage() {
       setRefresh((v) => v + 1)
     } catch (error) {
       setErrors(fieldErrors(error))
-      // 재개·연장·강사 변경이 다른 레슨과 겹치면 수강 변경 전체가 되돌아간다. 출구는 고정 일정 바꾸기 (교차 리뷰 28 2-4)
       const conflict = conflictText(error)
-      setMessage(conflict ? `${conflict}. 고정 일정을 바꾼 뒤 다시 해 주세요.` : errorMessage(error))
+      if (conflict && target) {
+        // 재개·연장은 고정 일정이 남의 레슨과 겹친 것이라 그 카드의 일정 편집기를 바로 연다 (교차 리뷰 28 2-4)
+        if (target.kind === 'resume' || target.kind === 'extend') {
+          setOpen({ id: target.id, action: 'schedule' })
+          setCardMessage({ id: target.id, text: `${conflict}. 고정 일정을 바꾸면 다시 할 수 있어요.`, editor: true })
+        } else {
+          setCardMessage({ id: target.id, text: target.kind === 'makeup'
+            ? `${conflict}. 다른 시각을 골라 주세요.`
+            : `${conflict}. 다른 강사를 고르거나 고정 일정을 바꿔 주세요.`, editor: false })
+        }
+        return
+      }
+      setMessage(errorMessage(error))
       // 낡은 화면이었으면 최신 상태를 다시 받아 보여 준다
       if (error instanceof ApiError && error.problem.code === 'CONFLICTING_UPDATE') setRefresh((v) => v + 1)
     }
@@ -97,7 +111,7 @@ export function StudentDetailPage() {
     if ((action === 'end' || action === 'refund')
       && !window.confirm(`${e.subjectName} 수강을 ${ACTION_LABEL[action]} 처리할까요? 되돌릴 수 없어요.`)) return
     // 화면에 보이는 버전을 함께 보낸다. 그사이 다른 관리자가 바꿨으면 409 CONFLICTING_UPDATE (이중 연장 방지)
-    run(api(`${base}/enrollments/${e.id}/${action}`, { method: 'POST', body: { version: e.version, ...body } }))
+    run(api(`${base}/enrollments/${e.id}/${action}`, { method: 'POST', body: { version: e.version, ...body } }), { id: e.id, kind: action })
   }
 
   function link(membershipId: string) {
@@ -222,8 +236,10 @@ export function StudentDetailPage() {
                   </button>
                 </div>
               )}
+              {cardMessage?.id === e.id && !cardMessage.editor && <p className="alert" role="alert">{cardMessage.text}</p>}
               {typeof open === 'object' && open?.id === e.id && open.action === 'schedule' && (
                 <ScheduleEditor orgId={orgId!} enrollment={e} today={today} onCancel={() => setOpen(null)}
+                  initialMessage={cardMessage?.id === e.id && cardMessage.editor ? cardMessage.text : undefined}
                   onSaved={(n) => { setOpen(null); setNotice(n); setRefresh((v) => v + 1) }} />
               )}
               {typeof open === 'object' && open?.id === e.id && open.action === 'makeup' && (
@@ -232,7 +248,7 @@ export function StudentDetailPage() {
                   const f = new FormData(ev.currentTarget)
                   run(api(`${base}/enrollments/${e.id}/makeups`, {
                     method: 'POST', body: { startsAt: zonedIso(String(f.get('d')), String(f.get('t')), zoneOf(me.timezone)) },
-                  }).then(() => setNotice('보강을 넣었어요.' + (e.kind === 'COUNT' ? ' 횟수권이라 맨 뒤 회차 하나가 빠져요.' : ''))))
+                  }).then(() => setNotice('보강을 넣었어요.')), { id: e.id, kind: 'makeup' })
                 }}>
                   <input name="d" type="date" min={today} defaultValue={today} aria-label="보강 날짜" required />
                   <input name="t" type="time" step={300} defaultValue="16:00" aria-label="보강 시각" required />
