@@ -115,6 +115,7 @@ a { color: var(--primary); }
 .tab[aria-selected='true'] { color: var(--primary); border-bottom-color: var(--primary); }
 
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.hint { flex-basis: 100%; margin: 0; }
 
 .select,
 .input-readonly,
@@ -138,3 +139,130 @@ a { color: var(--primary); }
 .fieldset legend { padding: 0 var(--space-1); }
 
 .join-code { font: var(--title-lg); color: var(--ink); letter-spacing: 0.1em; font-feature-settings: 'tnum'; margin: 0 0 var(--space-2); }
+
+.page-wide { max-width: 960px; }
+.input-small { width: 72px; }
+.form-row input[type='number'],
+.form-row input[type='time'],
+.form-row input[type='date'],
+.form-row select {
+  height: var(--touch);
+  padding: 0 var(--space-2);
+  font: var(--text-body);
+  color: var(--ink);
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-sm);
+}
+.form-row .field { flex: 1; }
+.day-label { width: 24px; font: var(--text-body-strong); color: var(--ink); }
+.form-row input[type='time'] { flex: 1; min-width: 0; }
+.button[aria-pressed='true'] { border-color: var(--primary); color: var(--primary); background: var(--primary-tint); }
+.tab[aria-checked='true'] { color: var(--primary); border-bottom-color: var(--primary); }
+.badge-unavailable { background: var(--unavailable); }
+
+/* 평면도 (DESIGN 4·5절): 화면 너비에 맞추되 칸이 44px보다 작아지면 좌우로 밀어서 본다 */
+.floor-scroll { overflow-x: auto; margin: var(--space-4) 0; }
+.floor {
+  --cell: clamp(44px, calc((min(100vw, 960px) - 32px) / var(--cols)), 64px);
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--cell));
+  grid-template-rows: repeat(var(--rows), var(--cell));
+  width: max-content;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-md);
+}
+.floor-editing {
+  background-image:
+    linear-gradient(to right, var(--hairline) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--hairline) 1px, transparent 1px);
+  background-size: var(--cell) var(--cell);
+  cursor: crosshair;
+  touch-action: manipulation;
+}
+.floor-wall { background: var(--wall); }
+.floor-corridor { background: var(--surface-soft); border: 1px dashed var(--wall); }
+.floor-highlight { background: var(--primary-tint); outline: 2px solid var(--primary); outline-offset: -2px; }
+.floor-room {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 2px;
+  padding: var(--space-1);
+  font: var(--text-caption);
+  color: var(--ink);
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-sm);
+  text-align: center;
+  overflow: hidden;
+}
+.room-edit { border-color: var(--ink); font-weight: 600; pointer-events: none; }
+
+.tnum { font-feature-settings: 'tnum'; }
+.card-muted { opacity: 0.7; }
+
+/* 지도 방 타일: 상태는 색과 글자를 함께 쓴다 (DESIGN 2절) */
+.floor-room span { font: var(--text-caption); color: var(--muted); }
+button.floor-room { cursor: pointer; }
+.room-available { border: 2px solid var(--free); background: var(--free-tint); }
+.room-available span { color: var(--ink); }
+.room-booked { background: var(--booked); }
+.room-mine { border: 2px solid var(--primary); background: var(--primary-tint); }
+.room-mine span { color: var(--primary); font-weight: 600; }
+.room-unavailable {
+  background: repeating-linear-gradient(45deg, var(--unavailable), var(--unavailable) 6px, var(--canvas) 6px, var(--canvas) 12px);
+}
+
+/* 시간표 시트: 휴대폰은 아래에서, 640px부터는 오른쪽 패널 (DESIGN 4·8절) */
+.sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: 85vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  border-radius: var(--rounded-lg) var(--rounded-lg) 0 0;
+  background: var(--canvas);
+  box-shadow: 0 -4px 24px rgb(0 0 0 / 0.12);
+}
+.sheet:not([open]) { display: none; }
+.sheet::backdrop { background: rgb(0 0 0 / 0.4); }
+@media (min-width: 640px) {
+  .sheet { inset: 0 0 0 auto; width: 380px; max-height: 100vh; height: 100vh; border-radius: 0; }
+}
+.sheet-header, .sheet-footer { padding: var(--space-4); }
+.sheet-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--hairline); }
+.sheet-footer { border-top: 1px solid var(--hairline); display: flex; flex-direction: column; gap: var(--space-2); }
+.sheet-header .card-title, .sheet-header .card-meta { margin: 0; }
+.slots { list-style: none; margin: 0; padding: var(--space-2) var(--space-4); overflow-y: auto; flex: 1; }
+.slot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: var(--touch);
+  margin-bottom: var(--space-1);
+  padding: 0 var(--space-3);
+  font: var(--text-body);
+  color: var(--ink);
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-sm);
+  cursor: pointer;
+}
+.slot:disabled { cursor: default; }
+.slot-time { font-feature-settings: 'tnum'; font-weight: 600; }
+.slot-available { border-color: var(--free); }
+.slot-booked { background: var(--booked); color: var(--muted); }
+.slot-unavailable { background: var(--unavailable); color: var(--muted); }
+.slot-mine { background: var(--primary-tint); color: var(--primary); }
+.slot-selected { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }

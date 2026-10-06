@@ -2,6 +2,19 @@ import { Link, useParams } from 'react-router'
 import { isManager, ROLE_LABEL } from '../labels'
 import { useMyOrganization } from '../useMyOrganization'
 
+const BOOKING_MENU = [
+  { to: 'practice', title: '연습실 예약', meta: '지도에서 빈 방을 찾아 예약해요' },
+  { to: 'practice/my', title: '내 예약', meta: '예약을 보고 취소해요' },
+]
+
+const PRACTICE_MENU = [
+  { to: 'practice', title: '연습실 지도', meta: '날짜·시각별로 빈 방을 봐요' },
+  { to: 'practice/bookings', title: '예약 현황', meta: '날짜별 전체 예약, 사유를 적어 강제 취소' },
+  { to: 'practice/floors', title: '평면도 편집', meta: '층을 만들고 벽·복도를 칠하고 방을 놓아요' },
+  { to: 'practice/rooms', title: '방 관리', meta: '방 이름, 수용 인원, 장비, 점검 중 표시' },
+  { to: 'practice/policy', title: '예약 정책', meta: '운영 시간, 시간 단위, 이용 한도, 예약 오픈' },
+]
+
 const MANAGER_MENU = [
   { to: 'members', title: '멤버 관리', meta: '가입 신청 승인, 역할 변경, 비활성화' },
   { to: 'invite', title: '초대 링크', meta: '역할을 정해 한 번 쓰는 링크를 만들어요' },
@@ -15,13 +28,19 @@ export function OrganizationHomePage() {
   if (org === undefined) return <main className="page" />
   if (org === null) return <NotMember />
 
+  // 학생은 예약 메뉴, 관리자는 관리 메뉴, 강사는 지도 보기만 (MVP에서 예약은 학생만, Q2)
+  const practice = org.modules.includes('PRACTICE_ROOM')
+  const menu = isManager(org.role) ? [...(practice ? PRACTICE_MENU : []), ...MANAGER_MENU]
+    : !practice ? []
+    : org.role === 'STUDENT' ? BOOKING_MENU : PRACTICE_MENU.slice(0, 1)
+
   return (
     <main className="page">
       <h1>{org.name}</h1>
       <p className="card-meta">내 역할: {ROLE_LABEL[org.role]}</p>
-      {isManager(org.role) ? (
+      {menu.length > 0 ? (
         <ul className="list section">
-          {MANAGER_MENU.map((item) => (
+          {menu.map((item) => (
             <li key={item.to}>
               <Link className="card card-link" to={item.to}>
                 <p className="card-title">{item.title}</p>
@@ -31,7 +50,7 @@ export function OrganizationHomePage() {
           ))}
         </ul>
       ) : (
-        <p className="card empty section">연습실 예약과 수강 정보는 곧 여기에 보여요.</p>
+        <p className="card empty section">수강 정보는 곧 여기에 보여요.</p>
       )}
       <p className="helper"><Link to="/">내 기관으로</Link></p>
     </main>

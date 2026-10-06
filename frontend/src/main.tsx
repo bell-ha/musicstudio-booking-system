@@ -10,6 +10,12 @@ import { LoginPage } from './pages/LoginPage'
 import { MembersPage } from './pages/MembersPage'
 import { NewOrganizationPage } from './pages/NewOrganizationPage'
 import { OrganizationHomePage } from './pages/OrganizationHomePage'
+import { AdminBookingsPage } from './pages/practice/AdminBookingsPage'
+import { FloorEditorPage } from './pages/practice/FloorEditorPage'
+import { MyBookingsPage } from './pages/practice/MyBookingsPage'
+import { PracticeMapPage } from './pages/practice/PracticeMapPage'
+import { PolicyPage } from './pages/practice/PolicyPage'
+import { RoomsPage } from './pages/practice/RoomsPage'
 import { OrganizationsPage } from './pages/OrganizationsPage'
 import { SignupPage } from './pages/SignupPage'
 import { RequireLogin } from './RequireLogin'
@@ -31,6 +37,12 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/orgs/:orgId/members" element={<RequireLogin><MembersPage /></RequireLogin>} />
         <Route path="/orgs/:orgId/invite" element={<RequireLogin><InvitationPage /></RequireLogin>} />
         <Route path="/orgs/:orgId/join-code" element={<RequireLogin><JoinCodePage /></RequireLogin>} />
+        <Route path="/orgs/:orgId/practice" element={<RequireLogin><PracticeMapPage /></RequireLogin>} />
+        <Route path="/orgs/:orgId/practice/my" element={<RequireLogin><MyBookingsPage /></RequireLogin>} />
+        <Route path="/orgs/:orgId/practice/bookings" element={<RequireLogin><AdminBookingsPage /></RequireLogin>} />
+        <Route path="/orgs/:orgId/practice/floors" element={<RequireLogin><FloorEditorPage /></RequireLogin>} />
+        <Route path="/orgs/:orgId/practice/rooms" element={<RequireLogin><RoomsPage /></RequireLogin>} />
+        <Route path="/orgs/:orgId/practice/policy" element={<RequireLogin><PolicyPage /></RequireLogin>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

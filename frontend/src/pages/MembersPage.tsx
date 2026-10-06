@@ -25,16 +25,20 @@ const TABS: { status: MemberStatus; label: string }[] = [
 
 export function MembersPage() {
   const { orgId } = useParams()
-  const me = useMyOrganization(orgId)
+  // 소유자·관리자를 바꾸면 그게 나 자신일 수 있다. 그때는 내 역할을 다시 읽는다
+  const [meVersion, setMeVersion] = useState(0)
+  const me = useMyOrganization(orgId, meVersion)
   const [status, setStatus] = useState<MemberStatus>('PENDING')
   const [members, setMembers] = useState<Member[] | null>(null)
   const [message, setMessage] = useState('')
 
   useEffect(() => {
     if (!me || !isManager(me.role)) return
+    let current = true // 탭을 빨리 바꾸면 지난 탭의 응답이 늦게 와서 덮어쓸 수 있다
     api<Member[]>(`/organizations/${orgId}/members?status=${status}`)
-      .then(setMembers)
-      .catch((error) => setMessage(errorMessage(error)))
+      .then((list) => current && setMembers(list))
+      .catch((error) => current && setMessage(errorMessage(error)))
+    return () => { current = false }
   }, [me, orgId, status])
 
   if (me === undefined) return <main className="page" />
@@ -50,6 +54,7 @@ export function MembersPage() {
     try {
       const updated = await api<Member>(`/organizations/${orgId}/members/${target.membershipId}`, { method: 'PATCH', body })
       // 상태가 바뀐 멤버는 지금 탭에서 빠진다
+      if (isManager(target.role)) setMeVersion((v) => v + 1)
       setMembers((list) => list && (updated.status === status
         ? list.map((m) => (m.membershipId === updated.membershipId ? updated : m))
         : list.filter((m) => m.membershipId !== updated.membershipId)))

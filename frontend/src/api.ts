@@ -27,8 +27,11 @@ export const token = {
   clear: () => localStorage.removeItem(TOKEN_KEY),
 }
 
-export async function api<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
-  const headers: Record<string, string> = {}
+export async function api<T>(
+  path: string,
+  init: { method?: string; body?: unknown; headers?: Record<string, string> } = {},
+): Promise<T> {
+  const headers: Record<string, string> = { ...init.headers }
   if (init.body !== undefined) headers['Content-Type'] = 'application/json'
   // 가입·로그인에는 토큰을 보내지 않는다. 만료된 토큰이 붙으면 서버가 permitAll 경로에서도 401을 준다
   const accessToken = token.get()
