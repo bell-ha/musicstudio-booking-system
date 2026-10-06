@@ -6,6 +6,8 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.sql.Connection;
+import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -20,6 +22,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,6 +70,9 @@ class LessonScheduleApiTest {
 
     @Autowired
     JdbcTemplate jdbc;
+
+    @Autowired
+    DataSource dataSource;
 
     ApiClient api;
     String owner;
@@ -233,6 +240,27 @@ class LessonScheduleApiTest {
                 .andExpect(jsonPath("$.code").value("IN_THE_PAST"));
     }
 
+    /**
+     * 리뷰 2-2: 이어 붙이기는 맨 뒤 정규 회차(상태 무관) 다음 슬롯부터. 마지막 회차를 휴강하면 그 자리에 되살리지 않고
+     * 다음 주에 붙이고, 보강을 넣으면 그 붙였던 맨 뒤 회차가 빠진다.
+     */
+    @Test
+    void 마지막_회차를_휴강하면_그_다음_슬롯에_붙고_보강을_넣으면_맨_뒤가_빠진다() throws Exception {
+        long e = enroll(countProduct, ownerMembership);
+        schedule(e, "[{\"dayOfWeek\":\"TUESDAY\",\"startTime\":\"16:00\"}]").andExpect(status().isOk());
+        long last = jdbc.queryForObject("select id from lesson_session where enrollment_id = ? order by starts_at desc limit 1",
+                Long.class, e); // 12/15
+        post(owner, "/sessions/" + last + "/cancel", "{\"reason\":\"강사 사정\"}").andExpect(status().isOk());
+        assertThat(jdbc.queryForObject("select max(local_date)::text from lesson_session where enrollment_id = ? and status = 'SCHEDULED'",
+                String.class, e)).isEqualTo("2026-12-22");
+        post(owner, "/enrollments/" + e + "/makeups", "{\"startsAt\":\"2026-10-14T16:00:00+09:00\"}").andExpect(status().isCreated());
+        assertThat(jdbc.queryForObject("select max(local_date)::text from lesson_session where enrollment_id = ? and status = 'SCHEDULED'",
+                String.class, e)).isEqualTo("2026-12-08");
+        assertThat(count("select count(*) from lesson_session where enrollment_id = ? and status = 'SCHEDULED'", e)).isEqualTo(10);
+        post(owner, "/enrollments/" + e + "/makeups", "{\"startsAt\":\"2026-10-15T16:07:00+09:00\"}")
+                .andExpect(jsonPath("$.code").value("INVALID_TIME"));
+    }
+
     @Test
     void 학생은_자기_회차와_휴강_사유만_본다() throws Exception {
         String studentToken = member("STUDENT");
@@ -288,6 +316,69 @@ class LessonScheduleApiTest {
             assertThat(codes.get(1)).as("일정은 성공하거나 겹쳐서 409").isIn(200, 409);
             assertNoOverlap();
         }
+    }
+
+    /**
+     * 리뷰 1-1: 잠금 키는 잠근 뒤 다시 읽은 강사로 정해야 한다. 출결이 수강 잠금을 기다리는 사이 강사가 바뀌면,
+     * 출결은 새 강사를 잠그고 나서 회차를 이어 붙여야 한다(옛 강사를 잠근 채 새 강사의 회차를 만들면 안 된다).
+     * 다른 DB 연결로 잠금을 직접 쥐어 순서를 강제한다.
+     */
+    @Test
+    void 출결은_잠근_뒤의_강사를_잠근다() throws Exception {
+        long newTeacher = membershipOf(member("TEACHER"));
+        long e = enroll(countProduct, ownerMembership);
+        schedule(e, "[{\"dayOfWeek\":\"TUESDAY\",\"startTime\":\"16:00\"}]").andExpect(status().isOk());
+        long first = sessionAt(e, 0);
+
+        try (Connection holder = dataSource.getConnection(); Connection teacherLock = dataSource.getConnection()) {
+            holder.setAutoCommit(false);
+            advisory(holder, "lesson:enrollment:" + e);
+            Future<Integer> marking = Executors.newSingleThreadExecutor().submit(() -> code(mark(first, "EXCUSED")));
+            awaitWaitingLocks(1);
+            // 출결이 기다리는 사이 다른 요청이 강사를 바꾼다(수강 잠금 안에서)
+            try (Statement st = holder.createStatement()) {
+                st.execute("update enrollment set teacher_membership_id = " + newTeacher + " where id = " + e);
+                st.execute("update lesson_session set teacher_membership_id = " + newTeacher
+                        + " where enrollment_id = " + e + " and status = 'SCHEDULED'");
+            }
+            teacherLock.setAutoCommit(false);
+            advisory(teacherLock, "lesson:teacher:" + newTeacher); // 새 강사 잠금을 다른 쪽이 쥐고 있다
+            holder.commit();
+            Thread.sleep(1500);
+            assertThat(marking.isDone()).as("출결이 새 강사 잠금을 기다려야 한다").isFalse();
+            teacherLock.commit();
+            assertThat(marking.get()).isEqualTo(200);
+        }
+    }
+
+    /** 리뷰 1-2: 그날 전체 휴강은 잠근 수강의 회차만 휴강한다. 두 번 읽는 사이에 생긴 회차는 건너뛰고 알려 준다 */
+    @Test
+    void 그날_전체_휴강은_잠그지_않은_수강의_회차를_건드리지_않는다() throws Exception {
+        long a = enroll(countProduct, ownerMembership);
+        schedule(a, "[{\"dayOfWeek\":\"TUESDAY\",\"startTime\":\"16:00\"}]").andExpect(status().isOk());
+        long b = enroll(countProduct, ownerMembership);
+        long bStudent = jdbc.queryForObject("select student_id from enrollment where id = ?", Long.class, b);
+
+        try (Connection holder = dataSource.getConnection()) {
+            holder.setAutoCommit(false);
+            advisory(holder, "lesson:enrollment:" + a);
+            Future<ResultActions> canceling = Executors.newSingleThreadExecutor()
+                    .submit(() -> post(owner, "/sessions/cancel-day", "{\"date\":\"2026-10-13\",\"reason\":\"휴일\"}"));
+            awaitWaitingLocks(1);
+            // 그사이 다른 수강(b)에 같은 날 회차가 생긴다
+            try (Statement st = holder.createStatement()) {
+                st.execute("""
+                        insert into lesson_session (organization_id, enrollment_id, student_id, teacher_membership_id, kind,
+                          starts_at, ends_at, local_date, status)
+                        values (%d, %d, %d, %d, 'REGULAR', '2026-10-13T18:00:00+09:00', '2026-10-13T18:50:00+09:00',
+                          '2026-10-13', 'SCHEDULED')""".formatted(orgId, b, bStudent, ownerMembership));
+            }
+            holder.commit();
+            canceling.get().andExpect(status().isOk())
+                    .andExpect(jsonPath("$.canceled").value(1))
+                    .andExpect(jsonPath("$.skipped").value(1));
+        }
+        assertThat(count("select count(*) from lesson_session where enrollment_id = ? and status = 'SCHEDULED'", b)).isOne();
     }
 
     // ---------- 불변식 ----------
@@ -362,6 +453,25 @@ class LessonScheduleApiTest {
     }
 
     // ---------- 도움 ----------
+
+    private static void advisory(Connection c, String key) throws Exception {
+        try (Statement st = c.createStatement()) {
+            st.execute("select pg_advisory_xact_lock(hashtextextended('" + key + "', 0))");
+        }
+    }
+
+    /** 다른 요청이 advisory lock을 기다리기 시작할 때까지 */
+    private void awaitWaitingLocks(int n) throws Exception {
+        for (int i = 0; i < 100; i++) {
+            Long waiting = jdbc.queryForObject("select count(*) from pg_locks where locktype = 'advisory' and not granted",
+                    Long.class);
+            if (waiting >= n) {
+                return;
+            }
+            Thread.sleep(50);
+        }
+        throw new AssertionError("잠금을 기다리는 요청이 없다");
+    }
 
     private void assertNoOverlap() {
         Long overlaps = jdbc.queryForObject("""

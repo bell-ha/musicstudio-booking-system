@@ -21,6 +21,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -68,6 +70,8 @@ import jakarta.persistence.LockModeType;
  */
 @Service
 public class LessonScheduleService {
+
+    private static final Logger log = LoggerFactory.getLogger(LessonScheduleService.class);
 
     static final int MAX_SLOTS = 3;
     /** 자동 이어 붙이기가 자리를 찾는 범위 */
@@ -181,8 +185,7 @@ public class LessonScheduleService {
         }
         LessonSession s = session(orgId, sessionId);
         Enrollment e = enrollment(orgId, s.getEnrollmentId());
-        lock(e, List.of(s.getTeacherMembershipId()));
-        entityManager.refresh(s);
+        lock(e, s);
         if (!manager && !s.getTeacherMembershipId().equals(requester)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "forbidden", "NOT_ASSIGNED", "맡은 회차만 출결을 남길 수 있습니다");
         }
@@ -208,10 +211,12 @@ public class LessonScheduleService {
 
     @Transactional
     public Marked cancel(long orgId, long sessionId, long requester, String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw ApiException.invalid("REASON_REQUIRED", "휴강 사유를 적어 주세요");
+        }
         LessonSession s = session(orgId, sessionId);
         Enrollment e = enrollment(orgId, s.getEnrollmentId());
-        lock(e, List.of(s.getTeacherMembershipId()));
-        entityManager.refresh(s);
+        lock(e, s);
         if (s.getStatus() != SessionStatus.SCHEDULED) {
             throw ApiException.conflict("ALREADY_MARKED", "출결을 남긴 회차는 휴강할 수 없습니다");
         }
@@ -228,20 +233,23 @@ public class LessonScheduleService {
     public DayCanceled cancelDay(long orgId, LocalDate date, long requester, String reason) {
         List<LessonSession> day = sessions.findByOrganizationIdAndLocalDateAndStatus(orgId, date, SessionStatus.SCHEDULED);
         if (day.isEmpty()) {
-            return new DayCanceled(0, 0);
+            return new DayCanceled(0, 0, 0);
         }
         List<Enrollment> affected = enrollments.findAllById(day.stream().map(LessonSession::getEnrollmentId)
                 .collect(Collectors.toCollection(LinkedHashSet::new)));
+        Set<Long> lockedIds = affected.stream().map(Enrollment::getId).collect(Collectors.toSet());
+        locks.lockEnrollments(lockedIds);
+        affected.forEach(entityManager::refresh);
+        // 잠그기 전에 읽은 목록은 낡았다. 잠근 수강의 회차만 휴강하고, 그사이 다른 수강에 생긴 회차는 건너뛰고 알린다.
+        // (이미 강사 잠금 단계로 넘어갈 것이라 새 수강을 더 잠그면 순서가 깨진다. 다시 누르면 같은 결과라 멱등)
+        List<LessonSession> reread = sessions.findByOrganizationIdAndLocalDateAndStatus(orgId, date, SessionStatus.SCHEDULED);
+        List<LessonSession> mine = reread.stream().filter(s -> lockedIds.contains(s.getEnrollmentId())).toList();
         Set<Long> teachers = new HashSet<>();
         affected.forEach(e -> teachers.add(e.getTeacherMembershipId()));
-        day.forEach(s -> teachers.add(s.getTeacherMembershipId()));
-        locks.lock(affected.stream().map(Enrollment::getId).toList(), teachers,
-                affected.stream().map(Enrollment::getStudentId).toList());
-        affected.forEach(entityManager::refresh);
-        // 잠그기 전에 읽은 목록은 낡았을 수 있다
-        day = sessions.findByOrganizationIdAndLocalDateAndStatus(orgId, date, SessionStatus.SCHEDULED);
+        mine.forEach(s -> teachers.add(s.getTeacherMembershipId()));
+        locks.lockPeople(teachers, affected.stream().map(Enrollment::getStudentId).toList());
         Instant now = clock.instant();
-        day.forEach(s -> s.mark(SessionStatus.CANCELED, reason.strip(), requester, now));
+        mine.forEach(s -> s.mark(SessionStatus.CANCELED, reason.strip(), requester, now));
         flush();
         int appended = 0;
         LocalDate today = today(orgId);
@@ -251,7 +259,7 @@ public class LessonScheduleService {
                 appended += fill(e, p, Mode.AUTO, today).created();
             }
         }
-        return new DayCanceled(day.size(), appended);
+        return new DayCanceled(mine.size(), appended, reread.size() - mine.size());
     }
 
     @Transactional
@@ -268,6 +276,9 @@ public class LessonScheduleService {
         }
         ZoneId zone = zone(orgId);
         LocalTime localStart = startsAt.atZone(zone).toLocalTime();
+        if (localStart.getMinute() % 5 != 0 || localStart.getSecond() != 0 || localStart.getNano() != 0) {
+            throw ApiException.invalid("INVALID_TIME", "보강 시각은 5분 단위로 정해 주세요");
+        }
         if (SessionPlanner.crossesMidnight(localStart, p.getLessonMinutes())) {
             throw ApiException.policyViolation("CROSSES_MIDNIGHT", "레슨은 자정을 넘을 수 없습니다");
         }
@@ -325,8 +336,11 @@ public class LessonScheduleService {
         Map<Long, List<LessonSession>> sessionsBy = sessions.findByEnrollmentIdIn(enrollmentIds).stream()
                 .collect(Collectors.groupingBy(LessonSession::getEnrollmentId));
         Map<Long, Summary> out = new HashMap<>();
-        for (Enrollment e : enrollments.findAllById(enrollmentIds)) {
-            Summary s = summary(e, product(e), sessionsBy.getOrDefault(e.getId(), List.of()));
+        List<Enrollment> found = enrollments.findAllById(enrollmentIds);
+        Map<Long, Product> productsBy = products.findAllById(found.stream().map(Enrollment::getProductId).toList()).stream()
+                .collect(Collectors.toMap(Product::getId, x -> x)); // 수강마다 따로 읽지 않는다 (N+1)
+        for (Enrollment e : found) {
+            Summary s = summary(e, productsBy.get(e.getProductId()), sessionsBy.getOrDefault(e.getId(), List.of()));
             List<Slot> mine = slotsBy.getOrDefault(e.getId(), List.of()).stream()
                     .sorted(Comparator.comparing(LessonSlot::getDayOfWeek).thenComparing(LessonSlot::getStartTime))
                     .map(x -> new Slot(x.getDayOfWeek(), x.getStartTime())).toList();
@@ -403,6 +417,12 @@ public class LessonScheduleService {
         if (!conflicts.isEmpty()) {
             throw scheduleConflict(conflicts);
         }
+        // 횟수권을 처음 정할 때 범위(3년) 안에 다 못 만들면 거절한다. 부족분은 "자동 이어 붙이기가 자리를 못 찾음"
+        // 한 가지 뜻으로만 쓴다 (교차 리뷰 28 3-3)
+        if (mode == Mode.STRICT && p.getKind() == ProductKind.COUNT && created.size() < need) {
+            throw ApiException.policyViolation("SCHEDULE_TOO_LONG",
+                    COUNT_HORIZON_YEARS + "년 안에 회차를 다 만들 수 없어요. 주당 횟수를 늘려 주세요");
+        }
         sessions.saveAll(created);
         flush();
         return created.isEmpty() ? Filled.NONE
@@ -451,12 +471,24 @@ public class LessonScheduleService {
 
     // ---------- 도움 ----------
 
-    /** 수강 → 강사(지금 강사 + extra) → 원생 순서로 잡고 다시 읽는다 */
+    /**
+     * 두 단계: 수강을 잡고 다시 읽은 뒤, 그 값으로 강사(지금 강사 + extra) → 원생을 잡는다.
+     * 키를 잠그기 전에 읽은 값으로 정하지 않는다 (교차 리뷰 28 1-1).
+     */
     private void lock(Enrollment e, List<Long> extraTeachers) {
+        locks.lockEnrollments(List.of(e.getId()));
+        entityManager.refresh(e);
         List<Long> teachers = new ArrayList<>(extraTeachers);
         teachers.add(e.getTeacherMembershipId());
-        locks.lock(List.of(e.getId()), teachers, List.of(e.getStudentId()));
+        locks.lockPeople(teachers, List.of(e.getStudentId()));
+    }
+
+    /** 회차를 건드리는 경로: 회차도 다시 읽어 그 강사까지 잡는다 (강사 변경 전의 회차일 수 있다) */
+    private void lock(Enrollment e, LessonSession s) {
+        locks.lockEnrollments(List.of(e.getId()));
         entityManager.refresh(e);
+        entityManager.refresh(s);
+        locks.lockPeople(List.of(e.getTeacherMembershipId(), s.getTeacherMembershipId()), List.of(e.getStudentId()));
     }
 
     private static void validateSlots(List<Slot> wanted, int minutes) {
@@ -513,6 +545,8 @@ public class LessonScheduleService {
         } catch (DataIntegrityViolationException | jakarta.persistence.PersistenceException ex) {
             String message = String.valueOf(ex.getMessage()) + " " + String.valueOf(ex.getCause());
             if (message.contains("ex_session_teacher") || message.contains("ex_session_student")) {
+                // 잠금(LessonLocks)을 지키면 여기 오지 않는다. 오면 잠금을 빠뜨린 경로가 있다는 신호다
+                log.warn("레슨 회차 EXCLUDE 위반: 잠금을 빠뜨린 경로가 있을 수 있음", ex);
                 throw scheduleConflict(List.of());
             }
             throw ex;
@@ -552,7 +586,8 @@ public class LessonScheduleService {
     public record Marked(LessonSession session, int shortfall) {
     }
 
-    public record DayCanceled(int canceled, int appended) {
+    /** skipped: 잠근 뒤 다시 읽었더니 새로 생겨 있던 회차. 다시 누르면 휴강된다 */
+    public record DayCanceled(int canceled, int appended, int skipped) {
     }
 
     /** remaining: 횟수권의 남은 회차(총 − 차감), 기간권은 null. shortfall: 자동으로 못 붙인 회차 */

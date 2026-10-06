@@ -120,8 +120,8 @@ R1·R2는 애플리케이션 검사에서 걸리든 DB 배타 제약(SQLSTATE `2
 | 51 | GET | /academy/students/me/sessions | S | 53 | 연결된 원생의 회차. 메모는 휴강 사유만 |
 | 52 | PUT | /academy/sessions/{id}/attendance | T(그 회차 강사), M | 51 | `{status: ATTENDED, ABSENT, EXCUSED, note?}`. 422 `TOO_EARLY`(출석·결석은 시작 뒤), 403 `NOT_ASSIGNED`. 같은 값은 멱등 |
 | 53 | POST | /academy/sessions/{id}/cancel | M | 52 | `{reason}`. 출결한 회차는 409 |
-| 54 | POST | /academy/enrollments/{id}/makeups | M | 52 | `{startsAt}`. 422 `IN_THE_PAST`, 422 `NO_REMAINING`, 409 `SCHEDULE_CONFLICT` |
-| 55 | POST | /academy/sessions/cancel-day | M | 52 | `{date, reason}` → `{canceled, appended}` |
+| 54 | POST | /academy/enrollments/{id}/makeups | M | 52 | `{startsAt}`(5분 단위). 400 `INVALID_TIME`, 422 `IN_THE_PAST`, 422 `NO_REMAINING`, 409 `SCHEDULE_CONFLICT` |
+| 55 | POST | /academy/sessions/cancel-day | M | 52 | `{date, reason}` → `{canceled, appended, skipped}`. skipped: 잠근 뒤 새로 생겨 있던 회차(다시 누르면 휴강됨, 멱등) |
 
 ### 기관 사이트 (0.3)
 | # | 메서드 | 경로 | 권한 | UC | 비고 |
