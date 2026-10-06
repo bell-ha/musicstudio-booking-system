@@ -169,6 +169,14 @@ class MembersApiTest {
     }
 
     @Test
+    void 기관ID를_다른_표기로_써서_검사를_우회할_수_없다() throws Exception {
+        for (String alias : List.of("0" + orgId, "+" + orgId)) {
+            api.call(owner, HttpMethod.GET, "/api/v1/organizations/" + alias + "/members", null)
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Test
     void 비활성화하면_다음_요청부터_막히고_다시_활성화할_수_있다() throws Exception {
         String manager = join(invite(owner, "MANAGER"));
         Number id = membershipIdOf("MANAGER");

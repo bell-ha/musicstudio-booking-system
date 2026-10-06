@@ -62,7 +62,7 @@ class OrgAccessInterceptor implements HandlerInterceptor {
                 .orElseThrow(() -> new ApiException(HttpStatus.FORBIDDEN, "not-a-member", "NOT_A_MEMBER",
                         "이 기관의 멤버가 아닙니다"));
 
-        Module module = moduleOf(request.getRequestURI(), orgId);
+        Module module = moduleOf(request);
         if (module != null && !organizations.findById(orgId).orElseThrow().getModules().contains(module)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "module-disabled", "MODULE_DISABLED",
                     "이 기관에서 켜지 않은 기능입니다");
@@ -88,19 +88,26 @@ class OrgAccessInterceptor implements HandlerInterceptor {
         @SuppressWarnings("unchecked")
         Map<String, String> vars = (Map<String, String>) request.getAttribute(
                 HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+        String raw = vars.get("orgId");
         try {
-            return Long.parseLong(vars.get("orgId"));
-        } catch (RuntimeException e) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "not-found", "NOT_FOUND", "찾을 수 없습니다");
+            long id = Long.parseLong(raw);
+            // "06", "+6" 같은 표기는 받지 않는다. 경로 하나에 기관 하나만 대응하게 한다.
+            if (id > 0 && Long.toString(id).equals(raw)) {
+                return id;
+            }
+        } catch (RuntimeException ignored) {
+            // 아래에서 404
         }
+        throw new ApiException(HttpStatus.NOT_FOUND, "not-found", "NOT_FOUND", "찾을 수 없습니다");
     }
 
-    private static Module moduleOf(String uri, long orgId) {
-        String rest = uri.substring(uri.indexOf("/organizations/" + orgId) + ("/organizations/" + orgId).length());
-        if (rest.startsWith("/practice")) {
+    /** 원래 URI가 아니라 매칭된 핸들러 경로 패턴으로 판단한다. URI 표기에 따라 모듈 검사를 건너뛰지 않게 한다. */
+    private static Module moduleOf(HttpServletRequest request) {
+        String pattern = String.valueOf(request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE));
+        if (pattern.startsWith("/api/v1/organizations/{orgId}/practice")) {
             return Module.PRACTICE_ROOM;
         }
-        if (rest.startsWith("/academy")) {
+        if (pattern.startsWith("/api/v1/organizations/{orgId}/academy")) {
             return Module.ACADEMY;
         }
         return null;

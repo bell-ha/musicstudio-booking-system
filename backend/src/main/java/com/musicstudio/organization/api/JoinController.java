@@ -51,9 +51,9 @@ class JoinController {
     @PostMapping("/join-requests")
     @ResponseStatus(HttpStatus.CREATED)
     JoinRequestResponse apply(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody JoinRequest request) {
-        Membership m = joinService.apply(AccessTokens.userId(jwt), request.code(), request.answers());
-        Organization org = joinService.lookup(request.code());
-        return new JoinRequestResponse(m.getOrganizationId(), org.getName(), m.getStatus());
+        JoinService.Applied applied = joinService.apply(AccessTokens.userId(jwt), request.code(), request.answers());
+        Membership m = applied.membership();
+        return new JoinRequestResponse(m.getOrganizationId(), applied.organizationName(), m.getStatus());
     }
 
     record AcceptRequest(@NotBlank String token) {

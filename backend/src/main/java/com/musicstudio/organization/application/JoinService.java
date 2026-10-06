@@ -140,7 +140,7 @@ public class JoinService {
     }
 
     @Transactional
-    public Membership apply(long userId, String code, Map<String, String> answers) {
+    public Applied apply(long userId, String code, Map<String, String> answers) {
         Organization org = lookup(code);
         Map<String, String> profile = validateAnswers(org.getJoinForm(), answers);
         Optional<Membership> existing = memberships.findByOrganizationIdAndUserId(org.getId(), userId);
@@ -152,10 +152,10 @@ public class JoinService {
                 case INACTIVE -> throw memberInactive();
                 case REJECTED -> m.reapply(profile);
             }
-            return m;
+            return new Applied(m, org.getName());
         }
         try {
-            return memberships.saveAndFlush(Membership.applied(org.getId(), userId, profile));
+            return new Applied(memberships.saveAndFlush(Membership.applied(org.getId(), userId, profile)), org.getName());
         } catch (DataIntegrityViolationException e) {
             throw ApiException.conflict("ALREADY_PENDING", "이미 신청해서 승인을 기다리고 있습니다");
         }
@@ -206,5 +206,8 @@ public class JoinService {
     }
 
     public record CreatedInvitation(String token, Instant expiresAt) {
+    }
+
+    public record Applied(Membership membership, String organizationName) {
     }
 }
