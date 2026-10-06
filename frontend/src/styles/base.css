@@ -161,11 +161,12 @@ a { color: var(--primary); }
 .tab[aria-checked='true'] { color: var(--primary); border-bottom-color: var(--primary); }
 .badge-unavailable { background: var(--unavailable); }
 
-/* 평면도 (DESIGN 4·5절): 화면 너비에 맞추고, 칸이 12px보다 작아지면 좌우로 밀어서 본다.
-   지도에서 누르는 것은 칸이 아니라 여러 칸짜리 방이라, 방이 44px 이상이면 된다 (v1도 30×30 격자를 20px 칸으로 그렸다) */
+/* 평면도 (DESIGN 4·5절): 화면 너비에 맞춘다(여백 16px×2, 테두리 1px×2를 뺀 폭).
+   지도에서 누르는 것은 칸이 아니라 여러 칸짜리 방이라, 가장 작은 방이 44px 이상이 되는 칸 크기(--cell-min,
+   FloorGrid가 계산)를 하한으로 둔다. 그보다 좁으면 좌우로 밀어서 본다. v1도 30×30 격자를 20px 칸으로 그렸다 */
 .floor-scroll { overflow-x: auto; margin: var(--space-4) 0; }
 .floor {
-  --cell: clamp(12px, calc((min(100vw, 960px) - 32px) / var(--cols)), 64px);
+  --cell: clamp(var(--cell-min, 12px), calc((min(100vw, 960px) - 34px) / var(--cols)), 64px);
   display: grid;
   grid-template-columns: repeat(var(--cols), var(--cell));
   grid-template-rows: repeat(var(--rows), var(--cell));
@@ -183,11 +184,15 @@ a { color: var(--primary); }
   /* 끌어서 그리는 동안 화면이 스크롤되지 않게 한다 */
   touch-action: none;
   user-select: none;
-  /* 편집기는 칸이 많아도(30×20 등) 한 화면에 보이도록 작게 둔다. 누르는 대상이 방이 아니라 칸이라 44px 기준을 따르지 않는다 */
-  --cell: clamp(20px, calc((min(100vw, 960px) - 32px) / var(--cols)), 48px);
+  /* 편집기는 칸이 많아도(30×20 등) 한 화면에 들어오게 화면 폭에 맞춘다. 그리는 동안은 밀어서 볼 수 없으므로(touch-action: none)
+     휴대폰에서는 칸이 작아진다. 넓은 화면을 권하는 안내를 띄운다 */
+  --cell: clamp(8px, calc((min(100vw, 960px) - 34px) / var(--cols)), 48px);
 }
 .floor-wall { background: var(--wall); }
 .floor-corridor { background: var(--surface-soft); border: 1px dashed var(--wall); }
+.floor:not(.floor-editing) .floor-corridor { border: none; } /* 지도에서는 복도를 바탕색만으로 (작은 칸에서 격자처럼 보이지 않게) */
+.wide-only-hint { display: none; }
+@media (max-width: 639px) { .wide-only-hint { display: block; } }
 .floor-preview { background: var(--primary-tint); border: 2px dashed var(--primary); border-radius: var(--rounded-sm); pointer-events: none; }
 .floor-preview-invalid { background: var(--unavailable); border-color: var(--error); }
 .floor-editing .floor-room { min-width: 0; min-height: 0; }

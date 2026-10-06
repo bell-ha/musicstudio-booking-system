@@ -16,7 +16,7 @@ type Tool = 'wall' | 'corridor' | 'room' | 'erase'
 const TOOLS: { tool: Tool; label: string; hint: string }[] = [
   { tool: 'wall', label: '벽', hint: '끌어서 벽을 그려요.' },
   { tool: 'corridor', label: '복도', hint: '끌어서 복도를 그려요.' },
-  { tool: 'room', label: '방 그리기', hint: '벽 안쪽을 끌어서 방 크기만큼 사각형을 그려요.' },
+  { tool: 'room', label: '방 그리기', hint: '벽 안쪽을 끌어서 방 크기만큼 사각형을 그려요. 이미 있는 방을 누르면 이름을 바꿔요.' },
   { tool: 'erase', label: '지우개', hint: '끌어서 벽·복도를 지우고, 방을 누르면 평면도에서 빼요.' },
 ]
 
@@ -75,6 +75,8 @@ export function FloorEditorPage() {
   const [stale, setStale] = useState(false)
   const [dirty, setDirty] = useState(false)
   const nameInput = useRef<HTMLInputElement>(null)
+  const drag = useRef<{ start: Cell; now: Cell } | null>(null)
+  const [createdThisEdit, setCreatedThisEdit] = useState(false) // 이번 편집에서 새로 만든 방이 있나
 
   const load = useCallback((selectId?: number) => api<FloorsResponse>(`/organizations/${orgId}/practice/floors`).then((loaded) => {
     setData(loaded)
@@ -134,16 +136,31 @@ export function FloorEditorPage() {
     if (!draft) return
     setMessage('')
     if (tool === 'room') {
-      if (phase === 'down') {
-        setPending(null)
-        setDragStart([x, y])
-        setDragNow([x, y])
-      } else if (phase === 'move' && dragStart) {
-        setDragNow([x, y])
-      } else if (phase === 'up' && dragStart) {
-        const rect = rectOf(dragStart, dragNow ?? dragStart)
+      if (phase === 'cancel') { // 끌기가 끊기면 그리던 방은 버린다
+        drag.current = null
         setDragStart(null)
         setDragNow(null)
+        return
+      }
+      if (phase === 'down') {
+        setPending(null)
+        drag.current = { start: [x, y], now: [x, y] }
+        setDragStart([x, y])
+        setDragNow([x, y])
+      } else if (phase === 'move' && drag.current) {
+        drag.current.now = [x, y]
+        setDragNow([x, y])
+      } else if (phase === 'up' && drag.current) {
+        const { start, now } = drag.current
+        drag.current = null
+        setDragStart(null)
+        setDragNow(null)
+        const tapped = draft.placements.find((p) => covers(p, start[0], start[1]))
+        if (tapped && start[0] === now[0] && start[1] === now[1]) {
+          rename(tapped) // 끌지 않고 방을 눌렀다 뗐으면 이름 바꾸기 (두 번 탭은 휴대폰에서 믿기 어렵다)
+          return
+        }
+        const rect = rectOf(start, now)
         if (blocked(draft, rect)) {
           setMessage('다른 방이나 벽·복도와 겹쳐요. 벽 안쪽 빈 칸에 그려 주세요.')
           return
@@ -153,6 +170,7 @@ export function FloorEditorPage() {
       }
       return
     }
+    if (phase === 'cancel') return // 칠하던 것은 그대로 둔다
     if (tool === 'erase' && phase === 'down') {
       const room = draft.placements.find((p) => covers(p, x, y))
       if (room) {
@@ -172,6 +190,7 @@ export function FloorEditorPage() {
       if (!name) return
       try {
         room = await api<Room>(`/organizations/${orgId}/practice/rooms`, { method: 'POST', body: { name } })
+        setCreatedThisEdit(true)
         const created = room
         setData((d) => (d ? { ...d, unplacedRooms: [...d.unplacedRooms, created] } : d))
       } catch (error) {
@@ -186,10 +205,8 @@ export function FloorEditorPage() {
     setNewName('')
   }
 
-  /** 방을 두 번 누르면 이름을 바꾼다 (v1의 이름표 고치기) */
-  async function rename(x: number, y: number) {
-    const room = draft?.placements.find((p) => covers(p, x, y))
-    if (!room) return
+  /** 방 그리기 도구로 방을 누르면 이름을 바꾼다 (v1의 이름표 고치기) */
+  async function rename(room: Placement) {
     const name = window.prompt('방 이름', room.name)?.trim()
     if (!name || name === room.name) return
     try {
@@ -238,18 +255,20 @@ export function FloorEditorPage() {
         },
       })
       await load(saved.id)
+      setCreatedThisEdit(false)
       setNotice('저장했어요.')
     } catch (error) {
       if (error instanceof ApiError && error.problem.status === 412) {
         setStale(true)
         return
       }
+      const keptRooms = createdThisEdit ? ' 새로 만든 방은 방 목록에 남아 있어요.' : ''
       const bookings = (error instanceof ApiError && (error.problem as { bookings?: { roomName: string; startsAt: string }[] }).bookings) || []
       setMessage(error instanceof ApiError && error.problem.code === 'ROOM_HAS_FUTURE_BOOKINGS'
         ? `앞으로의 예약이 있는 방은 뺄 수 없어요. 예약을 먼저 취소해 주세요. (${bookings
           .map((b) => `${b.roomName} ${new Date(b.startsAt).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' })}`)
-          .join(', ')})`
-        : errorMessage(error))
+          .join(', ')})${keptRooms}`
+        : errorMessage(error) + keptRooms)
     }
   }
 
@@ -278,7 +297,8 @@ export function FloorEditorPage() {
   return (
     <main className="page page-wide">
       <h1>평면도 편집</h1>
-      <p className="card-meta">펜으로 벽과 복도를 그리고, 그 안에 방을 사각형으로 그려요. 방을 두 번 누르면 이름을 바꿔요.</p>
+      <p className="card-meta">펜으로 벽과 복도를 그리고, 그 안에 방을 사각형으로 그려요.</p>
+      <p className="notice wide-only-hint">칸이 작아서 그리기 어려워요. 평면도는 넓은 화면(태블릿, PC)에서 편집하는 걸 권해요.</p>
 
       {data && data.floors.length > 0 && (
         <div className="tabs" role="tablist">
@@ -325,7 +345,6 @@ export function FloorEditorPage() {
             rooms={draft.placements}
             renderRoom={(room) => ({ className: 'room-edit', content: room.name })}
             onCellPointer={onPointer}
-            onCellDoubleClick={rename}
             preview={preview}
           />
 
@@ -349,7 +368,8 @@ export function FloorEditorPage() {
 
           {stale && (
             <div className="card section">
-              <p className="alert" role="alert">다른 관리자가 이 층을 먼저 저장했어요. 바꾼 내용을 버리고 다시 불러와야 해요.</p>
+              <p className="alert" role="alert">다른 관리자가 이 층을 먼저 저장했어요. 바꾼 내용을 버리고 다시 불러와야 해요.
+                {createdThisEdit && ' 새로 만든 방은 방 목록에 남아 있어요.'}</p>
               <button className="button button-block" onClick={() => load(floor.id)}>다시 불러오기</button>
             </div>
           )}
