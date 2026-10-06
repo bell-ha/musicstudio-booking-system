@@ -59,27 +59,29 @@ teacher_email, teacher, teacher_id = join("박강사", "TEACHER")
 student_email, student, student_member_id = join("이학생", "STUDENT")
 
 # ---------- 연습실: v1처럼 벽과 복도로 건물을 그리고 그 안에 방 9개 ----------
-# 30×16 격자. 바깥벽, 가운데 복도(2줄), 위쪽 방 5개와 아래쪽 방 4개, 방 사이 벽, 방마다 복도 쪽 문.
-W, H = 30, 16
+# 60×40 격자(새 층 기본 크기)의 왼쪽 위에 30×16 건물. 바깥벽, 가운데 복도(2줄), 위쪽 방 5개와 아래쪽 방 4개,
+# 방 사이 벽, 방마다 복도 쪽 문. 나머지 빈 칸에는 원장님이 직접 더 그려 볼 수 있다.
+W, H = 60, 40     # 격자
+BW, BH = 30, 16   # 건물
 TOP = (1, 5)       # 위쪽 방: y 1~5
 BOTTOM = (10, 14)  # 아래쪽 방: y 10~14
 cells = {}
-for x in range(W):
-    cells[(x, 0)] = cells[(x, H - 1)] = "wall"
-for y in range(H):
-    cells[(0, y)] = cells[(W - 1, y)] = "wall"
-for x in range(1, W - 1):
+for x in range(BW):
+    cells[(x, 0)] = cells[(x, BH - 1)] = "wall"
+for y in range(BH):
+    cells[(0, y)] = cells[(BW - 1, y)] = "wall"
+for x in range(1, BW - 1):
     cells[(x, 6)] = cells[(x, 9)] = "wall"          # 방과 복도 사이 벽
     cells[(x, 7)] = cells[(x, 8)] = "corridor"      # 복도
 top_rooms = [(1 + i * 5, 4) for i in range(5)]       # (x, 너비)
 bottom_rooms = [(1 + i * 6, 5) for i in range(4)]
 for x, w in top_rooms:
-    if x + w < W - 1:
+    if x + w < BW - 1:
         for y in range(TOP[0], TOP[1] + 1):
             cells[(x + w, y)] = "wall"               # 옆 방과의 벽
     cells[(x + w // 2, 6)] = "corridor"              # 문
 for x, w in bottom_rooms:
-    if x + w < W - 1:
+    if x + w < BW - 1:
         for y in range(BOTTOM[0], BOTTOM[1] + 1):
             cells[(x + w, y)] = "wall"
     cells[(x + w // 2, 9)] = "corridor"

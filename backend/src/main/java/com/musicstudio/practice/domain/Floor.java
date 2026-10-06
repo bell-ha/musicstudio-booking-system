@@ -12,6 +12,13 @@ import jakarta.persistence.Version;
 @Entity
 public class Floor {
 
+    /**
+     * 크기를 정하지 않고 만든 층의 격자. 원장님은 컴퓨터에서 편집하므로 v1(30×30)보다 넉넉하게,
+     * 20px 칸으로 한 화면(1200×800px)에 들어오는 크기. V7 마이그레이션도 기존 층을 이 크기까지 넓혔다.
+     */
+    public static final int DEFAULT_WIDTH = 60;
+    public static final int DEFAULT_HEIGHT = 40;
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;

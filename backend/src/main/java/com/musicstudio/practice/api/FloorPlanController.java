@@ -61,7 +61,9 @@ class FloorPlanController {
     @OrgRole(MembershipRole.MANAGER)
     ResponseEntity<FloorResponse> createFloor(CurrentMember me, @Valid @RequestBody CreateFloorRequest req) {
         Floor floor = service.createFloor(me.organizationId(), req.name(),
-                req.sortOrder() == null ? 0 : req.sortOrder(), req.width(), req.height());
+                req.sortOrder() == null ? 0 : req.sortOrder(),
+                req.width() == null ? Floor.DEFAULT_WIDTH : req.width(),
+                req.height() == null ? Floor.DEFAULT_HEIGHT : req.height());
         return ResponseEntity.status(HttpStatus.CREATED).eTag(Long.toString(floor.getVersion()))
                 .body(FloorResponse.of(floor, List.of()));
     }
@@ -112,8 +114,9 @@ class FloorPlanController {
         }
     }
 
+    /** 크기를 빼면 {@link Floor#DEFAULT_WIDTH}×{@link Floor#DEFAULT_HEIGHT} */
     record CreateFloorRequest(@NotBlank @Size(max = 50) String name, Integer sortOrder,
-                              @NotNull Integer width, @NotNull Integer height) {
+                              Integer width, Integer height) {
     }
 
     record SaveFloorRequest(@NotBlank @Size(max = 50) String name, int sortOrder,

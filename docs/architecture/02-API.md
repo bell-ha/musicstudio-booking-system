@@ -84,7 +84,7 @@ R1·R2는 애플리케이션 검사에서 걸리든 DB 배타 제약(SQLSTATE `2
 | # | 메서드 | 경로 | 권한 | UC | 비고 |
 |---|---|---|---|---|---|
 | 13 | GET | /practice/floors | 멤버 | 20, 23 | 층 목록. 각 층의 격자, 벽·복도, 배치된 방, `version`. 관리자에게는 배치 안 된 방도 준다 |
-| 14 | POST | /practice/floors | M | 20 | |
+| 14 | POST | /practice/floors | M | 20 | `width`·`height`(1~100)를 빼면 60×40칸 |
 | 15 | PUT | /practice/floors/{floorId} | M | 20 | 이름, 순서, 평면도, 방 배치 전체. **`If-Match` 필수.** 428, 412, 409 `ROOM_HAS_FUTURE_BOOKINGS`, 422 격자 밖·방 겹침 |
 | 16 | POST | /practice/rooms | M | 21 | |
 | 17 | PATCH | /practice/rooms/{roomId} | M | 21 | 이름, 수용 인원, 장비, `bookable` |

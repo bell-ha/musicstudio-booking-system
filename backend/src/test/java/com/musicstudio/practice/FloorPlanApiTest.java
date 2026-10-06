@@ -53,6 +53,38 @@ class FloorPlanApiTest {
     }
 
     @Test
+    void 크기를_빼고_층을_만들면_60x40() throws Exception {
+        api.call(owner, HttpMethod.POST, path("/floors"), "{\"name\":\"1층\"}")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.layout.width").value(60))
+                .andExpect(jsonPath("$.layout.height").value(40));
+    }
+
+    @Test
+    void V7은_작은_층만_60x40까지_넓히고_그린_것과_방은_제자리에_둔다() throws Exception {
+        long a = room("A101");
+        long small = floor("1층", 6, 4);
+        long big = floor("2층", 70, 50);
+        saveFloor(small, 0, """
+                {"name":"1층","sortOrder":0,
+                 "layout":{"width":6,"height":4,"walls":[[0,3],[1,3]],"corridors":[[2,3]]},
+                 "rooms":[{"id":%d,"x":0,"y":0,"w":2,"h":2}]}""".formatted(a)).andExpect(status().isOk());
+
+        jdbc.execute(new String(getClass().getResourceAsStream("/db/migration/V7__floor_default_size.sql").readAllBytes(),
+                java.nio.charset.StandardCharsets.UTF_8));
+
+        api.call(owner, HttpMethod.GET, path("/floors"), null)
+                .andExpect(jsonPath("$.floors[0].layout.width").value(60))
+                .andExpect(jsonPath("$.floors[0].layout.height").value(40))
+                .andExpect(jsonPath("$.floors[0].layout.walls", hasSize(2)))
+                .andExpect(jsonPath("$.floors[0].layout.corridors", hasSize(1)))
+                .andExpect(jsonPath("$.floors[0].rooms[0].x").value(0))
+                .andExpect(jsonPath("$.floors[0].version").value(2)) // 열려 있던 편집 화면(버전 1)은 412
+                .andExpect(jsonPath("$.floors[1].layout.width").value(70)) // 이미 큰 층은 그대로
+                .andExpect(jsonPath("$.floors[1].version").value(0));
+    }
+
+    @Test
     void 방을_만들어_평면도에_놓으면_버전이_오르고_지도에_보인다() throws Exception {
         long a = room("A101");
         long b = room("A102");
