@@ -15,6 +15,13 @@ const PRACTICE_MENU = [
   { to: 'practice/policy', title: '예약 정책', meta: '운영 시간, 시간 단위, 이용 한도, 예약 오픈' },
 ]
 
+const ACADEMY_ADMIN_MENU = [
+  { to: 'academy/students', title: '원생', meta: '원생 등록, 수강 관리, 만료 임박' },
+  { to: 'academy/catalog', title: '과목·상품', meta: '과목과 수업 상품, 가격' },
+]
+const TEACHING_MENU = [{ to: 'academy/my-students', title: '담당 학생', meta: '맡은 학생과 레슨 기록' }]
+const STUDENT_ACADEMY_MENU = [{ to: 'academy/me', title: '내 수강', meta: '수강 정보와 레슨 기록' }]
+
 const MANAGER_MENU = [
   { to: 'members', title: '멤버 관리', meta: '가입 신청 승인, 역할 변경, 비활성화' },
   { to: 'invite', title: '초대 링크', meta: '역할을 정해 한 번 쓰는 링크를 만들어요' },
@@ -29,10 +36,14 @@ export function OrganizationHomePage() {
   if (org === null) return <NotMember />
 
   // 학생은 예약 메뉴, 관리자는 관리 메뉴, 강사는 지도 보기만 (MVP에서 예약은 학생만, Q2)
+  // 관리자도 직접 가르칠 수 있어서(1인 학원) 담당 학생 메뉴를 함께 둔다
   const practice = org.modules.includes('PRACTICE_ROOM')
-  const menu = isManager(org.role) ? [...(practice ? PRACTICE_MENU : []), ...MANAGER_MENU]
-    : !practice ? []
-    : org.role === 'STUDENT' ? BOOKING_MENU : PRACTICE_MENU.slice(0, 1)
+  const academy = org.modules.includes('ACADEMY')
+  const menu = isManager(org.role)
+    ? [...(academy ? [...ACADEMY_ADMIN_MENU, ...TEACHING_MENU] : []), ...(practice ? PRACTICE_MENU : []), ...MANAGER_MENU]
+    : org.role === 'STUDENT'
+      ? [...(practice ? BOOKING_MENU : []), ...(academy ? STUDENT_ACADEMY_MENU : [])]
+      : [...(academy ? TEACHING_MENU : []), ...(practice ? PRACTICE_MENU.slice(0, 1) : [])]
 
   return (
     <main className="page">
@@ -50,7 +61,7 @@ export function OrganizationHomePage() {
           ))}
         </ul>
       ) : (
-        <p className="card empty section">수강 정보는 곧 여기에 보여요.</p>
+        <p className="card empty section">이 기관에서 쓸 수 있는 메뉴가 아직 없어요.</p>
       )}
       <p className="helper"><Link to="/">내 기관으로</Link></p>
     </main>

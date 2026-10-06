@@ -266,3 +266,21 @@ button.floor-room { cursor: pointer; }
 .slot-unavailable { background: var(--unavailable); color: var(--muted); }
 .slot-mine { background: var(--primary-tint); color: var(--primary); }
 .slot-selected { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+
+.section-title { font: var(--title-md); color: var(--ink); margin: var(--space-8) 0 var(--space-3); }
+.form-row.wrap { flex-wrap: wrap; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
+.chip { font: var(--text-caption); color: var(--body); background: var(--surface-soft); border: 1px solid var(--hairline); border-radius: var(--rounded-sm); padding: 2px var(--space-2); }
+.badge-warning { background: #fef3c7; color: #92400e; }
+.field textarea {
+  padding: var(--space-2) var(--space-3);
+  font: var(--text-body);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-sm);
+  resize: vertical;
+}
+.field textarea:focus { outline: none; border-color: var(--primary); }
+.timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.timeline-item p { margin: 0 0 var(--space-1); }
+.timeline-event { padding: 0 var(--space-4); border-left: 2px solid var(--hairline); }

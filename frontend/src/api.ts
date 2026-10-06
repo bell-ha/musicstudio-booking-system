@@ -74,6 +74,7 @@ const CODE_MESSAGES: Record<string, string> = {
   LAST_OWNER: '기관에는 소유자가 한 명 이상 있어야 해요.',
   NOT_A_MEMBER: '이 기관의 멤버가 아니에요.',
   FORBIDDEN: '권한이 없어요.',
+  CONFLICTING_UPDATE: '다른 관리자가 먼저 바꿨어요. 최신 내용으로 다시 불러왔어요. 확인한 뒤 다시 해 주세요.',
 }
 
 /** 폼 위에 보여 줄 한 줄 오류 */

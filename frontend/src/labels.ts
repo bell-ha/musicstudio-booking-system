@@ -17,4 +17,5 @@ export type MyOrganization = {
   status: 'PENDING' | 'ACTIVE' // 서버는 거절·비활성 멤버십을 주지 않는다
   modules: string[]
   timezone?: string // 지도 시각에 오프셋을 붙일 때 쓴다. 없으면 브라우저 시간대
+  membershipId?: number // 내가 담당 강사인 수강을 가릴 때 쓴다
 }

@@ -10,6 +10,11 @@ import { LoginPage } from './pages/LoginPage'
 import { MembersPage } from './pages/MembersPage'
 import { NewOrganizationPage } from './pages/NewOrganizationPage'
 import { OrganizationHomePage } from './pages/OrganizationHomePage'
+import { CatalogPage } from './pages/academy/CatalogPage'
+import { MyLessonsPage } from './pages/academy/MyLessonsPage'
+import { StudentDetailPage } from './pages/academy/StudentDetailPage'
+import { StudentFormPage } from './pages/academy/StudentFormPage'
+import { StudentsPage } from './pages/academy/StudentsPage'
 import { AdminBookingsPage } from './pages/practice/AdminBookingsPage'
 import { FloorEditorPage } from './pages/practice/FloorEditorPage'
 import { MyBookingsPage } from './pages/practice/MyBookingsPage'
@@ -37,6 +42,13 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/orgs/:orgId/members" element={<RequireLogin><MembersPage /></RequireLogin>} />
         <Route path="/orgs/:orgId/invite" element={<RequireLogin><InvitationPage /></RequireLogin>} />
         <Route path="/orgs/:orgId/join-code" element={<RequireLogin><JoinCodePage /></RequireLogin>} />
+        <Route path="/orgs/:orgId/academy/catalog" element={<RequireLogin><CatalogPage /></RequireLogin>} />
+        <Route path="/orgs/:orgId/academy/students" element={<RequireLogin><StudentsPage /></RequireLogin>} />
+        <Route path="/orgs/:orgId/academy/my-students" element={<RequireLogin><StudentsPage mine /></RequireLogin>} />
+        <Route path="/orgs/:orgId/academy/students/new" element={<RequireLogin><StudentFormPage /></RequireLogin>} />
+        <Route path="/orgs/:orgId/academy/students/:studentId" element={<RequireLogin><StudentDetailPage /></RequireLogin>} />
+        <Route path="/orgs/:orgId/academy/students/:studentId/edit" element={<RequireLogin><StudentFormPage /></RequireLogin>} />
+        <Route path="/orgs/:orgId/academy/me" element={<RequireLogin><MyLessonsPage /></RequireLogin>} />
         <Route path="/orgs/:orgId/practice" element={<RequireLogin><PracticeMapPage /></RequireLogin>} />
         <Route path="/orgs/:orgId/practice/my" element={<RequireLogin><MyBookingsPage /></RequireLogin>} />
         <Route path="/orgs/:orgId/practice/bookings" element={<RequireLogin><AdminBookingsPage /></RequireLogin>} />
