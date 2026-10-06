@@ -1,0 +1,41 @@
+/* DESIGN.md 토큰. 새 값이 필요하면 DESIGN.md에 먼저 추가한다. */
+:root {
+  --primary: #4f46e5;
+  --primary-pressed: #4338ca;
+  --primary-tint: #eef2ff;
+  --on-primary: #ffffff;
+  --ink: #111111;
+  --body: #374151;
+  --muted: #6b7280;
+  --hairline: #e5e7eb;
+  --canvas: #ffffff;
+  --surface-soft: #f8f9fa;
+  --free: #10b981;
+  --free-tint: #ecfdf5;
+  --booked: #e5e7eb;
+  --unavailable: #f3f4f6;
+  --wall: #cbd5e1;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+
+  --font: 'Pretendard Variable', Pretendard, -apple-system, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --title-lg: 700 22px/1.35 var(--font);
+  --title-md: 600 18px/1.4 var(--font);
+  --text-body: 400 15px/1.55 var(--font);
+  --text-body-strong: 600 15px/1.55 var(--font);
+  --text-caption: 400 13px/1.45 var(--font);
+
+  --rounded-sm: 6px;
+  --rounded-md: 8px;
+  --rounded-lg: 12px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --touch: 44px;
+}
