@@ -606,3 +606,15 @@ button.floor-room { cursor: pointer; }
 .sheet .money div:first-child { border-radius: var(--rounded-md) var(--rounded-md) 0 0; }
 .sheet .money div:last-child { border-radius: 0 0 var(--rounded-md) var(--rounded-md); }
 a.link-button { display: inline-flex; align-items: center; min-height: var(--touch); text-decoration: none; }
+
+/* 구글 로그인: 구글 버튼 안내(흰 바탕, 회색 테두리, 공식 G). 로그인·가입 화면 맨 위 */
+.google-login { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-2); }
+.button-google {
+  display: flex; align-items: center; justify-content: center; gap: var(--space-3); min-height: var(--button-h);
+  border: 1px solid #dadce0; border-radius: var(--rounded-md); background: #fff; color: #1f1f1f;
+  font: 600 15px/1 var(--font); cursor: pointer; transition: background 0.15s ease;
+}
+.button-google:hover:not(:disabled) { background: #f8faff; }
+.button-google:disabled { opacity: 0.55; cursor: not-allowed; }
+.divider { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-4) 0 var(--space-2); color: var(--muted); font: var(--text-caption); }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--hairline); }

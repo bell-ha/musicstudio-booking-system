@@ -38,6 +38,7 @@ export function LoginPage() {
       <div className="brand"><BrandMark /></div>
       <h1>로그인</h1>
       <p className="page-sub">마디에 다시 오신 걸 환영해요</p>
+      <GoogleButton />
       {notice && <p className="notice">{notice}</p>}
       <form className="form" onSubmit={submit}>
         <Field id="email" label="이메일">
@@ -49,7 +50,6 @@ export function LoginPage() {
         {message && <p className="alert" role="alert">{message}</p>}
         <button className="button button-primary" disabled={submitting}>로그인</button>
       </form>
-      <GoogleButton />
       <p className="helper">처음인가요? <Link to="/signup">가입하기</Link></p>
     </main>
   )

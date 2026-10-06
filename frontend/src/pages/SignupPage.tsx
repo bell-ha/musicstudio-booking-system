@@ -47,6 +47,7 @@ export function SignupPage() {
       <div className="brand"><BrandMark /></div>
       <h1>가입하기</h1>
       <p className="page-sub">마디 — 연습실 예약부터 레슨·수납까지 한곳에서</p>
+      <GoogleButton label="Google로 가입하기" />
       <form className="form" onSubmit={submit} noValidate>
         <Field id="name" label="이름" error={errors.name}>
           <input id="name" name="name" autoComplete="name" required />
@@ -60,7 +61,6 @@ export function SignupPage() {
         {message && <p className="alert" role="alert">{message}</p>}
         <button className="button button-primary" disabled={submitting}>가입하기</button>
       </form>
-      <GoogleButton />
       <p className="helper">이미 계정이 있나요? <Link to="/login">로그인</Link></p>
     </main>
   )
