@@ -50,23 +50,26 @@ export function MyBookingsPage() {
           <Link className="button button-primary" to={`/orgs/${orgId}/practice`}>연습실 예약하기</Link>
         </div>
       )}
-      <ul className="list">
-        {bookings?.map((b) => (
-          <li key={b.id} className={b.canceledAt ? 'card card-muted' : 'card'}>
-            <p className="card-title">
-              {b.roomName}
-              {b.canceledAt && <span className="badge">취소됨</span>}
-            </p>
-            <p className="card-meta tnum">{dateLabel(b.usageDate)} {hhmm(b.startsAt)}~{hhmm(b.endsAt)}</p>
-            {b.cancelReason && <p className="card-meta">관리자 취소 사유: {b.cancelReason}</p>}
-            {!b.canceledAt && !ended(b) && (
-              <div className="actions">
-                <button className="button button-danger" onClick={() => cancel(b)}>예약 취소</button>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+      {bookings && bookings.length > 0 && (
+        <ul className="group">
+          {bookings.map((b) => (
+            <li key={b.id} className={b.canceledAt || ended(b) ? 'row row-muted' : 'row'}>
+              <span className="date-block tnum" aria-hidden="true">
+                <span>{Number(b.usageDate.slice(5, 7))}월</span>
+                <strong>{Number(b.usageDate.slice(8, 10))}</strong>
+              </span>
+              <span className="row-text">
+                <span className="row-title">{b.roomName}{b.canceledAt && <span className="badge">취소됨</span>}</span>
+                <span className="row-meta tnum">{dateLabel(b.usageDate)} {hhmm(b.startsAt)}~{hhmm(b.endsAt)}</span>
+                {b.cancelReason && <span className="row-meta">관리자 취소 사유: {b.cancelReason}</span>}
+              </span>
+              {!b.canceledAt && !ended(b) && (
+                <button className="link-button" onClick={() => cancel(b)}>취소</button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
       <p className="helper"><Link to={`/orgs/${orgId}/practice`}>연습실 지도로</Link></p>
     </main>
   )

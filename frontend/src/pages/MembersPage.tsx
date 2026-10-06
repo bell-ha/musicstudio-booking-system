@@ -70,7 +70,7 @@ export function MembersPage() {
   }
 
   return (
-    <main className="page">
+    <main className="page page-wide">
       <h1>멤버 관리</h1>
       <div className="tabs" role="tablist">
         {TABS.map((tab) => (
@@ -84,14 +84,20 @@ export function MembersPage() {
       {message && <p className="alert" role="alert">{message}</p>}
       {members?.length === 0 && <p className="card empty">해당하는 멤버가 없어요.</p>}
 
-      <ul className="list">
+      {members && members.length > 0 && <h2 className="group-title">{members.length}명</h2>}
+      <ul className="group">
         {members?.map((m) => (
-          <li className="card" key={m.membershipId}>
-            <p className="card-title">{m.name} <span className="badge">{ROLE_LABEL[m.role]}</span></p>
-            <p className="card-meta">{m.email ?? '이메일 없음'}</p>
-            {Object.entries(m.profile).map(([key, value]) => (
-              <p className="card-meta" key={key}>{key}: {value}</p>
-            ))}
+          <li className="member-row" key={m.membershipId}>
+            <div className="row">
+              <span className="avatar" aria-hidden="true">{m.name.slice(0, 1)}</span>
+              <span className="row-text">
+                <span className="row-title">{m.name} <span className="badge">{ROLE_LABEL[m.role]}</span></span>
+                <span className="row-meta">{m.email ?? '이메일 없음'}</span>
+                {Object.entries(m.profile).map(([key, value]) => (
+                  <span className="row-meta" key={key}>{key}: {value}</span>
+                ))}
+              </span>
+            </div>
 
             {canChange(m) && (
               <div className="actions">
