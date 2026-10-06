@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { api, ApiError, errorMessage } from '../../api'
 import { Field } from '../../Field'
 import { isManager } from '../../labels'
@@ -397,7 +397,6 @@ export function FloorEditorPage() {
         <button className="button">층 추가</button>
       </form>
 
-      <p className="helper"><Link to={`/orgs/${orgId}`}>기관으로 돌아가기</Link></p>
     </main>
   )
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { api, errorMessage } from '../api'
 import { isManager, ROLE_LABEL, type MemberStatus, type Role } from '../labels'
 import { useMyOrganization } from '../useMyOrganization'
@@ -122,7 +122,6 @@ export function MembersPage() {
           </li>
         ))}
       </ul>
-      <p className="helper"><Link to={`/orgs/${orgId}`}>기관으로 돌아가기</Link></p>
     </main>
   )
 }

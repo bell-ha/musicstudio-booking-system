@@ -23,6 +23,7 @@ import { PolicyPage } from './pages/practice/PolicyPage'
 import { RoomsPage } from './pages/practice/RoomsPage'
 import { OrganizationsPage } from './pages/OrganizationsPage'
 import { SignupPage } from './pages/SignupPage'
+import { OrgLayout } from './OrgLayout'
 import { RequireLogin } from './RequireLogin'
 import './styles/tokens.css'
 import './styles/base.css'
@@ -38,23 +39,25 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/organizations/new" element={<RequireLogin><NewOrganizationPage /></RequireLogin>} />
         <Route path="/invite" element={<InvitePage />} />
         <Route path="/join" element={<RequireLogin><JoinRequestPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId" element={<RequireLogin><OrganizationHomePage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/members" element={<RequireLogin><MembersPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/invite" element={<RequireLogin><InvitationPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/join-code" element={<RequireLogin><JoinCodePage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/academy/catalog" element={<RequireLogin><CatalogPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/academy/students" element={<RequireLogin><StudentsPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/academy/my-students" element={<RequireLogin><StudentsPage mine /></RequireLogin>} />
-        <Route path="/orgs/:orgId/academy/students/new" element={<RequireLogin><StudentFormPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/academy/students/:studentId" element={<RequireLogin><StudentDetailPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/academy/students/:studentId/edit" element={<RequireLogin><StudentFormPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/academy/me" element={<RequireLogin><MyLessonsPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/practice" element={<RequireLogin><PracticeMapPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/practice/my" element={<RequireLogin><MyBookingsPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/practice/bookings" element={<RequireLogin><AdminBookingsPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/practice/floors" element={<RequireLogin><FloorEditorPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/practice/rooms" element={<RequireLogin><RoomsPage /></RequireLogin>} />
-        <Route path="/orgs/:orgId/practice/policy" element={<RequireLogin><PolicyPage /></RequireLogin>} />
+        <Route path="/orgs/:orgId" element={<RequireLogin><OrgLayout /></RequireLogin>}>
+          <Route index element={<OrganizationHomePage />} />
+          <Route path="members" element={<MembersPage />} />
+          <Route path="invite" element={<InvitationPage />} />
+          <Route path="join-code" element={<JoinCodePage />} />
+          <Route path="academy/catalog" element={<CatalogPage />} />
+          <Route path="academy/students" element={<StudentsPage />} />
+          <Route path="academy/my-students" element={<StudentsPage mine />} />
+          <Route path="academy/students/new" element={<StudentFormPage />} />
+          <Route path="academy/students/:studentId" element={<StudentDetailPage />} />
+          <Route path="academy/students/:studentId/edit" element={<StudentFormPage />} />
+          <Route path="academy/me" element={<MyLessonsPage />} />
+          <Route path="practice" element={<PracticeMapPage />} />
+          <Route path="practice/my" element={<MyBookingsPage />} />
+          <Route path="practice/bookings" element={<AdminBookingsPage />} />
+          <Route path="practice/floors" element={<FloorEditorPage />} />
+          <Route path="practice/rooms" element={<RoomsPage />} />
+          <Route path="practice/policy" element={<PolicyPage />} />
+        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

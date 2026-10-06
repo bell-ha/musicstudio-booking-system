@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { api, errorMessage, fieldErrors } from '../api'
 import { Field } from '../Field'
 import { isManager, ROLE_LABEL, type Role } from '../labels'
@@ -72,7 +72,6 @@ export function InvitationPage() {
           <button className="button button-block" onClick={copy}>{copied ? '복사했어요' : '링크 복사'}</button>
         </div>
       )}
-      <p className="helper"><Link to={`/orgs/${orgId}`}>기관으로 돌아가기</Link></p>
     </main>
   )
 }

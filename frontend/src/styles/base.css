@@ -302,3 +302,67 @@ button.floor-room { cursor: pointer; }
 .timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
 .timeline-item p { margin: 0 0 var(--space-1); }
 .timeline-event { padding: 0 var(--space-4); border-left: 2px solid var(--hairline); }
+
+/* 기관 화면 틀 (DESIGN 5절): 위 앱 바, 1024px 이상 왼쪽 메뉴, 그보다 좁으면 아래 탭 바.
+   포인트 색은 "지금 보고 있는 메뉴"에만 쓴다 (7절) */
+.shell { min-height: 100vh; }
+.shell-bar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: var(--space-3);
+  height: 56px; padding: 0 var(--space-4);
+  background: var(--canvas); border-bottom: 1px solid var(--hairline);
+}
+.shell-org { font: var(--title-md); color: var(--ink); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shell-switch {
+  min-width: 0; max-width: 60vw; height: 40px; padding: 0 var(--space-2);
+  background: var(--canvas); border: 1px solid transparent; border-radius: var(--rounded-sm); cursor: pointer;
+}
+.shell-switch:hover, .shell-switch:focus { border-color: var(--hairline); outline: none; }
+.shell-spacer { flex: 1; }
+.shell-role { font: var(--text-caption); color: var(--muted); white-space: nowrap; }
+@media (max-width: 639px) { .shell-role { display: none; } }
+.shell-link {
+  min-height: var(--touch); padding: 0 var(--space-2);
+  font: var(--text-caption); color: var(--muted); background: none; border: none; cursor: pointer; white-space: nowrap;
+}
+.shell-body { display: flex; align-items: flex-start; }
+.shell-main { flex: 1; min-width: 0; padding-bottom: 72px; } /* 아래 탭 바에 가리지 않게 */
+.shell-side { display: none; }
+.side-group { margin-top: var(--space-4); }
+.side-title { margin: 0 0 var(--space-1); padding: 0 var(--space-3); font: var(--text-caption); color: var(--muted); }
+.side-link {
+  display: flex; align-items: center; min-height: 40px; padding: 0 var(--space-3);
+  font: var(--text-body); color: var(--body); text-decoration: none; border-radius: var(--rounded-sm);
+}
+.side-link:hover { background: var(--surface-soft); color: var(--ink); }
+.side-link.active { background: var(--primary-tint); color: var(--primary); font-weight: 600; }
+.side-foot { margin-top: var(--space-6); font: var(--text-caption); color: var(--muted); }
+.shell-tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: flex; background: var(--canvas); border-top: 1px solid var(--hairline);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tab-link {
+  flex: 1; display: flex; align-items: center; justify-content: center; min-height: 56px;
+  font: var(--text-caption); color: var(--muted); text-decoration: none;
+}
+.tab-link.active { color: var(--primary); font-weight: 600; }
+@media (min-width: 1024px) {
+  .shell-side {
+    display: block; position: sticky; top: 56px; flex: 0 0 220px;
+    height: calc(100vh - 56px); overflow-y: auto; padding: var(--space-4) var(--space-3);
+    background: var(--canvas); border-right: 1px solid var(--hairline);
+  }
+  .shell-tabs { display: none; }
+  .shell-main { padding-bottom: 0; }
+  /* 메뉴 옆에 붙여 왼쪽 정렬. 가운데 정렬이면 넓은 화면에서 메뉴와 내용 사이가 비어 보인다 */
+  .shell-main .page { margin: 0; padding-left: var(--space-8); padding-right: var(--space-8); }
+}
+
+/* 기관 홈: 묶음 제목 + 넓은 화면에서 2~3열 카드 */
+.group-title { margin: 0 0 var(--space-3); font: var(--text-body-strong); color: var(--muted); }
+.menu-grid { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.menu-grid .card-link { height: 100%; }
+@media (min-width: 640px) { .menu-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .menu-grid { grid-template-columns: repeat(3, 1fr); } }
+.card-link:hover { border-color: var(--muted); }

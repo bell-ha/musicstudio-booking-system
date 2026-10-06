@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { api, errorMessage, fieldErrors } from '../../api'
 import { productTerms } from '../../academy/format'
 import type { Catalog, Product, ProductKind } from '../../academy/types'
@@ -149,7 +149,6 @@ export function CatalogPage() {
           <button className="button button-primary">상품 추가</button>
         </form>
       )}
-      <p className="helper"><Link to={`/orgs/${orgId}`}>기관으로 돌아가기</Link></p>
     </main>
   )
 }

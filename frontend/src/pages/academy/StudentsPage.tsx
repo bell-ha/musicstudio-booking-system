@@ -119,7 +119,6 @@ export function StudentsPage({ mine = false }: { mine?: boolean }) {
           </li>
         ))}
       </ul>
-      <p className="helper"><Link to={`/orgs/${orgId}`}>기관으로 돌아가기</Link></p>
     </main>
   )
 }

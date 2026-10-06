@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { api, errorMessage, fieldErrors } from '../../api'
 import { Field } from '../../Field'
 import { isManager } from '../../labels'
@@ -135,7 +135,6 @@ export function PolicyPage() {
         </div>
       )}
       {!policy && message && <p className="alert" role="alert">{message}</p>}
-      <p className="helper"><Link to={`/orgs/${orgId}`}>기관으로 돌아가기</Link></p>
     </main>
   )
 }

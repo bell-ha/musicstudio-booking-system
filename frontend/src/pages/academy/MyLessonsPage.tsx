@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { api, ApiError, errorMessage } from '../../api'
 import { STATUS_LABEL } from '../../academy/format'
 import { Timeline } from '../../academy/Timeline'
@@ -47,7 +47,6 @@ export function MyLessonsPage() {
           <Timeline enrollments={detail.enrollments} records={detail.records} />
         </>
       )}
-      <p className="helper"><Link to={`/orgs/${orgId}`}>기관으로 돌아가기</Link></p>
     </main>
   )
 }

@@ -141,7 +141,6 @@ export function RoomsPage() {
       <p className="helper">
         방을 만든 뒤 <Link to={`/orgs/${orgId}/practice/floors`}>평면도 편집</Link>에서 자리를 정해요.
       </p>
-      <p className="helper"><Link to={`/orgs/${orgId}`}>기관으로 돌아가기</Link></p>
     </main>
   )
 }

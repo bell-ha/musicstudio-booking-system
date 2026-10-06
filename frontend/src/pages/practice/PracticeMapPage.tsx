@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { api, errorMessage } from '../../api'
+import { cropToContent } from '../../practice/crop'
 import { FloorGrid } from '../../practice/FloorGrid'
 import { dateLabel, minutesOf, nowTimeIn, timeOf, todayIn, zonedIso, zoneOf } from '../../practice/time'
 import { TimetableSheet } from '../../practice/TimetableSheet'
@@ -103,11 +104,8 @@ export function PracticeMapPage() {
           {date && <p className="card-meta">{dateLabel(date)} {time}부터 {data!.policy.slotMinutes}분 동안 비어 있는지 보여요. 방을 누르면 그날 시간표가 나와요.</p>}
 
           <FloorGrid
-            width={floor.layout.width}
-            height={floor.layout.height}
-            walls={floor.layout.walls}
-            corridors={floor.layout.corridors}
-            rooms={floor.rooms.map((r) => ({ id: r.id, name: r.name, x: r.x!, y: r.y!, w: r.w!, h: r.h! }))}
+            {...cropToContent(floor.layout.width, floor.layout.height, floor.layout.walls, floor.layout.corridors,
+              floor.rooms.map((r) => ({ id: r.id, name: r.name, x: r.x!, y: r.y!, w: r.w!, h: r.h! })))}
             renderRoom={(room) => {
               const s = statusOf(room.id)
               const kind = !s ? '' : s.mine ? 'room-mine' : `room-${s.status.toLowerCase()}`
@@ -140,10 +138,6 @@ export function PracticeMapPage() {
         />
       )}
 
-      <p className="helper">
-        {me.role === 'STUDENT' && <><Link to={`/orgs/${orgId}/practice/my`}>내 예약</Link> · </>}
-        <Link to={`/orgs/${orgId}`}>기관으로 돌아가기</Link>
-      </p>
     </main>
   )
 }

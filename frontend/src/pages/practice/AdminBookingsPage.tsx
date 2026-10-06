@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { api, errorMessage } from '../../api'
 import { isManager } from '../../labels'
 import { hhmm, todayIn, zoneOf } from '../../practice/time'
@@ -82,7 +82,6 @@ export function AdminBookingsPage() {
           </li>
         ))}
       </ul>
-      <p className="helper"><Link to={`/orgs/${orgId}`}>기관으로 돌아가기</Link></p>
     </main>
   )
 }
