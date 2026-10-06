@@ -17,6 +17,7 @@
 | 기관 범위 | `/api/v1/organizations/{orgId}` |
 | 연습실 모듈 | `/api/v1/organizations/{orgId}/practice` |
 | 학원 관리 모듈 | `/api/v1/organizations/{orgId}/academy` |
+| 공개(로그인 없음) | `/api/v1/public` — 기관 범위 검사 밖, 응답은 정해 둔 항목만 |
 
 모듈 API를 접두사로 나눠서 "모듈이 꺼졌으면 막는다"(ADR 0006)를 필터 한 곳에서 처리한다. 아래 표에서 기관 범위 경로는 `/api/v1/organizations/{orgId}`를 빼고 적는다.
 
@@ -58,7 +59,7 @@
 
 R1·R2는 애플리케이션 검사에서 걸리든 DB 배타 제약(SQLSTATE `23P01`)에서 걸리든 **같은 응답**을 준다. 예외 처리기가 제약 이름(`ex_booking_room`, `ex_booking_member`)을 코드로 바꾼다.
 
-## 2. 엔드포인트 (36개)
+## 2. 엔드포인트 (48개)
 
 권한: 누구나 / 로그인 / **O** 소유자 / **M** 관리자 이상 / **T** 강사 / **S** 학생 / 멤버 = 그 기관의 활성 멤버
 
@@ -114,6 +115,22 @@ R1·R2는 애플리케이션 검사에서 걸리든 DB 배타 제약(SQLSTATE `2
 | 34 | POST | /academy/lesson-records | T | 46 | 본문에 `enrollmentId`. 403 담당 아님 |
 | 35 | PATCH | /academy/lesson-records/{recordId} | T(쓴 사람) | 46 | |
 | 36 | DELETE | /academy/lesson-records/{recordId} | T(쓴 사람) | 46 | 실제로 지우는 유일한 곳 (UC-46 2a) |
+
+### 기관 사이트 (0.3)
+| # | 메서드 | 경로 | 권한 | UC | 비고 |
+|---|---|---|---|---|---|
+| 37 | GET | /site | 멤버 | 10, 12 | 로고 URL, 소개, 주소, 대표 번호, 운영 안내, 색. M 이상에게 `published`·`slug`(읽기 전용), O에게 `acceptJoin` |
+| 38 | PUT | /site | M | 10 | 소개, 주소, 대표 번호, 운영 안내, 색(6색 키). 400 `INVALID_COLOR` |
+| 39 | PUT | /site/publishing | O | 10 | `slug`, `published`, `acceptJoin`. 400 `INVALID_SLUG`·`SLUG_RESERVED`, 409 `SLUG_TAKEN`, 422 `SLUG_REQUIRED` |
+| 40 | PUT | /site/logo | M | 10 | 본문 = 이미지 바이트. 413(200KB 초과), 415(형식), 400 `INVALID_IMAGE`(매직 바이트 불일치) → `{logoUrl}` |
+| 41 | DELETE | /site/logo | M | 10 | 204 |
+| 42 | GET | /notices | 멤버 | 12 | 내 역할이 볼 수 있는 것만. 고정 먼저, 최근 50개. 본문 포함 |
+| 43 | POST | /notices | M | 11 | `title`, `body`(평문), `visibility`(`STAFF`/`MEMBERS`/`PUBLIC`), `pinned` |
+| 44 | PATCH | /notices/{noticeId} | M | 11 | |
+| 45 | DELETE | /notices/{noticeId} | M | 11 | 실제 삭제 |
+| 46 | GET | /api/v1/public/sites/{slug} | 누구나 | 13 | 이름, 유형, 로고 URL, 소개, 연락처, 운영 안내, 색, `PUBLIC` 공지 최근 10개, `join: {open, form}`. 없거나 비공개면 같은 404 |
+| 47 | GET | /api/v1/public/logos/{logoKey} | 누구나 | 10, 13 | `Cache-Control: public, max-age=31536000, immutable`, `nosniff`. 키는 무작위 UUID (ADR 0015) |
+| 48 | POST | /api/v1/sites/{slug}/join-requests | 로그인 | 14 | 10번과 같은 응답. 공개 + 가입 받기 + 가입 코드 사용 중이 아니면 404. 가입 코드는 노출하지 않는다 |
 
 학생의 "내 수강 정보"(UC-48)는 3번 응답에 연결된 `studentId`가 있고, 31번으로 읽는다. 별도 엔드포인트를 두지 않는다.
 
