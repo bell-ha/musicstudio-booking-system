@@ -1,0 +1,27 @@
+# 로컬 개발용 PostgreSQL이다. 애플리케이션 서비스는 아직 넣지 않는다.
+# 계정과 비밀번호는 개발용 값이다. 운영(RDS)에서는 쓰지 않는다.
+#
+# 실행: docker compose up -d
+# 접속: psql -h localhost -U musicstudio musicstudio
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: musicstudio-postgres
+    environment:
+      POSTGRES_DB: musicstudio
+      POSTGRES_USER: musicstudio
+      POSTGRES_PASSWORD: musicstudio # 개발용 값
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U musicstudio -d musicstudio"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

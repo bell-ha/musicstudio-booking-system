@@ -21,3 +21,26 @@ node_modules/
 
 # DB tool artifacts
 *.session.sql
+
+# Java / Gradle
+build/
+.gradle/
+out/
+*.class
+!gradle/wrapper/gradle-wrapper.jar
+
+# IntelliJ
+*.iml
+
+# Env (예시 파일만 커밋한다)
+.env*
+!.env.example
+
+# Terraform
+.terraform/
+*.tfstate*
+*.tfvars
+!*.tfvars.example
+
+# k6 결과
+load-tests/results/

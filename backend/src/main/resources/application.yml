@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: musicstudio
+  # 로컬 개발용 기본값. 저장소 루트의 docker-compose.yml과 맞춘다.
+  # 서버에서는 환경 변수(SPRING_DATASOURCE_URL 등)로 덮어쓴다.
+  datasource:
+    url: jdbc:postgresql://localhost:5432/musicstudio
+    username: musicstudio
+    password: musicstudio
+  jpa:
+    # 스키마는 Flyway만 바꾼다. JPA는 엔티티와 스키마가 맞는지 검사만 한다.
+    hibernate:
+      ddl-auto: validate
+    # 컨트롤러까지 영속성 컨텍스트를 열어 두지 않는다. 지연 로딩은 서비스 안에서 끝낸다.
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  mvc:
+    problemdetails:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
