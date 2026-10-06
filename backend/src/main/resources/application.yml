@@ -23,6 +23,9 @@ app:
     secret: ${JWT_SECRET:}
     # 갱신 토큰은 MVP에 없으므로 접근 토큰을 12시간 동안 쓴다.
     ttl: 12h
+  crypto:
+    # 개인정보 암호화 키. base64로 인코딩한 32바이트. 없으면 서버가 뜨지 않는다.
+    key: ${APP_CRYPTO_KEY:}
   social:
     # 비어 있으면 구글 로그인을 끈다. 값은 Google Cloud Console의 OAuth 클라이언트(웹)에서 받는다.
     google:
