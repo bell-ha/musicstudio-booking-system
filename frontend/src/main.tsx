@@ -12,6 +12,7 @@ import { NewOrganizationPage } from './pages/NewOrganizationPage'
 import { OrganizationHomePage } from './pages/OrganizationHomePage'
 import { CatalogPage } from './pages/academy/CatalogPage'
 import { MyLessonsPage } from './pages/academy/MyLessonsPage'
+import { SchedulePage } from './pages/academy/SchedulePage'
 import { StudentDetailPage } from './pages/academy/StudentDetailPage'
 import { StudentFormPage } from './pages/academy/StudentFormPage'
 import { StudentsPage } from './pages/academy/StudentsPage'
@@ -57,6 +58,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="academy/students/:studentId" element={<StudentDetailPage />} />
           <Route path="academy/students/:studentId/edit" element={<StudentFormPage />} />
           <Route path="academy/me" element={<MyLessonsPage />} />
+          <Route path="academy/schedule" element={<SchedulePage />} />
           <Route path="practice" element={<PracticeMapPage />} />
           <Route path="practice/my" element={<MyBookingsPage />} />
           <Route path="practice/bookings" element={<AdminBookingsPage />} />

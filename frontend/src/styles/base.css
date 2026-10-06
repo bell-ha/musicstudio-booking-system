@@ -120,7 +120,9 @@ a { color: var(--primary); }
 .tab[aria-selected='true'] { color: var(--on-primary); background: var(--ink); }
 
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
-.hint { flex-basis: 100%; margin: 0; font: var(--text-caption); color: var(--muted); }
+.hint { margin: 0; font: var(--text-caption); color: var(--muted); }
+/* 가로 줄(.actions) 안에서만 한 줄을 다 쓴다. 세로 폼에서 flex-basis 100%는 높이를 다 차지해 빈 공간이 생긴다 */
+.actions .hint { flex-basis: 100%; }
 
 .select,
 .input-readonly,
@@ -504,3 +506,24 @@ button.floor-room { cursor: pointer; }
 .sheet-body { padding: var(--space-4); overflow-y: auto; flex: 1; }
 .chip-removable { display: inline-flex; align-items: center; gap: 2px; padding-right: var(--space-1); }
 .chip-removable button { display: grid; place-items: center; width: 22px; height: 22px; border: none; background: none; color: var(--muted); cursor: pointer; border-radius: 999px; }
+
+/* 레슨 일정 */
+.row-time { flex: 0 0 52px; font: 700 15px/1 var(--font); color: var(--ink); }
+.badge-done { background: var(--free-tint); color: #047857; }
+.week-nav { display: flex; align-items: center; gap: var(--space-1); }
+.day-head { display: flex; align-items: baseline; justify-content: space-between; }
+.day-today { color: var(--primary); }
+.link-button { background: none; border: none; padding: var(--space-2); font: var(--text-caption); color: var(--error); cursor: pointer; }
+.groups section { min-width: 0; }
+.row-icon-warn { background: #fef3c7; color: #92400e; }
+/* 고정 일정 편집 (수강 카드 안) */
+.card-inset { margin-top: var(--space-3); padding: var(--space-4); border-radius: var(--rounded-md); background: var(--fill); }
+.card-inset .field input { background: var(--canvas); border-color: transparent; }
+.slot-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.day-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.day-chip {
+  width: 36px; height: 36px; border-radius: 999px; border: none; cursor: pointer;
+  background: var(--canvas); color: var(--body); font: var(--text-body-strong);
+}
+.day-chip-on { background: var(--primary); color: var(--on-primary); }
+.input-time { height: 40px; padding: 0 var(--space-3); border: none; border-radius: var(--rounded-sm); background: var(--canvas); font: var(--text-body); font-feature-settings: 'tnum'; }

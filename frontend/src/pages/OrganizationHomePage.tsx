@@ -5,6 +5,7 @@ import { ROLE_LABEL, TYPE_LABEL } from '../labels'
 import { orgMenu } from '../orgMenu'
 import { api } from '../api'
 import { useOrgSite } from '../orgSite'
+import { TodayLessons } from '../academy/TodayLessons'
 import { OrgHeader } from '../site/OrgHeader'
 import { dateOf, type Notice } from '../site/site'
 import { useMyOrganization } from '../useMyOrganization'
@@ -50,6 +51,8 @@ export function OrganizationHomePage() {
           ))}
         </ul>
       )}
+
+      {org.role !== 'STUDENT' && org.modules.includes('ACADEMY') && <TodayLessons org={org} />}
 
       <section>
         <h2 className="group-title">공지</h2>

@@ -62,7 +62,41 @@ export type EnrollmentDetail = {
   totalSessions: number | null
   pausedAt: string | null
   version: number
+  /** 고정 주간 일정 (UC-49) */
+  schedule: Slot[]
+  /** 횟수권: 총 − 출석·결석. 기간권은 null */
+  remainingSessions: number | null
+  /** 자동으로 이어 붙이지 못한 회차 (보강으로 채운다) */
+  shortfall: number
+  nextLessonDate: string | null
+  lastLessonDate: string | null
 }
+
+export type Day = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
+export type Slot = { dayOfWeek: Day; startTime: string }
+
+export type SessionStatus = 'SCHEDULED' | 'ATTENDED' | 'ABSENT' | 'EXCUSED' | 'CANCELED'
+
+/** API 50·51 */
+export type Session = {
+  id: number
+  enrollmentId: number
+  studentId: number
+  studentName: string
+  subjectName: string
+  teacherMembershipId: number
+  teacherName: string
+  teacherActive: boolean
+  kind: 'REGULAR' | 'MAKEUP'
+  status: SessionStatus
+  note: string | null
+  startsAt: string
+  endsAt: string
+  localDate: string
+  mine: boolean
+}
+
+export type Conflict = { date: string; startsAt: string; endsAt: string; with: 'TEACHER' | 'STUDENT' }
 
 export type LessonRecord = {
   id: number

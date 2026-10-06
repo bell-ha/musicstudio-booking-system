@@ -1,5 +1,5 @@
 import {
-  BookOpen, CalendarCheck, ClipboardList, DoorOpen, GraduationCap, KeyRound, Link2, Map, NotebookPen,
+  BookOpen, CalendarCheck, CalendarDays, ClipboardList, DoorOpen, GraduationCap, KeyRound, Link2, Map, NotebookPen,
   Megaphone, Palette, PencilRuler, SlidersHorizontal, Tags, Users, type LucideIcon,
 } from 'lucide-react'
 import { isManager, type MyOrganization } from './labels'
@@ -42,6 +42,7 @@ export function orgMenu(org: MyOrganization): MenuGroup[] {
       { to: 'academy/students', title: '원생', meta: '원생 등록, 수강 관리, 만료 임박', icon: GraduationCap, tab: '원생' },
       { to: 'academy/catalog', title: '과목·상품', meta: '과목과 수업 상품, 가격', icon: Tags },
     ] : []),
+    { to: 'academy/schedule', title: '레슨 일정', meta: manager ? '주간 일정, 출결, 그날 전체 휴강' : '내 주간 일정과 출결', icon: CalendarDays, tab: manager ? undefined : '일정' },
     { to: 'academy/my-students', title: '담당 학생', meta: '맡은 학생과 레슨 기록', icon: NotebookPen, tab: manager ? undefined : '담당 학생' },
   ] })
   if (practice) groups.push({ title: '연습실', items: [

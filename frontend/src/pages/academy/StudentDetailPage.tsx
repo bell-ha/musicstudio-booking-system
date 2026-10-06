@@ -6,7 +6,9 @@ import { Timeline } from '../../academy/Timeline'
 import type { Catalog, EnrollmentDetail, LessonRecord, StudentDetail } from '../../academy/types'
 import { Field } from '../../Field'
 import { isManager, type Role } from '../../labels'
-import { dateLabel, todayIn, zoneOf } from '../../practice/time'
+import { dateLabel, todayIn, zonedIso, zoneOf } from '../../practice/time'
+import { conflictText, slotSummary } from '../../academy/lessons'
+import { ScheduleEditor } from '../../academy/ScheduleEditor'
 import { useMyOrganization } from '../../useMyOrganization'
 import { NotMember } from '../OrganizationHomePage'
 
@@ -31,7 +33,8 @@ export function StudentDetailPage() {
   const [detail, setDetail] = useState<StudentDetail | null>(null)
   const [catalog, setCatalog] = useState<Catalog | null>(null)
   const [members, setMembers] = useState<Member[]>([])
-  const [open, setOpen] = useState<{ id: number; action: 'extend' | 'change-teacher' } | 'enroll' | null>(null)
+  const [open, setOpen] = useState<{ id: number; action: 'extend' | 'change-teacher' | 'schedule' | 'makeup' } | 'enroll' | null>(null)
+  const [notice, setNotice] = useState('')
   const [editingRecord, setEditingRecord] = useState<number | null>(null)
   const [writing, setWriting] = useState<number | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -78,7 +81,9 @@ export function StudentDetailPage() {
       setRefresh((v) => v + 1)
     } catch (error) {
       setErrors(fieldErrors(error))
-      setMessage(errorMessage(error))
+      // 재개·연장·강사 변경이 다른 레슨과 겹치면 수강 변경 전체가 되돌아간다. 출구는 고정 일정 바꾸기 (교차 리뷰 28 2-4)
+      const conflict = conflictText(error)
+      setMessage(conflict ? `${conflict}. 고정 일정을 바꾼 뒤 다시 해 주세요.` : errorMessage(error))
       // 낡은 화면이었으면 최신 상태를 다시 받아 보여 준다
       if (error instanceof ApiError && error.problem.code === 'CONFLICTING_UPDATE') setRefresh((v) => v + 1)
     }
@@ -172,6 +177,7 @@ export function StudentDetailPage() {
       </div>
 
       {message && <p className="alert section" role="alert">{message}</p>}
+      {notice && <p className="notice-inline" role="status">{notice}</p>}
 
       <h2 className="section-title">수강</h2>
       {enrollments.length === 0 && <p className="card empty">아직 수강이 없어요.</p>}
@@ -190,6 +196,43 @@ export function StudentDetailPage() {
                 {e.pausedAt && ` · ${dateLabel(e.pausedAt)}부터 정지`}
                 {e.price !== null && ` · ${won(e.price)}`}
               </p>
+              {(e.status === 'ACTIVE' || e.status === 'PAUSED') && (
+                <p className="card-meta tnum">
+                  {e.schedule.length > 0 ? `매주 ${slotSummary(e.schedule)}` : '고정 일정 없음'}
+                  {e.remainingSessions !== null && ` · 남은 ${e.remainingSessions}회 / 총 ${e.totalSessions}회`}
+                  {e.nextLessonDate && ` · 다음 ${dateLabel(e.nextLessonDate)}`}
+                </p>
+              )}
+              {e.shortfall > 0 && (
+                <p className="notice-inline">자동으로 이어 붙이지 못한 회차가 {e.shortfall}개 있어요. 보강으로 넣어 주세요.</p>
+              )}
+              {manager && (e.status === 'ACTIVE' || e.status === 'PAUSED') && (
+                <div className="actions">
+                  <button className="button" onClick={() => setOpen({ id: e.id, action: 'schedule' })}>
+                    {e.schedule.length > 0 ? '고정 일정 바꾸기' : '고정 일정 정하기'}
+                  </button>
+                  {e.status === 'ACTIVE' && e.schedule.length > 0 && (
+                    <button className="button" onClick={() => setOpen({ id: e.id, action: 'makeup' })}>보강 넣기</button>
+                  )}
+                </div>
+              )}
+              {typeof open === 'object' && open?.id === e.id && open.action === 'schedule' && (
+                <ScheduleEditor orgId={orgId!} enrollment={e} today={today} onCancel={() => setOpen(null)}
+                  onSaved={(n) => { setOpen(null); setNotice(n); setRefresh((v) => v + 1) }} />
+              )}
+              {typeof open === 'object' && open?.id === e.id && open.action === 'makeup' && (
+                <form className="form-row section wrap" onSubmit={(ev) => {
+                  ev.preventDefault()
+                  const f = new FormData(ev.currentTarget)
+                  run(api(`${base}/enrollments/${e.id}/makeups`, {
+                    method: 'POST', body: { startsAt: zonedIso(String(f.get('d')), String(f.get('t')), zoneOf(me.timezone)) },
+                  }).then(() => setNotice('보강을 넣었어요.' + (e.kind === 'COUNT' ? ' 횟수권이라 맨 뒤 회차 하나가 빠져요.' : ''))))
+                }}>
+                  <input name="d" type="date" min={today} defaultValue={today} aria-label="보강 날짜" required />
+                  <input name="t" type="time" step={300} defaultValue="16:00" aria-label="보강 시각" required />
+                  <button className="button">넣기</button>
+                </form>
+              )}
 
               {manager && ACTIONS[e.status].length > 0 && (
                 <div className="actions">
