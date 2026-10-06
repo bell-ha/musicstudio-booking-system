@@ -50,7 +50,8 @@ class AuthAndOrganizationApiTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("하모니 음악학원"))
                 .andExpect(jsonPath("$[0].role").value("OWNER"))
-                .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+                .andExpect(jsonPath("$[0].status").value("ACTIVE"))
+                .andExpect(jsonPath("$[0].timezone").value("Asia/Seoul"));
     }
 
     @Test

@@ -88,7 +88,12 @@ class BookingController {
             return service.byDate(me.organizationId(), date).stream().map(r -> BookingResponse.of(r, zone)).toList();
         }
         LocalDate today = LocalDate.now(zone);
-        return service.mine(me.membershipId(), from == null ? today : from, to == null ? today.plusDays(30) : to)
+        LocalDate start = from == null ? today : from;
+        LocalDate end = to == null ? start.plusDays(30) : to;
+        if (end.isBefore(start) || start.plusDays(92).isBefore(end)) {
+            throw ApiException.invalid("INVALID_RANGE", "기간은 92일 이내로 골라 주세요");
+        }
+        return service.mine(me.membershipId(), start, end)
                 .stream().map(r -> BookingResponse.of(r, zone)).toList();
     }
 

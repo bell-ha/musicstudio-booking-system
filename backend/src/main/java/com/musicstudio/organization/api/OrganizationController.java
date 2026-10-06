@@ -50,7 +50,7 @@ class OrganizationController {
         return organizationService.myOrganizations(AccessTokens.userId(jwt)).stream()
                 .map(r -> new MyOrganizationResponse(r.getOrganization().getId(), r.getOrganization().getName(),
                         r.getOrganization().getType(), r.getMembership().getRole(), r.getMembership().getStatus(),
-                        r.getOrganization().getModules()))
+                        r.getOrganization().getModules(), r.getOrganization().getTimezone()))
                 .toList();
     }
 
@@ -65,6 +65,6 @@ class OrganizationController {
     }
 
     record MyOrganizationResponse(Long organizationId, String name, OrganizationType type, MembershipRole role,
-                                  MembershipStatus status, Set<Module> modules) {
+                                  MembershipStatus status, Set<Module> modules, String timezone) {
     }
 }

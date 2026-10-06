@@ -132,10 +132,12 @@ public class FloorPlanService {
                     removed.stream().map(Room::getId).toList(), Instant.now(clock));
             if (!future.isEmpty()) {
                 Map<Long, String> names = removed.stream().collect(Collectors.toMap(Room::getId, Room::getName));
+                java.time.ZoneId zone = settings.findById(orgId).zone();
                 throw ApiException.conflict("ROOM_HAS_FUTURE_BOOKINGS", "앞으로의 예약이 있는 방은 평면도에서 뺄 수 없습니다")
                         .with("bookings", future.stream().map(b -> Map.of(
                                 "bookingId", b.getId(), "roomId", b.getRoomId(), "roomName", names.get(b.getRoomId()),
-                                "startsAt", b.getStartsAt(), "endsAt", b.getEndsAt())).toList());
+                                "startsAt", b.getStartsAt().atZone(zone).toOffsetDateTime(),
+                                "endsAt", b.getEndsAt().atZone(zone).toOffsetDateTime())).toList());
             }
         }
 

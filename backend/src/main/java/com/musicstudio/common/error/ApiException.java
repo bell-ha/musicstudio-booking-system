@@ -19,7 +19,8 @@ public class ApiException extends RuntimeException {
     private final Map<String, Object> properties = new LinkedHashMap<>();
 
     public ApiException(HttpStatus status, String type, String code, String title) {
-        super(title);
+        // 업무 규칙 위반이라 스택 트레이스가 필요 없다. 시간표는 칸마다 규칙 예외를 만들고 잡으므로 비용도 줄인다.
+        super(title, null, false, false);
         this.status = status;
         this.type = type;
         this.code = code;

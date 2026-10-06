@@ -54,12 +54,6 @@ public class PracticeBooking {
         this.createdAt = Instant.now();
     }
 
-    public void cancel(Long byMembershipId, Instant at, String reason) {
-        this.canceledAt = at;
-        this.canceledByMembershipId = byMembershipId;
-        this.cancelReason = reason;
-    }
-
     public boolean overlaps(Instant from, Instant to) {
         return startsAt.isBefore(to) && endsAt.isAfter(from);
     }

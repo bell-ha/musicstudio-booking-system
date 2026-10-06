@@ -71,7 +71,8 @@ public class BookingService {
         }
         PracticeSettings s = settings.findById(orgId);
         PracticePolicy policy = s.policy();
-        LocalDate date = BookingRules.check(policy, s.zone(), Instant.now(clock), startsAt, endsAt);
+        ZoneId zone = s.zone();
+        LocalDate date = BookingRules.check(policy, zone, Instant.now(clock), startsAt, endsAt);
 
         return tx.execute(status -> {
             jdbc.sql("select pg_advisory_xact_lock(hashtextextended(:key, 0))")
@@ -82,7 +83,8 @@ public class BookingService {
             for (PracticeBooking b : sameDay) {
                 if (b.overlaps(startsAt, endsAt)) {
                     throw personOverlap().with("conflictingBooking", Map.of("bookingId", b.getId(),
-                            "roomId", b.getRoomId(), "startsAt", b.getStartsAt(), "endsAt", b.getEndsAt()));
+                            "roomId", b.getRoomId(), "startsAt", b.getStartsAt().atZone(zone).toOffsetDateTime(),
+                            "endsAt", b.getEndsAt().atZone(zone).toOffsetDateTime()));
                 }
             }
             long used = sameDay.stream().mapToLong(PracticeBooking::minutes).sum();
@@ -118,6 +120,9 @@ public class BookingService {
             throw ApiException.conflict("ALREADY_CANCELED", "이미 취소된 예약입니다");
         }
         Instant now = Instant.now(clock);
+        if (!b.getEndsAt().isAfter(now)) {
+            throw ApiException.policyViolation("BOOKING_ENDED", "이미 끝난 예약은 취소할 수 없습니다");
+        }
         if (manager) {
             if (reason == null || reason.isBlank()) {
                 throw ApiException.invalid("REASON_REQUIRED", "취소 사유를 적어 주세요");
@@ -129,8 +134,11 @@ public class BookingService {
                         "시작 %d분 전까지만 취소할 수 있습니다".formatted(deadline));
             }
         }
-        b.cancel(actorMemberId, now, manager ? reason.trim() : null);
-        return b;
+        // 학생과 관리자가 동시에 취소해도 한 건만 반영한다. 읽은 뒤 덮어쓰지 않고 조건부 UPDATE로 바꾼다.
+        if (bookings.cancel(bookingId, actorMemberId, now, manager ? reason.trim() : null) == 0) {
+            throw ApiException.conflict("ALREADY_CANCELED", "이미 취소된 예약입니다");
+        }
+        return bookings.findById(bookingId).orElseThrow();
     }
 
     @Transactional(readOnly = true)

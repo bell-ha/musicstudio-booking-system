@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpMethod;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -54,6 +56,9 @@ class BookingApiTest {
 
     @Autowired
     MockMvc mvc;
+
+    @Autowired
+    JdbcTemplate jdbc;
 
     ApiClient api;
     String owner;
@@ -115,7 +120,8 @@ class BookingApiTest {
         book(student, roomB, "14:30", "15:30")
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("PERSON_OVERLAP"))
-                .andExpect(jsonPath("$.conflictingBooking.roomId").value(roomA));
+                .andExpect(jsonPath("$.conflictingBooking.roomId").value(roomA))
+                .andExpect(jsonPath("$.conflictingBooking.startsAt").value(DAY + "T14:00:00+09:00"));
     }
 
     @Test
@@ -193,6 +199,41 @@ class BookingApiTest {
         api.call(owner, HttpMethod.GET, path("/bookings?date=" + DAY), null)
                 .andExpect(jsonPath("$[0].memberName").value("테스트"));
         api.call(student, HttpMethod.GET, path("/bookings?date=" + DAY), null).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 학생과_관리자가_동시에_취소하면_한_건만_반영된다() throws Exception {
+        for (int round = 0; round < 5; round++) {
+            String student = student();
+            String day = LocalDate.parse(DAY).plusDays(round).toString();
+            Number id = ApiClient.read(book(student, roomA, day, "20:00", "21:00"), "$.id");
+            List<Integer> statuses = concurrently(List.of(
+                    () -> httpStatus(api.call(student, HttpMethod.POST, path("/bookings/" + id + "/cancel"), null)),
+                    () -> httpStatus(api.call(owner, HttpMethod.POST, path("/bookings/" + id + "/cancel"),
+                            "{\"reason\":\"점검\"}"))));
+            assertThat(statuses).containsExactlyInAnyOrder(200, 409);
+        }
+    }
+
+    @Test
+    void 이미_끝난_예약은_관리자도_취소할_수_없다() throws Exception {
+        student();
+        Long memberId = jdbc.queryForObject(
+                "select max(id) from membership where organization_id = ? and role = 'STUDENT'", Long.class, orgId);
+        Long id = jdbc.queryForObject(
+                "insert into practice_booking (organization_id, room_id, member_id, starts_at, ends_at, usage_date) "
+                        + "values (?, ?, ?, '2026-10-08 10:00+09', '2026-10-08 11:00+09', '2026-10-08') returning id",
+                Long.class, orgId, roomA, memberId);
+
+        api.call(owner, HttpMethod.POST, path("/bookings/" + id + "/cancel"), "{\"reason\":\"정리\"}")
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.code").value("BOOKING_ENDED"));
+    }
+
+    @Test
+    void 내_예약_조회_기간은_92일까지() throws Exception {
+        api.call(student(), HttpMethod.GET, path("/bookings?from=2026-01-01&to=2026-12-31"), null)
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_RANGE"));
     }
 
     @Test

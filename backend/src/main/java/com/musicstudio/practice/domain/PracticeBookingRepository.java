@@ -7,11 +7,20 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 public interface PracticeBookingRepository extends JpaRepository<PracticeBooking, Long> {
 
     Optional<PracticeBooking> findByIdAndOrganizationId(Long id, Long organizationId);
+
+    /** 아직 취소되지 않았을 때만 취소한다. 동시에 두 번 취소하면 한 요청만 1을 받는다. */
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            update PracticeBooking b
+            set b.canceledAt = :at, b.canceledByMembershipId = :by, b.cancelReason = :reason
+            where b.id = :id and b.canceledAt is null""")
+    int cancel(Long id, Long by, Instant at, String reason);
 
     /** 같은 사람·같은 날의 유효한 예약 (R2 겹침, R4 합계). ix_booking_member_date를 탄다. */
     List<PracticeBooking> findByMemberIdAndUsageDateAndCanceledAtIsNull(Long memberId, LocalDate usageDate);
@@ -40,7 +49,11 @@ public interface PracticeBookingRepository extends JpaRepository<PracticeBooking
             order by b.startsAt""")
     List<BookingRow> findMine(Long memberId, LocalDate from, LocalDate to);
 
-    /** 관리자 현황: 그날 기관 전체 예약과 예약한 사람 이름. */
+    /**
+     * 관리자 현황: 그날 기관 전체 예약과 예약한 사람 이름.
+     * organization·account 모듈의 엔티티를 JPQL 문자열로 참조한다. ArchUnit은 이것을 보지 못하지만
+     * 방향은 허용된 쪽(practice → organization → account)이다.
+     */
     @Query("""
             select b as booking, r.name as roomName, u.name as memberName
             from PracticeBooking b

@@ -42,7 +42,7 @@ public final class BookingRules {
         }
         Instant opensAt = opensAt(policy, zone, now, date);
         if (opensAt != null) {
-            throw violation("NOT_OPEN_YET", "R6", "아직 예약이 열리지 않은 날입니다").with("opensAt", opensAt);
+            throw violation("NOT_OPEN_YET", "R6", "아직 예약이 열리지 않은 날입니다").with("opensAt", opensAt.atZone(zone).toOffsetDateTime());
         }
         return date;
     }
