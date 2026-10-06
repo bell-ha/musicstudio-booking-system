@@ -11,6 +11,8 @@ function messageFor(error: unknown): string {
   switch (error.problem.code) {
     case 'SOCIAL_EMAIL_IN_USE': return '이미 이메일로 가입한 계정이 있어요. 이메일로 로그인해 주세요.'
     case 'SOCIAL_LOGIN_DISABLED': return '지금은 구글 로그인을 쓸 수 없어요. 이메일로 로그인해 주세요.'
+    case 'GOOGLE_ALREADY_LINKED': return '이 구글 계정은 이미 다른 계정에 연결돼 있어요.'
+    case 'GOOGLE_ALREADY_SET': return '이 계정에는 이미 다른 구글 계정이 연결돼 있어요.'
     default: return FAILED
   }
 }
@@ -31,14 +33,16 @@ export function GoogleCallbackPage() {
       .then(() => {
         // 사용자가 동의 화면에서 취소하면 code 없이 error=access_denied로 돌아온다
         if (!saved || !code || params.get('state') !== saved.state) throw new Error('state mismatch')
-        return api<{ accessToken: string }>('/auth/social/google', {
-          method: 'POST',
-          body: { code, redirectUri: googleRedirectUri(), nonce: saved.nonce },
-        })
-      })
-      .then((login) => {
-        token.set(login.accessToken)
-        navigate(takeReturnTo(), { replace: true })
+        const body = { code, redirectUri: googleRedirectUri(), nonce: saved.nonce }
+        // 연결: 지금 로그인한 계정에 이 구글을 붙인다. 토큰은 그대로
+        if (saved.mode === 'link') {
+          return api('/me/social/google', { method: 'POST', body }).then(() => navigate('/?linked=google', { replace: true }))
+        }
+        return api<{ accessToken: string }>('/auth/social/google', { method: 'POST', body })
+          .then((login) => {
+            token.set(login.accessToken)
+            navigate(takeReturnTo(), { replace: true })
+          })
       })
       .catch((error) => setMessage(messageFor(error)))
   }, [params, navigate])

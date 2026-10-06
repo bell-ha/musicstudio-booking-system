@@ -12,10 +12,11 @@ function randomString() {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
-export function startGoogleLogin() {
+/** mode: login(구글로 로그인) 또는 link(로그인한 계정에 구글 연결). 돌아왔을 때 무엇을 할지 함께 저장한다 */
+export function startGoogleLogin(mode: 'login' | 'link' = 'login') {
   const state = randomString()
   const nonce = randomString()
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ state, nonce }))
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ state, nonce, mode }))
   const params = new URLSearchParams({
     client_id: CLIENT_ID!,
     redirect_uri: googleRedirectUri(),
@@ -28,7 +29,7 @@ export function startGoogleLogin() {
 }
 
 /** 저장해 둔 state·nonce를 한 번만 꺼낸다. 같은 값으로 다시 시도하지 못하게 바로 지운다 */
-export function takeGoogleLoginRequest(): { state: string; nonce: string } | null {
+export function takeGoogleLoginRequest(): { state: string; nonce: string; mode?: 'login' | 'link' } | null {
   const saved = sessionStorage.getItem(STORAGE_KEY)
   sessionStorage.removeItem(STORAGE_KEY)
   return saved ? JSON.parse(saved) : null

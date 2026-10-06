@@ -77,6 +77,46 @@ class SocialLoginApiTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void 로그인한_계정에_이메일이_다른_구글을_연결하면_그_구글로_같은_계정에_들어온다() throws Exception {
+        String email = uniqueEmail();
+        signup(email);
+        String password = JsonPath.read(mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"%s\",\"password\":\"password123\"}".formatted(email)))
+                .andReturn().getResponse().getContentAsString(), "$.accessToken");
+        String subject = "google-" + UUID.randomUUID();
+        googleReturns(new SocialProfile(subject, "someone-else@gmail.com", true, "구글 이름"));
+
+        mvc.perform(post("/api/v1/me/social/google").header("Authorization", "Bearer " + password)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"code\":\"c\",\"redirectUri\":\"http://localhost:3000/auth/callback/google\",\"nonce\":\"n\"}"))
+                .andExpect(status().isNoContent());
+        mvc.perform(get("/api/v1/me").header("Authorization", "Bearer " + password))
+                .andExpect(jsonPath("$.googleLinked").value(true)).andExpect(jsonPath("$.email").value(email));
+
+        String viaGoogle = JsonPath.read(googleLogin().andExpect(jsonPath("$.created").value(false))
+                .andReturn().getResponse().getContentAsString(), "$.accessToken");
+        mvc.perform(get("/api/v1/me").header("Authorization", "Bearer " + viaGoogle))
+                .andExpect(jsonPath("$.email").value(email)); // 새 계정이 아니라 원래 계정
+    }
+
+    @Test
+    void 다른_계정에_이미_붙은_구글은_연결할_수_없고_로그인하지_않으면_401() throws Exception {
+        googleReturns(new SocialProfile("google-" + UUID.randomUUID(), uniqueEmail(), true, "구글"));
+        googleLogin().andExpect(status().isOk()); // 그 구글로 새 계정이 생김
+        String other = uniqueEmail();
+        signup(other);
+        String token = JsonPath.read(mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"%s\",\"password\":\"password123\"}".formatted(other)))
+                .andReturn().getResponse().getContentAsString(), "$.accessToken");
+        String body = "{\"code\":\"c\",\"redirectUri\":\"http://localhost:3000/auth/callback/google\",\"nonce\":\"n\"}";
+        mvc.perform(post("/api/v1/me/social/google").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("GOOGLE_ALREADY_LINKED"));
+        mvc.perform(post("/api/v1/me/social/google").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isUnauthorized());
+    }
+
     private void googleReturns(SocialProfile profile) {
         given(google.verify(anyString(), anyString(), anyString())).willReturn(profile);
     }

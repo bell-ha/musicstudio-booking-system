@@ -42,6 +42,19 @@ public class UserAccount {
         return account;
     }
 
+    /** 이미 있는 계정에 구글을 붙인다(로그인한 본인만). 다른 구글이 이미 붙어 있으면 false */
+    public boolean linkGoogle(String subject) {
+        if (googleSubject != null && !googleSubject.equals(subject)) {
+            return false;
+        }
+        this.googleSubject = subject;
+        return true;
+    }
+
+    public boolean isGoogleLinked() {
+        return googleSubject != null;
+    }
+
     public Long getId() {
         return id;
     }

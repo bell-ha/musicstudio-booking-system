@@ -4,7 +4,7 @@ import { googleLoginEnabled, startGoogleLogin } from './googleLogin'
 export function GoogleButton() {
   if (!googleLoginEnabled) return null
   return (
-    <button type="button" className="button button-block" onClick={startGoogleLogin}>
+    <button type="button" className="button button-block" onClick={() => startGoogleLogin()}>
       Google로 계속하기
     </button>
   )

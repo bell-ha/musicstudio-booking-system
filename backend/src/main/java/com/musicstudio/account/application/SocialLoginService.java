@@ -60,6 +60,35 @@ public class SocialLoginService {
         }
     }
 
+    /**
+     * 로그인한 계정에 구글을 연결한다 (ADR 0013 보완). 이메일이 달라도 된다: 본인이 비밀번호로 로그인한 상태에서
+     * 구글 동의까지 거쳤으므로 두 신원이 같은 사람이다. 이메일이 같다고 자동으로 합치지 않는 규칙은 그대로다.
+     * 그 구글이 이미 다른 계정에 붙어 있으면 409.
+     */
+    public void linkGoogle(long userId, String code, String redirectUri, String nonce) {
+        SocialProfile profile = google.verify(code, redirectUri, nonce);
+        Optional<UserAccount> owner = accounts.findByGoogleSubject(profile.subject());
+        if (owner.isPresent()) {
+            if (owner.get().getId() == userId) {
+                return; // 이미 연결됨 (멱등)
+            }
+            throw alreadyLinked();
+        }
+        UserAccount me = accounts.findById(userId).orElseThrow();
+        if (!me.linkGoogle(profile.subject())) {
+            throw ApiException.conflict("GOOGLE_ALREADY_SET", "이 계정에는 이미 다른 구글 계정이 연결돼 있습니다");
+        }
+        try {
+            accounts.saveAndFlush(me);
+        } catch (DataIntegrityViolationException e) {
+            throw alreadyLinked(); // 같은 순간 그 구글로 다른 계정이 생겼다
+        }
+    }
+
+    private static ApiException alreadyLinked() {
+        return ApiException.conflict("GOOGLE_ALREADY_LINKED", "이 구글 계정은 이미 다른 계정에 연결돼 있습니다");
+    }
+
     private static ApiException emailInUse() {
         return ApiException.conflict("SOCIAL_EMAIL_IN_USE", "이미 이메일로 가입한 계정이 있습니다");
     }
