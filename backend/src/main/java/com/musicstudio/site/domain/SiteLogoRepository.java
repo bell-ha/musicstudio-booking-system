@@ -13,4 +13,9 @@ public interface SiteLogoRepository extends JpaRepository<SiteLogo, Long> {
     Optional<UUID> findKey(Long orgId);
 
     Optional<SiteLogo> findByLogoKey(UUID logoKey);
+
+    /** 교체·삭제는 행을 잠그고 읽는다. 동시에 둘이 바꾸면 한쪽의 파일이 고아로 남거나 낡은 행 저장(500)이 난다 */
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select l from SiteLogo l where l.organizationId = :orgId")
+    Optional<SiteLogo> findForUpdate(Long orgId);
 }

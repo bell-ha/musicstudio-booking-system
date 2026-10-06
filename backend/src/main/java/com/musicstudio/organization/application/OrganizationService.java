@@ -36,6 +36,7 @@ public class OrganizationService {
             throw ApiException.invalid("INVALID_TIMEZONE", "알 수 없는 시간대입니다");
         }
         Set<Module> enabled = (modules == null || modules.isEmpty()) ? type.defaultModules() : modules;
+        requireConsistent(enabled);
         Organization organization = organizations.save(
                 new Organization(name.trim(), type, timezone, enabled, JoinCodes.next()));
         memberships.save(Membership.owner(organization.getId(), userId));
@@ -49,13 +50,19 @@ public class OrganizationService {
             throw ApiException.invalid("INVALID_NAME", "기관 이름을 입력해 주세요");
         }
         Set<Module> wanted = modules == null ? null : EnumSet.copyOf(modules.isEmpty() ? EnumSet.noneOf(Module.class) : modules);
-        if (wanted != null && wanted.contains(Module.BILLING) && !wanted.contains(Module.ACADEMY)) {
-            // 청구는 원생·수강에 붙는다. 학원 관리를 끄면서 청구·결제만 남기는 것도 같은 이유로 막는다
-            throw ApiException.policyViolation("BILLING_NEEDS_ACADEMY", "청구·결제는 학원 관리를 켜야 쓸 수 있어요");
+        if (wanted != null) {
+            requireConsistent(wanted);
         }
         Organization organization = organizations.findById(orgId).orElseThrow();
         organization.update(name == null ? null : name.strip(), wanted);
         return organization;
+    }
+
+    /** 청구는 원생·수강에 붙어서 학원 관리 없이 켤 수 없다. 만들기·수정 모두 이 한 곳 (DB CHECK도 있다) */
+    private static void requireConsistent(Set<Module> modules) {
+        if (modules.contains(Module.BILLING) && !modules.contains(Module.ACADEMY)) {
+            throw ApiException.policyViolation("BILLING_NEEDS_ACADEMY", "청구·결제는 학원 관리를 켜야 쓸 수 있어요");
+        }
     }
 
     @Transactional(readOnly = true)

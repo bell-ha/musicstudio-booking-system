@@ -103,10 +103,12 @@ public class SiteService {
         }
         // 파일은 저장소에 먼저 올리고, DB에는 키만. 커밋되면 옛 파일을 지우고, 롤백되면 방금 올린 파일을 지운다
         String key = "orgs/" + orgId + "/logo/" + UUID.randomUUID();
+        String[] old = new String[1];
+        // 정리는 올리기 전에 등록한다: 올린 뒤 어디서 예외가 나도 롤백이면 새 파일이 지워진다 (리뷰 31 1-4)
+        afterCompletion(committed -> files.delete(committed ? old[0] : key));
         files.put(key, bytes, type);
-        SiteLogo logo = logos.findById(orgId).orElseGet(() -> new SiteLogo(orgId));
-        String old = logo.store(type, key, clock.instant());
-        afterCompletion(committed -> files.delete(committed ? old : key));
+        SiteLogo logo = logos.findForUpdate(orgId).orElseGet(() -> new SiteLogo(orgId));
+        old[0] = logo.store(type, key, clock.instant());
         try {
             return logos.saveAndFlush(logo).getLogoKey();
         } catch (DataIntegrityViolationException e) {
@@ -116,15 +118,17 @@ public class SiteService {
 
     @Transactional
     public void deleteLogo(long orgId) {
-        logos.findById(orgId).ifPresent(logo -> {
+        logos.findForUpdate(orgId).ifPresent(logo -> {
             String key = logo.getStorageKey();
             logos.delete(logo);
             afterCompletion(committed -> files.delete(committed ? key : null));
         });
     }
 
-    /** 공개 로고: 저장소에 있으면 저장소에서, 0015 시절 것은 DB에서 */
-    @Transactional(readOnly = true)
+    /**
+     * 공개 로고: 저장소에 있으면 저장소에서, 0015 시절 것은 DB에서.
+     * 트랜잭션을 두지 않는다: 저장소를 읽는 동안 DB 커넥션을 쥐고 있지 않게 (리뷰 31 1-5)
+     */
     public Optional<FileStore.StoredFile> logo(UUID key) {
         return logos.findByLogoKey(key).flatMap(l -> l.getStorageKey() == null
                 ? Optional.of(new FileStore.StoredFile(l.getBytes(), l.getContentType()))

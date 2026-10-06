@@ -94,6 +94,22 @@ class BillingApiTest {
     void 청구_결제는_학원_관리_없이_켤_수_없다() throws Exception {
         api.call(owner, HttpMethod.PATCH, "/api/v1/organizations/" + orgId, "{\"modules\":[\"BILLING\"]}")
                 .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("BILLING_NEEDS_ACADEMY"));
+        // 만들 때도 같은 규칙 (리뷰 31 1-1), DB CHECK가 마지막으로 막는다
+        api.call(owner, HttpMethod.POST, "/api/v1/organizations",
+                        "{\"name\":\"학교\",\"type\":\"SCHOOL\",\"timezone\":\"Asia/Seoul\",\"modules\":[\"BILLING\"]}")
+                .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("BILLING_NEEDS_ACADEMY"));
+        assertThatThrownBy(() -> jdbc.update("update organization set modules = '{BILLING}' where id = ?", orgId))
+                .hasMessageContaining("ck_organization_billing_needs_academy");
+    }
+
+    @Test
+    void 지난_날짜로_등록한_수강의_자동_청구서는_기한이_오늘이다() throws Exception {
+        long enrollment = id(academy("/enrollments", """
+                {"studentId":%d,"productId":%d,"teacherMembershipId":%d,"startsOn":"2020-01-01"}"""
+                .formatted(student, product, ownerMembership())));
+        api.call(owner, HttpMethod.GET, billing("/invoices"), null)
+                .andExpect(jsonPath("$.invoices[0].enrollmentId").value(enrollment))
+                .andExpect(jsonPath("$.invoices[0].overdue").value(false));
     }
 
     // ---------- 입금·환불 (60) ----------
