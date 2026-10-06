@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { House, LayoutGrid, LogOut } from 'lucide-react'
 import { Link, NavLink, Outlet, useNavigate, useParams } from 'react-router'
 import { api, token } from './api'
 import { ROLE_LABEL, type MyOrganization } from './labels'
@@ -32,6 +33,8 @@ export function OrgLayout() {
   return (
     <div className="shell">
       <header className="shell-bar">
+        {/* 로고 자리: 사이트 설정(UC-10)에서 로고를 올리기 전까지 이름 첫 글자 */}
+        <Link to={base} className="shell-logo" aria-hidden="true" tabIndex={-1}>{org?.name.slice(0, 1)}</Link>
         {/* 기관이 여럿이면 이름 자리가 곧 기관 전환 */}
         {active.length > 1 ? (
           <select aria-label="기관 바꾸기" className="shell-org shell-switch" value={orgId}
@@ -43,17 +46,19 @@ export function OrgLayout() {
         )}
         <span className="shell-spacer" />
         {org && <span className="shell-role">{ROLE_LABEL[org.role]}</span>}
-        <button type="button" className="shell-link" onClick={logout}>로그아웃</button>
+        <button type="button" className="shell-link" onClick={logout} aria-label="로그아웃" title="로그아웃"><LogOut size={20} /></button>
       </header>
 
       <div className="shell-body">
         {groups.length > 0 && (
           <nav className="shell-side" aria-label="기관 메뉴">
-            <NavLink to={base} end className="side-link">홈</NavLink>
+            <NavLink to={base} end className="side-link"><House size={20} />홈</NavLink>
             {groups.map((g) => (
               <div key={g.title} className="side-group">
                 <p className="side-title">{g.title}</p>
-                {g.items.map((i) => <NavLink key={i.to} to={`${base}/${i.to}`} end className="side-link">{i.title}</NavLink>)}
+                {g.items.map((i) => (
+                  <NavLink key={i.to} to={`${base}/${i.to}`} end className="side-link"><i.icon size={20} />{i.title}</NavLink>
+                ))}
               </div>
             ))}
             <Link to="/" className="side-link side-foot">내 기관 목록</Link>
@@ -64,8 +69,10 @@ export function OrgLayout() {
 
       {tabs.length > 0 && (
         <nav className="shell-tabs" aria-label="주요 메뉴">
-          {tabs.map((i) => <NavLink key={i.to} to={`${base}/${i.to}`} end className="tab-link">{i.tab}</NavLink>)}
-          <NavLink to={base} end className="tab-link">전체</NavLink>
+          {tabs.map((i) => (
+            <NavLink key={i.to} to={`${base}/${i.to}`} end className="tab-link"><i.icon size={24} strokeWidth={1.8} />{i.tab}</NavLink>
+          ))}
+          <NavLink to={base} end className="tab-link"><LayoutGrid size={24} strokeWidth={1.8} />전체</NavLink>
         </nav>
       )}
     </div>

@@ -1,3 +1,4 @@
+import { Music } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { api, ApiError, errorMessage, fieldErrors, token } from '../api'
@@ -42,8 +43,10 @@ export function SignupPage() {
   }
 
   return (
-    <main className="page">
+    <main className="page page-auth">
+      <div className="brand" aria-hidden="true"><Music size={28} /></div>
       <h1>가입하기</h1>
+      <p className="page-sub">학원·연습실을 한곳에서</p>
       <form className="form" onSubmit={submit} noValidate>
         <Field id="name" label="이름" error={errors.name}>
           <input id="name" name="name" autoComplete="name" required />

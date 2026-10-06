@@ -1,3 +1,4 @@
+import { Music } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { api, ApiError, errorMessage, token } from '../api'
@@ -33,8 +34,10 @@ export function LoginPage() {
   }
 
   return (
-    <main className="page">
+    <main className="page page-auth">
+      <div className="brand" aria-hidden="true"><Music size={28} /></div>
       <h1>로그인</h1>
+      <p className="page-sub">다시 만나서 반가워요</p>
       {notice && <p className="notice">{notice}</p>}
       <form className="form" onSubmit={submit}>
         <Field id="email" label="이메일">
