@@ -28,7 +28,7 @@ import com.musicstudio.organization.domain.OrganizationType;
 import com.musicstudio.site.application.PublicSiteService;
 import com.musicstudio.site.application.SiteService;
 import com.musicstudio.site.domain.Notice;
-import com.musicstudio.site.domain.SiteLogo;
+import com.musicstudio.common.storage.FileStore;
 import com.musicstudio.site.domain.SiteProfile;
 
 /**
@@ -60,12 +60,12 @@ class PublicSiteController {
         } catch (IllegalArgumentException e) {
             throw ApiException.notFound("찾을 수 없습니다");
         }
-        SiteLogo logo = sites.logo(key).orElseThrow(() -> ApiException.notFound("찾을 수 없습니다"));
+        FileStore.StoredFile logo = sites.logo(key).orElseThrow(() -> ApiException.notFound("찾을 수 없습니다"));
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(logo.getContentType()))
+                .contentType(MediaType.parseMediaType(logo.contentType()))
                 .cacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())
                 .header("X-Content-Type-Options", "nosniff")
-                .body(logo.getBytes());
+                .body(logo.bytes());
     }
 
     /** 가입 코드 없이 주소로 신청한다 (UC-14). 응답은 가입 코드 신청(API 10)과 같다 */

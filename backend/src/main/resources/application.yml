@@ -31,6 +31,14 @@ app:
   crypto:
     # 개인정보 암호화 키. base64로 인코딩한 32바이트. 없으면 서버가 뜨지 않는다.
     key: ${APP_CRYPTO_KEY:}
+  # 파일 저장소 (ADR 0017). 로컬 기본값은 docker-compose의 MinIO. 운영(S3)은 endpoint와 키를 비우고 EC2 역할을 쓴다
+  storage:
+    endpoint: ${APP_STORAGE_ENDPOINT:http://localhost:9000}
+    region: ${APP_STORAGE_REGION:ap-northeast-2}
+    bucket: ${APP_STORAGE_BUCKET:musicstudio}
+    access-key: ${APP_STORAGE_ACCESS_KEY:musicstudio}
+    secret-key: ${APP_STORAGE_SECRET_KEY:musicstudio-dev-secret}
+    create-bucket: ${APP_STORAGE_CREATE_BUCKET:true}
   social:
     # 비어 있으면 구글 로그인을 끈다. 값은 Google Cloud Console의 OAuth 클라이언트(웹)에서 받는다.
     google:

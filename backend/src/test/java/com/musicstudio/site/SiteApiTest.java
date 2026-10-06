@@ -40,6 +40,12 @@ class SiteApiTest {
     @Autowired
     MockMvc mvc;
 
+    @Autowired
+    org.springframework.jdbc.core.JdbcTemplate jdbc;
+
+    @Autowired
+    com.musicstudio.common.storage.FileStore files;
+
     ApiClient api;
     String owner;
     long orgId;
@@ -259,6 +265,24 @@ class SiteApiTest {
         api.call(owner, HttpMethod.DELETE, path("/site/logo"), null).andExpect(status().isNoContent());
         api.call(owner, HttpMethod.GET, path("/site"), null).andExpect(jsonPath("$.logoUrl").value(nullValue()));
         mvc.perform(MockMvcRequestBuilders.get("/api/v1/public/logos/not-a-uuid")).andExpect(status().isNotFound());
+    }
+
+    /** ADR 0017: 로고 파일은 저장소에, DB에는 키만. 바꾸면 커밋 뒤 옛 파일을 지운다 */
+    @Test
+    void 로고_파일은_저장소에_두고_바꾸면_옛_파일을_지운다() throws Exception {
+        uploadLogo("image/png", PNG).andExpect(status().isOk());
+        String first = jdbc.queryForObject("select storage_key from site_logo where organization_id = ?", String.class, orgId);
+        org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject(
+                "select bytes is null from site_logo where organization_id = ?", Boolean.class, orgId)).isTrue();
+        org.assertj.core.api.Assertions.assertThat(files.get(first)).isPresent();
+
+        uploadLogo("image/png", PNG).andExpect(status().isOk());
+        String second = jdbc.queryForObject("select storage_key from site_logo where organization_id = ?", String.class, orgId);
+        org.assertj.core.api.Assertions.assertThat(second).isNotEqualTo(first);
+        org.assertj.core.api.Assertions.assertThat(files.get(first)).isEmpty();
+
+        api.call(owner, HttpMethod.DELETE, path("/site/logo"), null).andExpect(status().isNoContent());
+        org.assertj.core.api.Assertions.assertThat(files.get(second)).isEmpty();
     }
 
     // ---------- 공개 페이지에서 가입 (48) ----------

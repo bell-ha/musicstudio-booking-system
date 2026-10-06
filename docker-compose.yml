@@ -6,6 +6,7 @@
 #   http://localhost:3000 에서 화면을 본다. Nginx가 정적 파일을 주고 /api는 백엔드로 넘긴다.
 #
 # DB 접속: psql -h localhost -U musicstudio musicstudio
+# 파일 저장소(S3 API, ADR 0017): http://localhost:8333 (SeaweedFS). 운영은 AWS S3
 
 services:
   postgres:
@@ -26,6 +27,20 @@ services:
       retries: 10
     restart: unless-stopped
 
+  # 사용자가 올린 파일(로고)을 두는 S3 호환 저장소. DB에는 키만 둔다 (ADR 0017)
+  storage:
+    image: chrislusf/seaweedfs:4.48
+    container_name: musicstudio-storage
+    command: server -s3 -dir=/data
+    environment:
+      AWS_ACCESS_KEY_ID: musicstudio                 # 개발용 값
+      AWS_SECRET_ACCESS_KEY: musicstudio-dev-secret  # 개발용 값
+    ports:
+      - "8333:8333"
+    volumes:
+      - storage-data:/data
+    restart: unless-stopped
+
   backend:
     profiles: [full]
     build: ./backend
@@ -41,9 +56,14 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_REDIRECT_URIS: http://localhost:3000/auth/callback/google,http://localhost:5173/auth/callback/google
+      APP_STORAGE_ENDPOINT: http://storage:8333
+      APP_STORAGE_ACCESS_KEY: musicstudio
+      APP_STORAGE_SECRET_KEY: musicstudio-dev-secret
     depends_on:
       postgres:
         condition: service_healthy
+      storage:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness | grep -q '\"status\":\"UP\"'"]
       interval: 5s
@@ -68,3 +88,4 @@ services:
 
 volumes:
   postgres-data:
+  storage-data:

@@ -3,6 +3,10 @@
 
 body {
   margin: 0;
+  /* 한국어는 띄어쓰기에서만 줄을 바꾼다("평면/도", "연습실입/니다"처럼 단어 중간에서 끊지 않게).
+     띄어쓰기 없는 긴 주소·영문은 넘치지 않게 어디서든 끊는다 */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
   font: var(--text-body);
   color: var(--body);
   background: var(--surface-soft);
@@ -551,3 +555,9 @@ button.floor-room { cursor: pointer; }
 .date-block span { font: 600 11px/1.2 var(--font); }
 .date-block strong { font: 700 18px/1.2 var(--font); }
 .row-muted { opacity: 0.55; }
+/* 가로로 긴 로고(학교 로고 등)는 칸을 로고 비율만큼 넓힌다. 이미지는 비율을 지킨 채 칸 안에 들어간다 */
+.hero-logo:has(img) { flex: 0 0 auto; width: auto; max-width: 132px; padding: 6px 10px; }
+.hero-logo img { display: block; width: auto; height: auto; max-width: 100%; max-height: 44px; padding: 0; }
+@media (max-width: 479px) { .hero-logo:has(img) { max-width: 100px; } }
+.shell-logo:has(img) { flex: 0 0 auto; width: auto; min-width: 32px; max-width: 72px; padding: 0 4px; background: var(--canvas); }
+.shell-logo img { display: block; width: auto; height: auto; max-width: 100%; max-height: 26px; }

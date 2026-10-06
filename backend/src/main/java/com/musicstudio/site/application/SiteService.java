@@ -10,8 +10,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.musicstudio.common.error.ApiException;
+import com.musicstudio.common.storage.FileStore;
 import com.musicstudio.site.domain.SiteColors;
 import com.musicstudio.site.domain.SiteLogo;
 import com.musicstudio.site.domain.SiteLogoRepository;
@@ -33,11 +36,13 @@ public class SiteService {
 
     private final SiteProfileRepository profiles;
     private final SiteLogoRepository logos;
+    private final FileStore files;
     private final Clock clock;
 
-    SiteService(SiteProfileRepository profiles, SiteLogoRepository logos, Clock clock) {
+    SiteService(SiteProfileRepository profiles, SiteLogoRepository logos, FileStore files, Clock clock) {
         this.profiles = profiles;
         this.logos = logos;
+        this.files = files;
         this.clock = clock;
     }
 
@@ -96,8 +101,12 @@ public class SiteService {
         if (type == null) {
             throw ApiException.invalid("INVALID_IMAGE", "PNG, JPEG, WebP 이미지만 올릴 수 있습니다");
         }
+        // 파일은 저장소에 먼저 올리고, DB에는 키만. 커밋되면 옛 파일을 지우고, 롤백되면 방금 올린 파일을 지운다
+        String key = "orgs/" + orgId + "/logo/" + UUID.randomUUID();
+        files.put(key, bytes, type);
         SiteLogo logo = logos.findById(orgId).orElseGet(() -> new SiteLogo(orgId));
-        logo.replace(type, bytes, clock.instant());
+        String old = logo.store(type, key, clock.instant());
+        afterCompletion(committed -> files.delete(committed ? old : key));
         try {
             return logos.saveAndFlush(logo).getLogoKey();
         } catch (DataIntegrityViolationException e) {
@@ -107,12 +116,29 @@ public class SiteService {
 
     @Transactional
     public void deleteLogo(long orgId) {
-        logos.deleteById(orgId);
+        logos.findById(orgId).ifPresent(logo -> {
+            String key = logo.getStorageKey();
+            logos.delete(logo);
+            afterCompletion(committed -> files.delete(committed ? key : null));
+        });
     }
 
+    /** 공개 로고: 저장소에 있으면 저장소에서, 0015 시절 것은 DB에서 */
     @Transactional(readOnly = true)
-    public Optional<SiteLogo> logo(UUID key) {
-        return logos.findByLogoKey(key);
+    public Optional<FileStore.StoredFile> logo(UUID key) {
+        return logos.findByLogoKey(key).flatMap(l -> l.getStorageKey() == null
+                ? Optional.of(new FileStore.StoredFile(l.getBytes(), l.getContentType()))
+                : files.get(l.getStorageKey()).map(f -> new FileStore.StoredFile(f.bytes(), l.getContentType())));
+    }
+
+    /** 트랜잭션이 끝난 뒤 (커밋 여부를 받아) 저장소를 정리한다. 키가 없으면 할 일이 없다 */
+    private static void afterCompletion(java.util.function.Consumer<Boolean> cleanup) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                cleanup.accept(status == STATUS_COMMITTED);
+            }
+        });
     }
 
     public static ApiException tooLarge() {
