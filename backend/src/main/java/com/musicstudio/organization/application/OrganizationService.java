@@ -35,7 +35,8 @@ public class OrganizationService {
         if (!ZoneId.getAvailableZoneIds().contains(timezone)) {
             throw ApiException.invalid("INVALID_TIMEZONE", "알 수 없는 시간대입니다");
         }
-        Set<Module> enabled = (modules == null || modules.isEmpty()) ? type.defaultModules() : modules;
+        // 보내지 않았을 때만 유형 기본값. 빈 목록은 "아무 기능도 안 씀"이다 (UC-03 설정과 같은 뜻)
+        Set<Module> enabled = modules == null ? type.defaultModules() : modules;
         requireConsistent(enabled);
         Organization organization = organizations.save(
                 new Organization(name.trim(), type, timezone, enabled, JoinCodes.next()));

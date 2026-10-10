@@ -5,6 +5,7 @@ import { api, ApiError, errorMessage, token } from '../api'
 import { takeReturnTo } from '../returnTo'
 import { Field } from '../Field'
 import { GoogleButton } from '../GoogleButton'
+import { PasswordInput } from '../PasswordInput'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -45,7 +46,7 @@ export function LoginPage() {
           <input id="email" name="email" type="email" autoComplete="email" required />
         </Field>
         <Field id="password" label="비밀번호">
-          <input id="password" name="password" type="password" autoComplete="current-password" required />
+          <PasswordInput id="password" name="password" autoComplete="current-password" required />
         </Field>
         {message && <p className="alert" role="alert">{message}</p>}
         <button className="button button-primary" disabled={submitting}>로그인</button>

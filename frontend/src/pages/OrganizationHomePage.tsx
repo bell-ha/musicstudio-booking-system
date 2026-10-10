@@ -8,6 +8,7 @@ import { useOrgSite } from '../orgSite'
 import { TodayLessons } from '../academy/TodayLessons'
 import { BillingSummary } from '../billing/BillingSummary'
 import { OrgHeader } from '../site/OrgHeader'
+import { SetupChecklist } from '../onboarding/SetupChecklist'
 import { dateOf, type Notice } from '../site/site'
 import { useMyOrganization } from '../useMyOrganization'
 
@@ -40,6 +41,8 @@ export function OrganizationHomePage() {
     <main className="page page-wide">
       <OrgHeader name={org.name} subtitle={`${TYPE_LABEL[org.type]} · ${ROLE_LABEL[org.role]}`}
         logoUrl={site?.logoUrl ?? null} intro={site?.intro} />
+
+      {isManager(org.role) && <SetupChecklist key={org.organizationId} org={org} site={site} />}
 
       {contact.length > 0 && (
         <ul className="group">

@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router'
 import { api, ApiError, errorMessage, fieldErrors } from '../api'
 import { Field } from '../Field'
 import { TYPE_LABEL, type OrgType } from '../labels'
+import { DEFAULT_MODULES, toggled } from '../modules'
+import { ModuleSwitches } from '../ModuleSwitches'
 
 const TIMEZONES = Intl.supportedValuesOf('timeZone')
 
@@ -11,6 +13,8 @@ export function NewOrganizationPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  // UC-02 2: 유형을 고르면 그 기본값으로 다시 채운다. 그냥 만들면 지금까지와 같다
+  const [modules, setModules] = useState<string[]>(DEFAULT_MODULES.ACADEMY)
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -19,12 +23,12 @@ export function NewOrganizationPage() {
     setErrors({})
     setMessage('')
     try {
-      // modules는 보내지 않는다. 서버가 유형별 기본값을 쓴다
-      await api('/organizations', {
+      const created = await api<{ id: number }>('/organizations', {
         method: 'POST',
-        body: { name: form.get('name'), type: form.get('type'), timezone: form.get('timezone') },
+        body: { name: form.get('name'), type: form.get('type'), timezone: form.get('timezone'), modules },
       })
-      navigate('/', { replace: true })
+      // 새 기관 홈으로 바로 간다. 홈의 시작하기 목록이 다음 할 일을 알려 준다 (UC-02 4, UC-15)
+      navigate(`/orgs/${created.id}`, { replace: true })
     } catch (error) {
       if (error instanceof ApiError && error.problem.status === 401) {
         navigate('/login', { replace: true })
@@ -45,7 +49,7 @@ export function NewOrganizationPage() {
           <input id="name" name="name" required />
         </Field>
         <Field id="type" label="유형" error={errors.type}>
-          <select id="type" name="type" defaultValue="ACADEMY">
+          <select id="type" name="type" defaultValue="ACADEMY" onChange={(e) => setModules(DEFAULT_MODULES[e.target.value as OrgType])}>
             {(Object.keys(TYPE_LABEL) as OrgType[]).map((type) => (
               <option key={type} value={type}>{TYPE_LABEL[type]}</option>
             ))}
@@ -56,6 +60,13 @@ export function NewOrganizationPage() {
             {TIMEZONES.map((zone) => <option key={zone} value={zone}>{zone}</option>)}
           </select>
         </Field>
+        <div className="field">
+          <span className="field-label" id="modules-label">쓸 기능</span>
+          <div role="group" aria-labelledby="modules-label">
+            <ModuleSwitches value={modules} onToggle={(key, on) => setModules(toggled(modules, key, on))} />
+          </div>
+          <p className="hint">나중에 기관 설정에서 언제든 켜고 끌 수 있어요. 꺼도 데이터는 남아요.</p>
+        </div>
         {message && <p className="alert" role="alert">{message}</p>}
         <button className="button button-primary" disabled={submitting}>만들기</button>
       </form>

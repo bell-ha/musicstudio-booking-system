@@ -103,9 +103,13 @@ export function StudentsPage({ mine = false }: { mine?: boolean }) {
       </div>
 
       {message && <p className="alert" role="alert">{message}</p>}
-      {students?.length === 0 && (
-        <p className="card empty section">{mine ? '지금 맡고 있는 수강이 없어요.' : '조건에 맞는 원생이 없어요.'}</p>
-      )}
+      {/* 빈 화면은 이유와 다음 행동을 말한다. 강사는 할 수 없는 일이라 누가 하면 채워지는지 적는다 (NFR-07) */}
+      {students?.length === 0 && (mine
+        ? <p className="card empty section">지금 맡고 있는 수강이 없어요. 원장님이 수강을 등록하고 담당 강사로 정하면 여기에 보여요.</p>
+        : Object.values(filter).some(Boolean)
+          ? <p className="card empty section">조건에 맞는 원생이 없어요.</p>
+          : <div className="card empty section"><p>아직 원생이 없어요. 첫 원생을 등록하면 수강을 넣을 수 있어요.</p>
+              {admin && <Link className="button" to={`/orgs/${orgId}/academy/students/new`}>원생 등록</Link>}</div>)}
       {students && students.length > 0 && (
         <>
           <h2 className="group-title">{students.length}명</h2>

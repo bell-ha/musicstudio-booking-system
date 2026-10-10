@@ -67,6 +67,25 @@ class AuthAndOrganizationApiTest {
     }
 
     @Test
+    void 고른_모듈대로_만들고_빈_목록이면_아무것도_켜지_않는다() throws Exception {
+        String token = signupAndLogin(uniqueEmail());
+
+        mvc.perform(post("/api/v1/organizations").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"보컬 학원","type":"ACADEMY","timezone":"Asia/Seoul","modules":["ACADEMY","BILLING"]}"""))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.modules", containsInAnyOrder("ACADEMY", "BILLING")));
+
+        mvc.perform(post("/api/v1/organizations").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"빈 기관","type":"ACADEMY","timezone":"Asia/Seoul","modules":[]}"""))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.modules", hasSize(0)));
+    }
+
+    @Test
     void 대소문자만_다른_이메일로는_다시_가입할_수_없다() throws Exception {
         String email = uniqueEmail();
         signup(email).andExpect(status().isCreated());

@@ -18,6 +18,7 @@
   --unavailable: #f3f4f6;
   --wall: #cbd5e1;
   --success: #10b981;
+  --success-ink: #047857; /* 연한 초록 바탕 위 글자·아이콘 (완료) */
   --warning: #f59e0b;
   --error: #ef4444;
 

@@ -5,6 +5,7 @@ import { api, ApiError, errorMessage, fieldErrors, token } from '../api'
 import { takeReturnTo } from '../returnTo'
 import { Field } from '../Field'
 import { GoogleButton } from '../GoogleButton'
+import { PasswordInput } from '../PasswordInput'
 
 export function SignupPage() {
   const navigate = useNavigate()
@@ -17,9 +18,15 @@ export function SignupPage() {
     const form = new FormData(event.currentTarget)
     const email = String(form.get('email'))
     const password = String(form.get('password'))
+    setMessage('')
+    // 비밀번호는 가려져 있어 잘못 친 줄 모르고 가입하기 쉽다. 서버에 보내기 전에 두 번 친 것이 같은지 본다
+    if (password !== form.get('passwordConfirm')) {
+      setErrors({ passwordConfirm: '위에 친 비밀번호와 달라요.' })
+      ;(event.currentTarget.elements.namedItem('passwordConfirm') as HTMLInputElement).focus()
+      return
+    }
     setSubmitting(true)
     setErrors({})
-    setMessage('')
     try {
       await api('/auth/signup', { method: 'POST', body: { email, password, name: form.get('name') } })
     } catch (error) {
@@ -56,7 +63,11 @@ export function SignupPage() {
           <input id="email" name="email" type="email" autoComplete="email" required />
         </Field>
         <Field id="password" label="비밀번호 (8자 이상)" error={errors.password}>
-          <input id="password" name="password" type="password" autoComplete="new-password" minLength={8} required />
+          <PasswordInput id="password" name="password" autoComplete="new-password" minLength={8} required />
+        </Field>
+        <Field id="passwordConfirm" label="비밀번호 확인" error={errors.passwordConfirm}>
+          <PasswordInput id="passwordConfirm" name="passwordConfirm" autoComplete="new-password" required
+            aria-invalid={!!errors.passwordConfirm} aria-describedby={errors.passwordConfirm ? 'passwordConfirm-error' : undefined} />
         </Field>
         {message && <p className="alert" role="alert">{message}</p>}
         <button className="button button-primary" disabled={submitting}>가입하기</button>

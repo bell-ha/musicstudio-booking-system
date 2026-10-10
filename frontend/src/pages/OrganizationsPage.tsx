@@ -52,7 +52,7 @@ export function OrganizationsPage() {
                     {org.name}
                     {org.status === 'PENDING' && <span className="badge">승인 대기</span>}
                   </span>
-                  <span className="row-meta">{TYPE_LABEL[org.type]} · {ROLE_LABEL[org.role]}</span>
+                  <span className="row-meta">{org.status === 'PENDING' ? '관리자가 승인하면 들어갈 수 있어요' : `${TYPE_LABEL[org.type]} · ${ROLE_LABEL[org.role]}`}</span>
                 </span>
               </>
             )

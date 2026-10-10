@@ -34,7 +34,7 @@ a { color: var(--primary); }
 .form { display: flex; flex-direction: column; gap: var(--space-4); }
 
 .field { display: flex; flex-direction: column; gap: var(--space-1); }
-.field label { font: var(--text-body-strong); color: var(--ink); }
+.field label, .field-label { font: var(--text-body-strong); color: var(--ink); }
 .field input,
 .field select {
   height: 48px;
@@ -50,6 +50,13 @@ a { color: var(--primary); }
 .field select:focus { outline: none; border-color: var(--primary); }
 .field[data-invalid] input { border-color: var(--error); }
 .field-error { font: var(--text-caption); color: var(--error); }
+.password { position: relative; display: flex; flex-direction: column; }
+.password input { padding-right: 52px; }
+.password-toggle {
+  position: absolute; top: 0; right: 0; width: 48px; height: 48px;
+  display: grid; place-items: center; color: var(--muted); background: none; border: 0; cursor: pointer;
+}
+.password-toggle[aria-pressed='true'] { color: var(--primary); }
 
 .button {
   display: inline-flex;
@@ -513,7 +520,7 @@ button.floor-room { cursor: pointer; }
 
 /* 레슨 일정 */
 .row-time { flex: 0 0 52px; font: 700 15px/1 var(--font); color: var(--ink); }
-.badge-done { background: var(--free-tint); color: #047857; }
+.badge-done { background: var(--free-tint); color: var(--success-ink); }
 .week-nav { display: flex; align-items: center; gap: var(--space-1); }
 .day-head { display: flex; align-items: baseline; justify-content: space-between; }
 .day-today { color: var(--primary); }
@@ -618,3 +625,9 @@ a.link-button { display: inline-flex; align-items: center; min-height: var(--tou
 .button-google:disabled { opacity: 0.55; cursor: not-allowed; }
 .divider { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-4) 0 var(--space-2); color: var(--muted); font: var(--text-caption); }
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--hairline); }
+/* 시작하기 (UC-15): 완료는 상태 색(success)과 "완료" 글자, 다음 단계는 포인트 색 배지 하나 */
+.row-icon-done { background: var(--free-tint); color: var(--success-ink); }
+.row > .badge-done { margin-right: var(--space-4); }
+.badge-next { background: var(--primary-tint); color: var(--primary); }
+.setup-hide .row-icon { background: none; }
+.row-meta-wrap { white-space: normal; } /* 설명 문장은 자르지 않는다 (시작하기, 쓰는 기능) */

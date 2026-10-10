@@ -3,15 +3,11 @@ import { useParams } from 'react-router'
 import { api, errorMessage } from '../api'
 import { Field } from '../Field'
 import { TYPE_LABEL } from '../labels'
+import { toggled } from '../modules'
+import { ModuleSwitches } from '../ModuleSwitches'
 import { useOrgSite } from '../orgSite'
 import { useMyOrganization } from '../useMyOrganization'
 import { NotMember } from './OrganizationHomePage'
-
-const MODULES = [
-  { key: 'PRACTICE_ROOM', title: '연습실', meta: '평면도, 방, 예약 정책, 지도에서 예약' },
-  { key: 'ACADEMY', title: '학원 관리', meta: '원생, 수강, 레슨 일정·출결, 레슨 기록' },
-  { key: 'BILLING', title: '청구·결제', meta: '청구서, 입금·환불 기록, 미납, 영수증 (학원 관리 필요)' },
-] as const
 
 /**
  * UC-03 기관 설정 (소유자). 이름과 쓰는 기능(모듈). 기능을 꺼도 데이터는 지우지 않고, 다시 켜면 그대로다.
@@ -49,9 +45,7 @@ export function OrganizationSettingsPage() {
 
   function toggle(key: string, on: boolean) {
     if (!on && !window.confirm('이 기능을 끌까요? 메뉴와 화면에서 사라지지만 데이터는 남아 있고, 다시 켜면 그대로 돌아와요.')) return
-    // 청구는 원생·수강에 붙어서 학원 관리 없이 켤 수 없다. 학원 관리를 끄면 청구·결제도 같이 끈다 (서버는 422)
-    const next = on ? [...shownModules, key] : shownModules.filter((m) => m !== key && !(key === 'ACADEMY' && m === 'BILLING'))
-    setModules(next)
+    setModules(toggled(shownModules, key, on))
   }
 
   return (
@@ -68,25 +62,7 @@ export function OrganizationSettingsPage() {
       </section>
 
       <h2 className="group-title">쓰는 기능</h2>
-      <ul className="group">
-        {MODULES.map((m) => {
-          const on = shownModules.includes(m.key)
-          return (
-            <li key={m.key} className="room-row">
-              <div className="row">
-                <span className="row-text">
-                  <span className="row-title">{m.title}</span>
-                  <span className="row-meta">{m.meta}</span>
-                </span>
-              </div>
-              <button type="button" role="switch" aria-checked={on} aria-label={`${m.title} 쓰기`} className="switch"
-                disabled={m.key === 'BILLING' && !shownModules.includes('ACADEMY')} onClick={() => toggle(m.key, !on)}>
-                <span className="switch-knob" />
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+      <ModuleSwitches value={shownModules} onToggle={toggle} />
       <p className="hint section">시간대는 만들 때 정해요. 이미 잡힌 예약과 레슨의 날짜가 어긋나서 바꿀 수 없어요.</p>
 
       <button className="button button-primary button-block section" onClick={save}>저장</button>

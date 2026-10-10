@@ -97,6 +97,11 @@ export function SchedulePage() {
           </ul>
         </section>
       )}
+      {sessions?.length === 0 && (
+        <p className="notice-inline">{manager
+          ? '이 주에는 레슨이 없어요. 레슨은 원생 화면의 수강 카드에서 고정 일정을 정하면 생겨요.'
+          : '이 주에는 레슨이 없어요. 수강에 고정 일정이 정해지면 여기에 보여요.'}</p>
+      )}
       {manager && inactive > 0 && (
         <p className="notice-inline">비활성 강사의 레슨이 {inactive}개 있어요. 원생 화면에서 강사를 바꿔 주세요.</p>
       )}
