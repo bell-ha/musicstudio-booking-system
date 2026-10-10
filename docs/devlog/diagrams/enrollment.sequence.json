@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "수강 등록 → 청구서 자동 생성 → 레슨 회차",
+    "viewBox": [
+      1080,
+      640
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    {
+      "id": "admin",
+      "type": "external",
+      "label": "관리자",
+      "sublabel": "원생 화면"
+    },
+    {
+      "id": "enroll",
+      "type": "backend",
+      "label": "수강 등록",
+      "sublabel": "EnrollmentService · academy"
+    },
+    {
+      "id": "listener",
+      "type": "backend",
+      "label": "청구 자동 생성",
+      "sublabel": "AutoInvoiceListener · billing"
+    },
+    {
+      "id": "sched",
+      "type": "backend",
+      "label": "레슨 일정",
+      "sublabel": "LessonScheduleService · academy"
+    },
+    {
+      "id": "pg",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "한 트랜잭션"
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 318,
+      "label": "수강 등록 + 청구"
+    },
+    {
+      "from": 328,
+      "to": 520,
+      "label": "고정 일정 → 회차"
+    }
+  ],
+  "messages": [
+    {
+      "id": "post-enroll",
+      "from": "admin",
+      "to": "enroll",
+      "y": 165,
+      "label": "POST /academy/enrollments",
+      "variant": "emphasis"
+    },
+    {
+      "id": "insert-enroll",
+      "from": "enroll",
+      "to": "pg",
+      "y": 198,
+      "label": "INSERT enrollment (가격 복사)"
+    },
+    {
+      "id": "event",
+      "from": "enroll",
+      "to": "listener",
+      "y": 231,
+      "label": "EnrollmentRegistered (동기)",
+      "variant": "default"
+    },
+    {
+      "id": "insert-invoice",
+      "from": "listener",
+      "to": "pg",
+      "y": 264,
+      "label": "INSERT invoice (BILLING 켜짐, 가격 > 0)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "enrolled",
+      "from": "enroll",
+      "to": "admin",
+      "y": 297,
+      "label": "201 수강",
+      "variant": "return"
+    },
+    {
+      "id": "put-schedule",
+      "from": "admin",
+      "to": "sched",
+      "y": 345,
+      "label": "PUT /enrollments/{id}/schedule",
+      "variant": "emphasis"
+    },
+    {
+      "id": "locks",
+      "from": "sched",
+      "to": "pg",
+      "y": 378,
+      "label": "잠금: 수강 → 다시 읽기 → 강사·원생",
+      "variant": "security"
+    },
+    {
+      "id": "sessions",
+      "from": "sched",
+      "to": "pg",
+      "y": 411,
+      "label": "미래 회차 INSERT · EXCLUDE 강사/원생"
+    },
+    {
+      "id": "commit",
+      "from": "pg",
+      "to": "sched",
+      "y": 444,
+      "label": "COMMIT",
+      "variant": "return"
+    },
+    {
+      "id": "scheduled",
+      "from": "sched",
+      "to": "admin",
+      "y": 477,
+      "label": "200 회차 n개 (겹치면 409)",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "enroll",
+      "from": 165,
+      "to": 303,
+      "type": "backend"
+    },
+    {
+      "participant": "listener",
+      "from": 226,
+      "to": 270,
+      "type": "backend"
+    },
+    {
+      "participant": "sched",
+      "from": 345,
+      "to": 483,
+      "type": "backend"
+    },
+    {
+      "participant": "pg",
+      "from": 193,
+      "to": 450,
+      "type": "database"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "모듈 경계",
+      "items": [
+        "academy는 billing을 모른다 (ArchUnit)",
+        "billing이 이벤트를 받아 청구서를 만든다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "잠금 순서",
+      "items": [
+        "수강을 먼저 잠그고 다시 읽은 값으로",
+        "강사·원생을 id 오름차순으로 (교착 방지)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "회차",
+      "items": [
+        "지난 회차는 만들지 않는다",
+        "횟수권은 총 회차만큼, 겹치면 409"
+      ]
+    }
+  ]
+}

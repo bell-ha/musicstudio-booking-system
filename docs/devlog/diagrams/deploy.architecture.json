@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": { "title": "배포 계획 (AWS, ADR 0008)", "quality_profile": "showcase" },
+  "components": [
+    { "id": "browser", "type": "external", "label": "브라우저", "sublabel": "휴대폰 · PC", "pos": [40, 300], "size": [130, 64] },
+    { "id": "edge", "type": "cloud", "label": "도메인 · TLS", "sublabel": "HTTPS :443", "pos": [260, 300], "size": [150, 64] },
+    { "id": "ec2", "type": "backend", "label": "EC2", "sublabel": "Nginx + Spring 컨테이너", "pos": [540, 300], "size": [180, 64], "tag": "퍼블릭 서브넷" },
+    { "id": "rds", "type": "database", "label": "RDS PostgreSQL 17", "sublabel": "자동 백업 · PITR", "pos": [880, 300], "size": [180, 64], "tag": "프라이빗 서브넷" },
+    { "id": "s3", "type": "cloud", "label": "S3 버킷", "sublabel": "로고 파일", "pos": [880, 480], "size": [180, 64] },
+    { "id": "google", "type": "security", "label": "Google OAuth", "sublabel": "ID 토큰 검증", "pos": [540, 110], "size": [180, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "VPC (계획)", "wraps": ["ec2", "rds"] },
+    { "kind": "security-group", "label": "sg-db: 5432 ← EC2만", "wraps": ["rds"] }
+  ],
+  "connections": [
+    { "id": "https", "from": "browser", "to": "edge", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "to-ec2", "from": "edge", "to": "ec2", "label": "Nginx :443", "variant": "emphasis" },
+    { "id": "sql", "from": "ec2", "to": "rds", "label": "JDBC :5432", "variant": "security" },
+    { "id": "files", "from": "ec2", "to": "s3", "label": "IAM 역할 Get · Put · Delete", "fromSide": "bottom", "toSide": "left" },
+    { "id": "oidc", "from": "ec2", "to": "google", "label": "코드 교환", "variant": "security", "fromSide": "top", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "로컬과 같은 것", "items": ["같은 백엔드 · 프론트 이미지", "코드는 S3 API와 JDBC만 안다"] },
+    { "dot": "amber", "title": "바뀌는 설정", "items": ["DB 주소 → RDS, 저장소 → S3", "키 대신 IAM 역할, create-bucket=false"] },
+    { "dot": "rose", "title": "배포 전에", "items": ["구글 클라이언트 비밀값 새로 발급", "Terraform으로 구성 · 블루그린 측정"] }
+  ]
+}

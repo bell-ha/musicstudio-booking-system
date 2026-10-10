@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "연습실 예약: 겹침을 막는 두 겹",
+    "viewBox": [
+      1080,
+      660
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    {
+      "id": "student",
+      "type": "external",
+      "label": "학생",
+      "sublabel": "휴대폰"
+    },
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "연습실 지도",
+      "sublabel": "React"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "BookingService",
+      "sublabel": "@Transactional"
+    },
+    {
+      "id": "rules",
+      "type": "backend",
+      "label": "BookingRules",
+      "sublabel": "정책 R3~R6"
+    },
+    {
+      "id": "pg",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "practice_booking"
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 272,
+      "label": "요청 · 정책"
+    },
+    {
+      "from": 282,
+      "to": 412,
+      "label": "잠금 · 겹침 검사"
+    },
+    {
+      "from": 422,
+      "to": 560,
+      "label": "저장 · 응답"
+    }
+  ],
+  "messages": [
+    {
+      "id": "pick",
+      "from": "student",
+      "to": "web",
+      "y": 165,
+      "label": "방 · 시간 선택"
+    },
+    {
+      "id": "post",
+      "from": "web",
+      "to": "api",
+      "y": 198,
+      "label": "POST /practice/bookings",
+      "variant": "emphasis"
+    },
+    {
+      "id": "policy",
+      "from": "api",
+      "to": "rules",
+      "y": 231,
+      "label": "운영 시간 · 단위 · 한도"
+    },
+    {
+      "id": "policy-ok",
+      "from": "rules",
+      "to": "api",
+      "y": 262,
+      "label": "통과",
+      "variant": "return"
+    },
+    {
+      "id": "lock-room",
+      "from": "api",
+      "to": "pg",
+      "y": 298,
+      "label": "advisory lock pr:room:방:날짜",
+      "variant": "security"
+    },
+    {
+      "id": "lock-member",
+      "from": "api",
+      "to": "pg",
+      "y": 332,
+      "label": "advisory lock pr:member:멤버:날짜",
+      "variant": "security"
+    },
+    {
+      "id": "overlap",
+      "from": "api",
+      "to": "pg",
+      "y": 368,
+      "label": "겹치는 예약? (R1 방 · R2 사람)"
+    },
+    {
+      "id": "none",
+      "from": "pg",
+      "to": "api",
+      "y": 400,
+      "label": "없음",
+      "variant": "return"
+    },
+    {
+      "id": "insert",
+      "from": "api",
+      "to": "pg",
+      "y": 442,
+      "label": "INSERT · EXCLUDE gist 검사",
+      "variant": "emphasis"
+    },
+    {
+      "id": "commit",
+      "from": "pg",
+      "to": "api",
+      "y": 475,
+      "label": "COMMIT · 잠금 자동 해제",
+      "variant": "return"
+    },
+    {
+      "id": "created",
+      "from": "api",
+      "to": "web",
+      "y": 510,
+      "label": "201 (겹치면 409)",
+      "variant": "return"
+    },
+    {
+      "id": "refresh",
+      "from": "web",
+      "to": "student",
+      "y": 545,
+      "label": "지도 갱신",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "web",
+      "from": 193,
+      "to": 551,
+      "type": "frontend"
+    },
+    {
+      "participant": "api",
+      "from": 198,
+      "to": 516,
+      "type": "backend"
+    },
+    {
+      "participant": "rules",
+      "from": 226,
+      "to": 268,
+      "type": "backend"
+    },
+    {
+      "participant": "pg",
+      "from": 293,
+      "to": 481,
+      "type": "database"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "1겹: 키 잠금",
+      "items": [
+        "아직 없는 행은 FOR UPDATE로 잠글 수 없다 (phantom)",
+        "방·날짜, 사람·날짜 키로 advisory lock"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "2겹: DB 제약",
+      "items": [
+        "EXCLUDE USING gist (room_id =, during &&)",
+        "앱 검사를 뚫어도 DB가 거절"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "실험 0001",
+      "items": [
+        "조치 없음 · FOR UPDATE: 겹친 행 20건 저장",
+        "advisory lock · EXCLUDE: 매번 1건"
+      ]
+    }
+  ]
+}

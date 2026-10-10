@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "입금 기록: 두 번 눌러도 한 번, 초과 입금 불가",
+    "viewBox": [
+      1080,
+      640
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "청구서 시트",
+      "sublabel": "requestId 1개"
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "BillingService",
+      "sublabel": "JdbcClient"
+    },
+    {
+      "id": "payment",
+      "type": "database",
+      "label": "payment",
+      "sublabel": "UNIQUE request_id"
+    },
+    {
+      "id": "invoice",
+      "type": "database",
+      "label": "invoice",
+      "sublabel": "CHECK 0 ≤ paid ≤ amount"
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 352,
+      "label": "첫 요청"
+    },
+    {
+      "from": 362,
+      "to": 520,
+      "label": "같은 요청을 다시 보냄"
+    }
+  ],
+  "messages": [
+    {
+      "id": "post",
+      "from": "web",
+      "to": "svc",
+      "y": 165,
+      "label": "POST /payments {requestId, 금액}",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ledger",
+      "from": "svc",
+      "to": "payment",
+      "y": 198,
+      "label": "INSERT … ON CONFLICT DO NOTHING RETURNING"
+    },
+    {
+      "id": "new-id",
+      "from": "payment",
+      "to": "svc",
+      "y": 231,
+      "label": "새 id",
+      "variant": "return"
+    },
+    {
+      "id": "add",
+      "from": "svc",
+      "to": "invoice",
+      "y": 264,
+      "label": "UPDATE paid += x WHERE paid + x ≤ amount",
+      "variant": "emphasis"
+    },
+    {
+      "id": "one-row",
+      "from": "invoice",
+      "to": "svc",
+      "y": 297,
+      "label": "1행 (0행이면 422 · 롤백)",
+      "variant": "return"
+    },
+    {
+      "id": "created",
+      "from": "svc",
+      "to": "web",
+      "y": 330,
+      "label": "201",
+      "variant": "return"
+    },
+    {
+      "id": "retry",
+      "from": "web",
+      "to": "svc",
+      "y": 378,
+      "label": "같은 requestId (두 번 누름 · 재시도)",
+      "variant": "default"
+    },
+    {
+      "id": "conflict",
+      "from": "svc",
+      "to": "payment",
+      "y": 411,
+      "label": "ON CONFLICT → 기존 행 읽기"
+    },
+    {
+      "id": "existing",
+      "from": "payment",
+      "to": "svc",
+      "y": 444,
+      "label": "처음 기록",
+      "variant": "return"
+    },
+    {
+      "id": "same",
+      "from": "svc",
+      "to": "web",
+      "y": 477,
+      "label": "처음 결과 그대로 (내용 다르면 409)",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "svc",
+      "from": 165,
+      "to": 336,
+      "type": "backend"
+    },
+    {
+      "participant": "svc",
+      "from": 378,
+      "to": 483,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "멱등",
+      "items": [
+        "화면이 입금 폼을 열 때 requestId를 한 번 만든다",
+        "장부 INSERT를 맨 앞에 두어 중복을 먼저 거른다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "합계 불변식",
+      "items": [
+        "판단과 쓰기를 한 UPDATE 문으로",
+        "행 잠금 없이 동시 입금이 금액을 넘지 못함 (ADR 0016)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "마디 시스템 구성 (로컬 Docker Compose)",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "browser",
+      "type": "external",
+      "label": "브라우저",
+      "sublabel": "휴대폰 · PC",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "google",
+      "type": "security",
+      "label": "Google OAuth",
+      "sublabel": "accounts.google.com",
+      "pos": [
+        570,
+        110
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "OIDC"
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "frontend",
+      "sublabel": "Nginx + React :3000",
+      "pos": [
+        270,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "backend",
+      "sublabel": "Spring Boot 4.1 :8080",
+      "pos": [
+        570,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "Java 25"
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL 17",
+      "sublabel": "업무 데이터 :5432",
+      "pos": [
+        880,
+        300
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "SeaweedFS",
+      "sublabel": "S3 API · 로고 파일 :8333",
+      "pos": [
+        880,
+        480
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "docker compose --profile full",
+      "wraps": [
+        "frontend",
+        "backend",
+        "postgres",
+        "storage"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "browse",
+      "from": "browser",
+      "to": "frontend",
+      "label": "HTTP /",
+      "variant": "emphasis"
+    },
+    {
+      "id": "proxy",
+      "from": "frontend",
+      "to": "backend",
+      "label": "/api/* 프록시",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sql",
+      "from": "backend",
+      "to": "postgres",
+      "label": "JDBC · Flyway",
+      "variant": "emphasis"
+    },
+    {
+      "id": "files",
+      "from": "backend",
+      "to": "storage",
+      "label": "PutObject · GetObject",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "verify",
+      "from": "backend",
+      "to": "google",
+      "label": "코드 교환 · ID 토큰 검증",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "들어오는 길",
+      "items": [
+        "Nginx가 React 빌드를 주고 /api/만 백엔드로 넘김",
+        "인증은 JWT, 구글은 로그인할 때만"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "데이터",
+      "items": [
+        "업무 데이터는 PostgreSQL, 파일은 S3 호환 저장소",
+        "DB에는 파일의 키만 둔다 (ADR 0017)"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "배포하면",
+      "items": [
+        "PostgreSQL → RDS, SeaweedFS → S3",
+        "바뀌는 것은 설정뿐"
+      ]
+    }
+  ]
+}
