@@ -103,6 +103,7 @@ PostgreSQL 17 (EXCLUDE 제약, advisory lock, 연락처 AES-GCM)
 | [결정 기록 (ADR)](docs/adr/README.md) | 0001~0014. 고른 것, 버린 것, 이유 |
 | [실험](docs/experiments/0001-예약-겹침-방지-비교.md) | 예약 겹침 방지 4가지 방식 비교 |
 | [아키텍처](docs/architecture/) | ERD, API 명세, 스키마 초안 |
+| [개발 기록](docs/devlog/) | 구성도·시퀀스 다이어그램, 트러블슈팅, 질문과 답, 작업 방식 |
 | [디자인](DESIGN.md) | 화면 디자인 규칙 |
 
 ## 측정 환경
