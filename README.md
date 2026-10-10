@@ -95,6 +95,11 @@ PostgreSQL 17 (EXCLUDE 제약, advisory lock, 연락처 AES-GCM)
 | 한 학부 전용 | 누구나 기관을 만들고 모듈을 골라 씀 |
 | 비밀번호 평문 저장을 실험 운영 중에 발견 | 처음부터 해시, 연락처는 AES-GCM 암호화 + 화면 마스킹 |
 
+## 아키텍처
+![마디 아키텍처](docs/devlog/diagrams/aws-architecture.png)
+
+자세한 흐름(예약 잠금, 수강→청구, 입금 멱등)은 [개발 기록의 아키텍처](docs/devlog/01-아키텍처.md).
+
 ## 문서
 | 문서 | 내용 |
 |---|---|
